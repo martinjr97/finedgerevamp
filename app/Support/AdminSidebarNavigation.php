@@ -196,6 +196,7 @@ class AdminSidebarNavigation
                 'Interest Rate Types' => ['admin.loan-rate-types.*'],
                 'Sectors' => ['admin.sectors.*'],
                 'Ministries' => ['admin.ministries.*'],
+                'Loan Purposes' => ['admin.loan-purposes.*'],
                 'Provinces' => ['admin.provinces.*'],
                 'Branches' => ['admin.branches.*'],
                 'General Settings' => ['admin.settings.general.*', 'admin.settings.customer-registration.*', 'admin.settings.repayment-reminders.*', 'admin.settings.credit-score.*'],

@@ -47,6 +47,7 @@ class PermissionSeeder extends Seeder
             'provinces' => ['view', 'create', 'update', 'delete'],
             'districts' => ['view', 'create', 'update', 'delete'],
             'ministries' => ['view', 'create', 'update', 'delete'],
+            'loan-purposes' => ['view', 'create', 'update', 'delete'],
             'security-questions' => ['view', 'create', 'update', 'delete'],
             'channels' => ['view', 'create', 'update', 'delete'],
 	            'financial-institutions' => ['view', 'create', 'update', 'delete'],

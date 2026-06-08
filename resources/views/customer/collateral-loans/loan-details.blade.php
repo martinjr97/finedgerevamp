@@ -128,6 +128,13 @@
                                class="w-full rounded-xl bg-white border-2 border-muted text-primary px-4 py-3 font-semibold focus:outline-none">
                     </div>
 
+                    @include('partials.loan-purpose-select', [
+                        'loanPurposes' => $loanPurposes,
+                        'labelClass' => 'block text-sm font-semibold text-muted mb-2',
+                        'selectClass' => 'w-full rounded-xl bg-white border-2 border-muted text-primary px-4 py-3 font-semibold focus:outline-none',
+                        'wrapperClass' => 'md:col-span-2',
+                    ])
+
                     @include('partials.disbursement-destination-fields', [
                         'channels' => $channels,
                         'financialInstitutions' => $financialInstitutions,
@@ -311,8 +318,21 @@
                     return;
                 }
 
+                const loanPurposeId = document.getElementById('loanPurposeId')?.value;
+                if (!loanPurposeId) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Loan purpose required',
+                        text: 'Please select the purpose for this loan.',
+                        confirmButtonColor: '#0A2540',
+                        iconColor: '#0A2540'
+                    });
+                    return;
+                }
+
                 const sessionData = {
                     loan_amount: loanAmount,
+                    loan_purpose_id: loanPurposeId,
                     tenure_months: tenureMonths,
                     loan_start_date: loanStartDate,
                     ...destinationPayload,

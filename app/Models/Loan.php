@@ -29,6 +29,7 @@ class Loan extends Model
     protected $fillable = [
         'customer_id',
         'loan_product_id',
+        'loan_purpose_id',
         'customer_group_id',
         'loan_rate_id',
         'channel_id',
@@ -113,6 +114,11 @@ class Loan extends Model
     public function loanProduct(): BelongsTo
     {
         return $this->belongsTo(LoanProduct::class);
+    }
+
+    public function loanPurpose(): BelongsTo
+    {
+        return $this->belongsTo(LoanPurpose::class);
     }
 
     public function customerGroup(): BelongsTo

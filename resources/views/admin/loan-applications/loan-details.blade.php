@@ -209,6 +209,12 @@
                         </div>
                     </div>
 
+                    @include('partials.loan-purpose-select', [
+                        'loanPurposes' => $loanPurposes,
+                        'selected' => $sessionLoanData['loan_purpose_id'] ?? null,
+                        'wrapperClass' => 'md:col-span-2',
+                    ])
+
                     @if($paymentDetailsPrefilled ?? false)
                         <div class="md:col-span-2 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-100">
                             Loaded this customer’s saved payment details. Review and adjust if needed before continuing.
@@ -541,6 +547,7 @@
                 body: JSON.stringify({
                     include_destination: true,
                     save_customer_payment_details: savePaymentDetails,
+                    loan_purpose_id: document.getElementById('loanPurposeId')?.value,
                     ...destination.payload,
                 }),
             })
@@ -577,6 +584,17 @@
                     icon: 'warning',
                     title: 'Complete calculation first',
                     text: 'Enter loan amount, tenure, and start date, then click Calculate before continuing.',
+                    confirmButtonColor: '#06b6d4',
+                });
+                return;
+            }
+
+            const loanPurposeId = document.getElementById('loanPurposeId')?.value;
+            if (!loanPurposeId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Loan purpose required',
+                    text: 'Please select the purpose for this loan before continuing.',
                     confirmButtonColor: '#06b6d4',
                 });
                 return;

@@ -13,7 +13,9 @@ use App\Models\LoanProduct;
 use App\Models\LoanRate;
 use App\Models\LoanRateType;
 use App\Models\WalletProvider;
+use App\Models\LoanPurpose;
 use Database\Seeders\FinancialInstitutionSeeder;
+use Database\Seeders\LoanPurposeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
@@ -22,6 +24,13 @@ use Tests\TestCase;
 class LoanApplicationLoanDetailsTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(LoanPurposeSeeder::class);
+    }
 
     private function adminWithPermissions(array $permissions): \App\Models\Admin
     {
@@ -222,6 +231,8 @@ class LoanApplicationLoanDetailsTest extends TestCase
             'accrual_period' => 'daily',
         ];
 
+        $loanPurpose = LoanPurpose::query()->where('name', 'Personal Use')->firstOrFail();
+
         $response = $this->actingAs($context['admin'], 'admin')
             ->withSession(['loan_application_data' => $sessionPayload])
             ->postJson(
@@ -229,6 +240,7 @@ class LoanApplicationLoanDetailsTest extends TestCase
                 [
                     'include_destination' => true,
                     'save_customer_payment_details' => true,
+                    'loan_purpose_id' => $loanPurpose->id,
                     'channel_id' => $bankChannel->id,
                     'disbursement_financial_institution_id' => $institution->id,
                     'disbursement_financial_institution_branch_id' => $branch->id,

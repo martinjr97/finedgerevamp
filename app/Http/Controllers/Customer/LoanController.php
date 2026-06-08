@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Channel;
 use App\Models\FinancialInstitution;
 use App\Models\Loan;
+use App\Models\LoanPurpose;
 use App\Models\LoanProduct;
 use App\Models\LoanRate;
 use App\Models\LoanRateType;
@@ -90,6 +91,7 @@ class LoanController extends Controller
             'channel' => $channel,
             'maximumLoanTake' => $customer->maximum_loan_take ?? 0,
             'availableLoanAmount' => $availableLoanAmount,
+            'loanPurposes' => LoanPurpose::orderedActive(),
         ]);
     }
 
@@ -108,18 +110,21 @@ class LoanController extends Controller
         $availableLoanAmount = $customer->getAvailableLoanAmount();
         $maximumLoanTake = $customer->maximum_loan_take ?? 0;
 
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'amount' => [
                 'required',
                 'numeric',
                 'min:1',
                 'max:' . min($maximumLoanTake, $availableLoanAmount),
             ],
-        ], [
+        ], LoanPurpose::idValidationRules()), [
             'amount.max' => 'The loan amount cannot exceed your available loan limit of ZMW ' . number_format($availableLoanAmount, 2) . '.',
         ]);
 
-        session(['loan_application.amount' => $validated['amount']]);
+        session([
+            'loan_application.amount' => $validated['amount'],
+            'loan_application.loan_purpose_id' => $validated['loan_purpose_id'],
+        ]);
 
         return redirect()->route('customer.loans.enter-destination')
             ->with('success', 'Loan amount saved. Enter where you would like to receive your disbursement.');
@@ -202,6 +207,9 @@ class LoanController extends Controller
         $channelId = session('loan_application.channel_id');
         $loanData = $this->loanApplicationDestinationDataForView();
         $channel = Channel::find($channelId);
+        $loanPurpose = session('loan_application.loan_purpose_id')
+            ? LoanPurpose::find(session('loan_application.loan_purpose_id'))
+            : null;
 
         // Load customer with relationships
         $customer->load(['customerGroup.loanRateType.loanRates', 'company.loanRateType.loanRates', 'loanProduct']);
@@ -299,6 +307,7 @@ class LoanController extends Controller
                 'customer' => $customer,
                 'loanAmount' => $loanAmount,
                 'loanData' => $loanData,
+                'loanPurpose' => $loanPurpose,
                 'channel' => $channel,
                 'customerGroup' => $customerGroup,
                 'rateType' => $rateType,
@@ -376,6 +385,7 @@ class LoanController extends Controller
             'customer' => $customer,
             'loanAmount' => $loanAmount,
             'loanData' => $loanData,
+            'loanPurpose' => $loanPurpose,
             'channel' => $channel,
             'customerGroup' => $customerGroup,
             'rateType' => $rateType,
@@ -413,6 +423,11 @@ class LoanController extends Controller
         if (!session('loan_application.tenure_months') || !session('loan_application.loan_rate_id')) {
             return redirect()->route('customer.loans.calculate')
                 ->with('error', 'Please complete the loan calculation first.');
+        }
+
+        if (! session('loan_application.loan_purpose_id')) {
+            return redirect()->route('customer.loans.enter-amount')
+                ->with('error', 'Please select a loan purpose before submitting your application.');
         }
 
         $loanAmount = session('loan_application.amount');
@@ -544,6 +559,7 @@ class LoanController extends Controller
             $loan = Loan::create(array_merge([
                 'customer_id' => $customer->id,
                 'loan_product_id' => $loanProduct->id,
+                'loan_purpose_id' => session('loan_application.loan_purpose_id'),
                 'customer_group_id' => $customerGroup?->id,
                 'loan_rate_id' => $loanRate->id,
                 'channel_id' => $channelId,
@@ -575,6 +591,7 @@ class LoanController extends Controller
 
             session()->forget([
                 'loan_application.amount',
+                'loan_application.loan_purpose_id',
                 'loan_application.channel_id',
                 'loan_application.tenure_months',
                 'loan_application.loan_rate_id',

@@ -18,6 +18,12 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Loan Amount</p>
                     <p class="text-2xl font-bold text-gray-900 dark:text-white">ZMW {{ number_format($loanAmount, 2) }}</p>
                 </div>
+                @if (! empty($loanPurpose))
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Loan Purpose</p>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ $loanPurpose->name }}</p>
+                    </div>
+                @endif
                 <div class="md:col-span-2">
                     @include('partials.customer.disbursement-destination-summary', [
                         'channel' => $channel,

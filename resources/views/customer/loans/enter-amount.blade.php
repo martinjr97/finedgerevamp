@@ -79,6 +79,15 @@
                 @enderror
             </div>
 
+            <div class="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-2 border-gray-300 dark:border-gray-600 rounded-2xl p-6 shadow-lg">
+                @include('partials.loan-purpose-select', [
+                    'loanPurposes' => $loanPurposes,
+                    'selected' => session('loan_application.loan_purpose_id'),
+                    'labelClass' => 'block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3',
+                    'selectClass' => 'w-full rounded-xl bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white px-4 py-3 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition',
+                ])
+            </div>
+
             <div class="flex items-center justify-between gap-4 pt-4">
                 <a href="{{ route('customer.loans.select-channel') }}"
                    class="inline-flex items-center gap-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-6 py-3 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition">

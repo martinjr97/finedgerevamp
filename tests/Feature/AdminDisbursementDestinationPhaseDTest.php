@@ -16,7 +16,9 @@ use App\Models\LoanRate;
 use App\Models\LoanRateType;
 use App\Models\Wallet;
 use App\Services\DisbursementDestinationService;
+use App\Models\LoanPurpose;
 use Database\Seeders\FinancialInstitutionSeeder;
+use Database\Seeders\LoanPurposeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
@@ -25,6 +27,18 @@ use Tests\TestCase;
 class AdminDisbursementDestinationPhaseDTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(LoanPurposeSeeder::class);
+    }
+
+    private function defaultLoanPurposeId(): int
+    {
+        return (int) LoanPurpose::query()->where('name', 'Personal Use')->value('id');
+    }
 
     private function adminWithPermissions(array $permissions): Admin
     {
@@ -255,6 +269,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
                 route('admin.loan-applications.store-calculation', [$context['product'], $context['customer']]),
                 [
                     'include_destination' => true,
+                    'loan_purpose_id' => $this->defaultLoanPurposeId(),
                     'channel_id' => $channel->id,
                     'disbursement_financial_institution_id' => $institution->id,
                     'disbursement_financial_institution_branch_id' => $otherBranch->id,
@@ -280,6 +295,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
                 route('admin.loan-applications.store-calculation', [$context['product'], $context['customer']]),
                 [
                     'include_destination' => true,
+                    'loan_purpose_id' => $this->defaultLoanPurposeId(),
                     'channel_id' => $channel->id,
                     'disbursement_phone_number' => '0978232334',
                 ]

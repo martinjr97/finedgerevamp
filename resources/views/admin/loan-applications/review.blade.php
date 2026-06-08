@@ -114,6 +114,7 @@
         <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-6">
             <h2 class="text-lg font-semibold text-white">Loan Summary</h2>
             <div class="grid gap-4 md:grid-cols-3 lg:grid-cols-4 text-sm text-slate-200">
+                @include('partials.loan-purpose-summary', ['loanPurpose' => $loanPurpose ?? null])
                 <div>
                     <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">Loan Amount</p>
                     <p class="text-base font-semibold text-white">

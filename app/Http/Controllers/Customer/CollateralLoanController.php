@@ -11,6 +11,7 @@ use App\Models\FinancialInstitution;
 use App\Models\CollateralLoanDetail;
 use App\Models\CollateralType;
 use App\Models\Loan;
+use App\Models\LoanPurpose;
 use App\Models\LoanRate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -90,6 +91,7 @@ class CollateralLoanController extends Controller
             'financialInstitutions' => $financialInstitutions,
             'maxLoanAmount' => $maxLoanAmount,
             'availableLoanAmount' => $availableLoanAmount,
+            'loanPurposes' => LoanPurpose::orderedActive(),
         ]);
     }
 
@@ -187,7 +189,7 @@ class CollateralLoanController extends Controller
     {
         $customer = auth('customer')->user();
         
-        $calcValidated = $request->validate([
+        $calcValidated = $request->validate(array_merge([
             'loan_amount' => 'required|numeric|min:1',
             'tenure_months' => 'required|integer|min:1',
             'loan_start_date' => 'required|date',
@@ -200,7 +202,7 @@ class CollateralLoanController extends Controller
             'daily_rate' => 'nullable|numeric',
             'weekly_rate' => 'nullable|numeric',
             'accrual_period' => 'required|string',
-        ]);
+        ], LoanPurpose::idValidationRules()));
 
         try {
             $destinationNormalized = $this->normalizeDisbursementDestination(
@@ -238,6 +240,11 @@ class CollateralLoanController extends Controller
         if (!$loanData) {
             return redirect()->route('customer.collateral-loans.loan-details')
                 ->with('error', 'Please complete the loan details first.');
+        }
+
+        if (empty($loanData['loan_purpose_id'])) {
+            return redirect()->route('customer.collateral-loans.loan-details')
+                ->with('error', 'Please select a loan purpose before continuing.');
         }
         
         // Get collateral types for this product

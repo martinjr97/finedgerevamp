@@ -69,9 +69,15 @@ trait ResolvesDisbursementDestination
      */
     protected function destinationAttributesFromLoanData(array $loanData): array
     {
-        return $this->loanDestinationAttributes(
+        $attributes = $this->loanDestinationAttributes(
             $this->destinationPayloadFromArray($loanData)
         );
+
+        if (! empty($loanData['loan_purpose_id'])) {
+            $attributes['loan_purpose_id'] = $loanData['loan_purpose_id'];
+        }
+
+        return $attributes;
     }
 
     /**

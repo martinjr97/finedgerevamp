@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
 	                ProvinceSeeder::class,
 	                DistrictSeeder::class,
 	                MinistrySeeder::class,
+	                LoanPurposeSeeder::class,
 	                ChannelSeeder::class,
 	                CashRegisterSeeder::class,
 	                FinancialInstitutionSeeder::class,

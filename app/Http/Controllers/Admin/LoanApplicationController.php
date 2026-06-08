@@ -17,6 +17,7 @@ use App\Models\CollateralType;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
 use App\Models\Loan;
+use App\Models\LoanPurpose;
 use App\Models\LoanProduct;
 use App\Models\LoanRate;
 use App\Models\LoanRateType;
@@ -408,6 +409,7 @@ class LoanApplicationController extends Controller
             'disbursementDefaults' => $disbursementDefaults,
             'hasSavedPaymentDetails' => $hasSavedPaymentDetails,
             'paymentDetailsPrefilled' => $paymentDetailsPrefilled,
+            'loanPurposes' => LoanPurpose::orderedActive(),
         ]);
     }
 
@@ -611,11 +613,13 @@ class LoanApplicationController extends Controller
                 ], 422);
             }
 
+            $purposeValidated = $request->validate(LoanPurpose::idValidationRules());
+
             $destinationNormalized = $this->normalizeDisbursementDestination(
                 $this->destinationPayloadFromArray($request->all())
             );
 
-            $sessionData = array_merge($existing, $destinationNormalized);
+            $sessionData = array_merge($existing, $destinationNormalized, $purposeValidated);
 
             if ($request->boolean('save_customer_payment_details')) {
                 app(CustomerPaymentDetailPrefillService::class)
@@ -691,6 +695,10 @@ class LoanApplicationController extends Controller
             return redirect()->route('admin.loan-applications.loan-details', [$loanProduct, $customer])
                 ->with('error', 'Please complete the loan details first.');
         }
+
+        if ($redirect = $this->redirectIfLoanPurposeMissing($loanProduct, $customer, $loanData)) {
+            return $redirect;
+        }
         
         // Get collateral types for this product
         $collateralTypes = CollateralType::where('loan_product_id', $loanProduct->id)
@@ -715,6 +723,7 @@ class LoanApplicationController extends Controller
             'customer' => $customer,
             'collateralTypes' => $collateralTypes,
             'loanData' => $loanData,
+            'loanPurpose' => $this->loanPurposeFromLoanData($loanData),
             'relationshipManagers' => $relationshipManagers,
         ]);
     }
@@ -928,6 +937,10 @@ class LoanApplicationController extends Controller
                 ->with('error', 'Please complete the loan details first.');
         }
 
+        if ($redirect = $this->redirectIfLoanPurposeMissing($loanProduct, $customer, $loanData)) {
+            return $redirect;
+        }
+
         $company = $customer->company;
         if (! $company) {
             return redirect()->route('admin.loan-applications.search-customer', $loanProduct)
@@ -948,6 +961,7 @@ class LoanApplicationController extends Controller
             'customer' => $customer,
             'company' => $company,
             'loanData' => $loanData,
+            'loanPurpose' => $this->loanPurposeFromLoanData($loanData),
             'rateType' => $rateType,
             'loanRate' => $loanRate,
             'channel' => $channel,
@@ -976,6 +990,10 @@ class LoanApplicationController extends Controller
                 ->with('error', 'Please complete the loan details first.');
         }
 
+        if ($redirect = $this->redirectIfLoanPurposeMissing($loanProduct, $customer, $loanData)) {
+            return $redirect;
+        }
+
         $customerGroup = $customer->customerGroup;
         if (! $customerGroup) {
             return redirect()->route('admin.loan-applications.search-customer', $loanProduct)
@@ -996,6 +1014,7 @@ class LoanApplicationController extends Controller
             'customer' => $customer,
             'customerGroup' => $customerGroup,
             'loanData' => $loanData,
+            'loanPurpose' => $this->loanPurposeFromLoanData($loanData),
             'rateType' => $rateType,
             'loanRate' => $loanRate,
             'channel' => $channel,
@@ -1145,6 +1164,10 @@ class LoanApplicationController extends Controller
                 ->with('error', 'Please complete the loan details first.');
         }
 
+        if ($redirect = $this->redirectIfLoanPurposeMissing($loanProduct, $customer, $loanData)) {
+            return $redirect;
+        }
+
         $loanData = $this->ensureRepaymentScheduleInLoanData($loanProduct, $customer, $loanData);
         $request->session()->put('loan_application_data', $loanData);
 
@@ -1168,6 +1191,7 @@ class LoanApplicationController extends Controller
             'customer' => $customer,
             'customerGroup' => $customerGroup,
             'loanData' => $loanData,
+            'loanPurpose' => $this->loanPurposeFromLoanData($loanData),
             'rateType' => $rateType,
             'loanRate' => $loanRate,
             'channel' => $channel,
@@ -1706,5 +1730,31 @@ class LoanApplicationController extends Controller
         } catch (\Throwable) {
             return $loanData;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $loanData
+     */
+    private function loanPurposeFromLoanData(array $loanData): ?LoanPurpose
+    {
+        $loanPurposeId = $loanData['loan_purpose_id'] ?? null;
+
+        return $loanPurposeId ? LoanPurpose::find($loanPurposeId) : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $loanData
+     */
+    private function redirectIfLoanPurposeMissing(
+        LoanProduct $loanProduct,
+        Customer $customer,
+        array $loanData,
+    ): ?RedirectResponse {
+        if (empty($loanData['loan_purpose_id'])) {
+            return redirect()->route('admin.loan-applications.loan-details', [$loanProduct, $customer])
+                ->with('error', 'Please select a loan purpose before continuing.');
+        }
+
+        return null;
     }
 }

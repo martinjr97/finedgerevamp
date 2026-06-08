@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\KycController;
 use App\Http\Controllers\Admin\LoanProductController;
 use App\Http\Controllers\Admin\LoanRateTypeController;
 use App\Http\Controllers\Admin\MarketController;
+use App\Http\Controllers\Admin\LoanPurposeController;
 use App\Http\Controllers\Admin\MinistryController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\ProvinceController;
@@ -274,6 +275,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('loan-rate-types/{loanRateType}/copy-product', [LoanRateTypeController::class, 'copyToProduct'])->name('loan-rate-types.copy-product');
         Route::resource('sectors', SectorController::class)->except(['show']);
         Route::resource('ministries', MinistryController::class)->except(['show']);
+        Route::resource('loan-purposes', LoanPurposeController::class)->except(['show']);
         Route::resource('provinces', ProvinceController::class)->except(['show']);
         Route::resource('branches', BranchController::class)->except(['show']);
         Route::get('settings/general', [GeneralSettingController::class, 'edit'])->name('settings.general.edit');
