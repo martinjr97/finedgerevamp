@@ -513,6 +513,36 @@ class LoanPricingService
         return $matching->sortBy('id')->first();
     }
 
+    /**
+     * Tenure months that have an active rate applicable to the principal amount.
+     *
+     * @return list<int>
+     */
+    public function resolveAvailableTenureMonths(
+        LoanRateType $rateType,
+        float|int|string $principal,
+        ?int $maxTenureMonths = null,
+    ): array {
+        $configuredTenures = $rateType->loanRates()
+            ->where('is_active', true)
+            ->orderBy('tenure_months')
+            ->pluck('tenure_months')
+            ->map(fn ($months) => (int) $months)
+            ->unique()
+            ->values();
+
+        if ($maxTenureMonths !== null) {
+            $configuredTenures = $configuredTenures->filter(
+                fn (int $months) => $months <= $maxTenureMonths
+            );
+        }
+
+        return $configuredTenures
+            ->filter(fn (int $months) => $this->resolveRateForAmount($rateType, $months, $principal) !== null)
+            ->values()
+            ->all();
+    }
+
     public function calculateTermDays(CarbonInterface|string $startDate, int $tenureMonths): int
     {
         if ($tenureMonths < 1) {

@@ -25,7 +25,6 @@ class AuthenticatedSessionController extends Controller
         $setting = GeneralSetting::query()->first();
 
         return view('customer.auth.login', [
-            'authSideImage' => 'homepage.png',
             'brandColor' => 'text-emerald-600',
             'allowCustomerRegistration' => (bool) optional($setting)->allow_customer_registration,
         ]);

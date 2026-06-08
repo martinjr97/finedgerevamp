@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
 	                WalletProviderSeeder::class,
 	                SecurityQuestionSeeder::class,
 	                VstRateTableSeeder::class,
+	                GovernmentSampleCustomerSeeder::class,
 	            ]);
     }
 }

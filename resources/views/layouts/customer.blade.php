@@ -150,7 +150,7 @@
                 <aside class="hidden lg:flex lg:w-1/2 customer-aside items-center justify-center p-6" style="min-height: calc(100vh - 57px);">
                     <div class="w-full" style="max-width: 1000px;">
                         <div class="card rounded-xl overflow-hidden shadow-lg p-1">
-                            <img src="{{ url('customer-view.jpg') }}" alt="Customer View" class="w-full h-auto rounded-lg" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center text-gray-500 dark:text-gray-400 p-8\'>Image not found</div>';">
+                            <img src="{{ url('/img/customer-view.png') }}" alt="Customer View" class="w-full h-auto rounded-lg" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center text-gray-500 dark:text-gray-400 p-8\'>Image not found</div>';">
                         </div>
                     </div>
                 </aside>

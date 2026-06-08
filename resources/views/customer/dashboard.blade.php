@@ -6,6 +6,7 @@
     $hasActiveLoans = $activeLoans->count() > 0;
     $isGroupLoanCustomer = $isGroupLoanCustomer ?? ((string) ($loanProduct?->category ?? '') === 'group_loans');
     $relationshipManager = $customer->customerGroup?->relationshipManager;
+    $primaryCtaClass = 'mt-5 inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-green-300 via-emerald-400 to-teal-400 hover:from-green-400 hover:via-emerald-500 hover:to-teal-500 text-emerald-950 font-bold text-base sm:text-lg px-8 py-4 shadow-[0_10px_28px_rgba(74,222,128,0.45)] hover:shadow-[0_14px_32px_rgba(52,211,153,0.55)] ring-2 ring-white ring-offset-2 ring-offset-purple-700 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]';
 @endphp
 
 @extends('layouts.customer')
@@ -24,18 +25,18 @@
                 <p class="text-purple-100 text-sm sm:text-base mt-1">Welcome to your loan management dashboard</p>
                 @if($loanProduct && $canStartLoanFlow)
                 @if($loanProduct->category === 'collateral')
-                    <a href="{{ route('customer.collateral-loans.loan-details') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3.5 shadow-md hover:shadow-lg transition border border-green-700/30">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <a href="{{ route('customer.collateral-loans.loan-details') }}" class="{{ $primaryCtaClass }}">
+                        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <span>{{ $hasActiveLoans ? 'Apply for Another Loan' : 'Get a Loan' }}</span>
                     </a>
                 @else
-                    <a href="{{ route('customer.loans.select-channel') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3.5 shadow-md hover:shadow-lg transition border border-green-700/30">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <a href="{{ route('customer.loans.select-channel') }}" class="{{ $primaryCtaClass }}">
+                        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <span>{{ $hasActiveLoans ? 'Apply for Another Loan' : 'Get a Loan' }}</span>
                     </a>
                 @endif
             @elseif($hasActiveLoans)
-                <a href="{{ route('customer.repayments.select-type') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3.5 shadow-md hover:shadow-lg transition border border-green-700/30">
+                <a href="{{ route('customer.repayments.select-type') }}" class="{{ $primaryCtaClass }}">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <span>Make a Loan Repayment</span>
                 </a>

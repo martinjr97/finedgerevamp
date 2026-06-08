@@ -16,6 +16,7 @@ use App\Models\LoanRateType;
 use App\Services\LoanPayDayScheduleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -257,6 +258,11 @@ class LoanController extends Controller
         }
 
         $maxTenureMonths = max(1, (int) $maxTenureMonths);
+        $availableTenureMonths = $this->loanPricing()->resolveAvailableTenureMonths(
+            $rateType,
+            $loanAmount,
+            $maxTenureMonths
+        );
 
         // Calculate crossover threshold
         $crossoverThreshold = ($instalmentCrossOverPercentage / 100) * $netSalary;
@@ -264,13 +270,13 @@ class LoanController extends Controller
 
         // Handle POST request (tenure selection)
         if ($request->isMethod('post')) {
+            if ($availableTenureMonths === []) {
+                return redirect()->route('customer.loans.calculate')
+                    ->with('error', 'No loan rates are configured for your loan amount. Please contact support.');
+            }
+
             $validated = $request->validate([
-                'tenure_months' => [
-                    'required',
-                    'integer',
-                    'min:1',
-                    'max:' . $maxTenureMonths,
-                ],
+                'tenure_months' => ['required', 'integer', Rule::in($availableTenureMonths)],
             ]);
 
             $selectedTenure = (int) $validated['tenure_months'];
@@ -316,6 +322,7 @@ class LoanController extends Controller
                 'crossoverThreshold' => $crossoverThreshold,
                 'exceedsCrossover' => $exceedsCrossover,
                 'maxTenureMonths' => $maxTenureMonths,
+                'availableTenureMonths' => $availableTenureMonths,
                 'selectedTenure' => $selectedTenure,
                 'loanRate' => $loanRate,
                 'loanStartDate' => $loanStartDate,
@@ -345,10 +352,9 @@ class LoanController extends Controller
         // If amount doesn't exceed crossover, show 1-month calculation immediately
         if (!$exceedsCrossover) {
             $defaultTenure = 1;
-            $loanRate = $rateType->loanRates()
-                ->where('tenure_months', $defaultTenure)
-                ->where('is_active', true)
-                ->first();
+            $loanRate = in_array($defaultTenure, $availableTenureMonths, true)
+                ? $this->loanPricing()->resolveRateForAmount($rateType, $defaultTenure, $loanAmount)
+                : null;
 
             if ($loanRate) {
                 $loanStartDate = now()->startOfDay();
@@ -394,6 +400,7 @@ class LoanController extends Controller
             'crossoverThreshold' => $crossoverThreshold,
             'exceedsCrossover' => $exceedsCrossover,
             'maxTenureMonths' => $maxTenureMonths,
+            'availableTenureMonths' => $availableTenureMonths,
             'selectedTenure' => $selectedTenure,
             'loanRate' => $loanRate,
             'loanStartDate' => $loanStartDate,

@@ -38,7 +38,7 @@
         </div>
 
         {{-- Tenure Selection (if amount exceeds crossover) --}}
-        @if($exceedsCrossover && !$showCalculation)
+        @if($exceedsCrossover && !$showCalculation && ! empty($availableTenureMonths))
             <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-300 dark:border-amber-600 rounded-2xl p-6 shadow-lg">
                 <div class="flex items-start gap-3 mb-4">
                     <svg class="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,12 +63,12 @@
                         </label>
                         <select name="tenure_months" id="tenure_months" required 
                                 class="w-full rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                            @for($i = 1; $i <= $maxTenureMonths; $i++)
-                                <option value="{{ $i }}">{{ $i }} {{ $i === 1 ? 'Month' : 'Months' }}</option>
-                            @endfor
+                            @foreach ($availableTenureMonths as $months)
+                                <option value="{{ $months }}">{{ $months }} {{ $months === 1 ? 'Month' : 'Months' }}</option>
+                            @endforeach
                         </select>
                         <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                            Maximum tenure: {{ $maxTenureMonths }} months
+                            Only repayment periods with configured rates are shown.
                         </p>
                     </div>
                     <button type="submit" 
@@ -76,6 +76,16 @@
                         Calculate Loan
                     </button>
                 </form>
+            </div>
+        @endif
+
+        @if($exceedsCrossover && !$showCalculation && empty($availableTenureMonths))
+            <div class="bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 border-2 border-rose-300 dark:border-rose-600 rounded-2xl p-6 shadow-lg">
+                <h3 class="text-lg font-semibold text-rose-900 dark:text-rose-200 mb-2">No Rates Available</h3>
+                <p class="text-sm text-rose-800 dark:text-rose-300">
+                    No loan rates are configured for your requested amount and available repayment periods.
+                    Please contact support or try a different loan amount.
+                </p>
             </div>
         @endif
 
@@ -154,8 +164,15 @@
             </div>
         @endif
 
-        {{-- Info Card (if amount doesn't exceed crossover) --}}
-        @if(!$exceedsCrossover && !$showCalculation)
+        {{-- Info Card (if amount doesn't exceed crossover but 1-month rate is missing) --}}
+        @if(!$exceedsCrossover && !$showCalculation && empty($availableTenureMonths))
+            <div class="bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 border-2 border-rose-300 dark:border-rose-600 rounded-2xl p-6 shadow-lg">
+                <h3 class="text-lg font-semibold text-rose-900 dark:text-rose-200 mb-2">No Rates Available</h3>
+                <p class="text-sm text-rose-800 dark:text-rose-300">
+                    No loan rates are configured for your requested amount. Please contact support.
+                </p>
+            </div>
+        @elseif(!$exceedsCrossover && !$showCalculation)
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-300 dark:border-blue-600 rounded-2xl p-6 shadow-lg">
                 <div class="flex items-start gap-3">
                     <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

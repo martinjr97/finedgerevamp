@@ -13,7 +13,7 @@ class AdminLoginBrandingTest extends TestCase
             ->assertSee('auth-page admin-auth-page')
             ->assertSee('admin-auth-card')
             ->assertSee('auth-submit-button')
-            ->assertSee('customer-view.jpg')
+            ->assertSee('customer-view.png')
             ->assertDontSee('Restricted operations console for authorized staff.');
     }
 
