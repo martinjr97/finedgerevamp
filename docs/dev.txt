@@ -1,0 +1,8 @@
+php artisan migrate
+php artisan db:seed --class=FinancialInstitutionSeeder
+php artisan db:seed --class=ChannelSeeder
+# optional: refresh permissions for super-admin
+php artisan db:seed --class=PermissionSeeder
+php artisan db:seed --class=SuperAdminSeeder
+
+php artisan db:seed --class=VstRateTableSeeder

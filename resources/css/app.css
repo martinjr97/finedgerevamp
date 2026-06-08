@@ -1,0 +1,1197 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+    /* FineEdge legacy palette (lite-purple / Gull admin theme) */
+    --brand-purple: #663399;
+    --brand-purple-hover: #402060;
+    --brand-purple-soft: #d4c6e2;
+    --brand-ink: #47404f;
+    --brand-muted: #70657b;
+    --brand-surface: #ffffff;
+    --brand-surface-alt: #f8f9fa;
+    --brand-border: #dee2e6;
+    --brand-danger: #f44336;
+    --brand-landing-blue: #151b54;
+    --brand-landing-blue-hover: #0f1440;
+    --brand-landing-text: #e6e6fa;
+
+    /* App semantic tokens */
+    --color-primary: var(--brand-ink);
+    --color-brand: var(--brand-purple);
+    --color-brand-hover: var(--brand-purple-hover);
+    --color-brand-soft: var(--brand-purple-soft);
+    --color-surface: var(--brand-surface);
+    --color-surface-alt: var(--brand-surface-alt);
+    --color-muted: var(--brand-muted);
+    --color-black: var(--brand-ink);
+    --color-white: var(--brand-surface);
+    --focus-ring: rgba(102, 51, 153, 0.18);
+
+    /* Neutral scale (50-200 surface, 300-500 muted, 600+ primary) */
+    --color-slate-50: var(--color-surface);
+    --color-slate-100: var(--color-surface);
+    --color-slate-200: var(--color-surface);
+    --color-slate-300: var(--color-muted);
+    --color-slate-400: var(--color-muted);
+    --color-slate-500: var(--color-muted);
+    --color-slate-600: var(--color-primary);
+    --color-slate-700: var(--color-primary);
+    --color-slate-800: var(--color-primary);
+    --color-slate-900: var(--color-primary);
+    --color-slate-950: var(--color-primary);
+
+    --color-gray-50: var(--color-surface);
+    --color-gray-100: var(--color-surface);
+    --color-gray-200: var(--color-surface);
+    --color-gray-300: var(--color-muted);
+    --color-gray-400: var(--color-muted);
+    --color-gray-500: var(--color-muted);
+    --color-gray-600: var(--color-primary);
+    --color-gray-700: var(--color-primary);
+    --color-gray-800: var(--color-primary);
+    --color-gray-900: var(--color-primary);
+    --color-gray-950: var(--color-primary);
+
+    --color-zinc-50: var(--color-surface);
+    --color-zinc-100: var(--color-surface);
+    --color-zinc-200: var(--color-surface);
+    --color-zinc-300: var(--color-muted);
+    --color-zinc-400: var(--color-muted);
+    --color-zinc-500: var(--color-muted);
+    --color-zinc-600: var(--color-primary);
+    --color-zinc-700: var(--color-primary);
+    --color-zinc-800: var(--color-primary);
+    --color-zinc-900: var(--color-primary);
+    --color-zinc-950: var(--color-primary);
+
+    --color-neutral-50: var(--color-surface);
+    --color-neutral-100: var(--color-surface);
+    --color-neutral-200: var(--color-surface);
+    --color-neutral-300: var(--color-muted);
+    --color-neutral-400: var(--color-muted);
+    --color-neutral-500: var(--color-muted);
+    --color-neutral-600: var(--color-primary);
+    --color-neutral-700: var(--color-primary);
+    --color-neutral-800: var(--color-primary);
+    --color-neutral-900: var(--color-primary);
+    --color-neutral-950: var(--color-primary);
+
+    --color-stone-50: var(--color-surface);
+    --color-stone-100: var(--color-surface);
+    --color-stone-200: var(--color-surface);
+    --color-stone-300: var(--color-muted);
+    --color-stone-400: var(--color-muted);
+    --color-stone-500: var(--color-muted);
+    --color-stone-600: var(--color-primary);
+    --color-stone-700: var(--color-primary);
+    --color-stone-800: var(--color-primary);
+    --color-stone-900: var(--color-primary);
+    --color-stone-950: var(--color-primary);
+
+    /* Semantic danger reds (errors — not brand accent) */
+    --color-red-50: #fef2f2;
+    --color-red-100: #fee2e2;
+    --color-red-200: #fecaca;
+    --color-red-300: #fca5a5;
+    --color-red-400: #f87171;
+    --color-red-500: #f44336;
+    --color-red-600: #e53935;
+    --color-red-700: #d32f2f;
+    --color-red-800: #c62828;
+    --color-red-900: #b71c1c;
+    --color-red-950: #991b1b;
+
+    --color-orange-50: var(--color-surface);
+    --color-orange-100: var(--color-surface);
+    --color-orange-200: var(--color-surface);
+    --color-orange-300: var(--color-muted);
+    --color-orange-400: var(--color-muted);
+    --color-orange-500: var(--color-muted);
+    --color-orange-600: var(--color-primary);
+    --color-orange-700: var(--color-primary);
+    --color-orange-800: var(--color-primary);
+    --color-orange-900: var(--color-primary);
+    --color-orange-950: var(--color-primary);
+
+    --color-amber-50: var(--color-surface);
+    --color-amber-100: var(--color-surface);
+    --color-amber-200: var(--color-surface);
+    --color-amber-300: var(--color-muted);
+    --color-amber-400: var(--color-muted);
+    --color-amber-500: var(--color-muted);
+    --color-amber-600: var(--color-primary);
+    --color-amber-700: var(--color-primary);
+    --color-amber-800: var(--color-primary);
+    --color-amber-900: var(--color-primary);
+    --color-amber-950: var(--color-primary);
+
+    --color-yellow-50: var(--color-surface);
+    --color-yellow-100: var(--color-surface);
+    --color-yellow-200: var(--color-surface);
+    --color-yellow-300: var(--color-muted);
+    --color-yellow-400: var(--color-muted);
+    --color-yellow-500: var(--color-muted);
+    --color-yellow-600: var(--color-primary);
+    --color-yellow-700: var(--color-primary);
+    --color-yellow-800: var(--color-primary);
+    --color-yellow-900: var(--color-primary);
+    --color-yellow-950: var(--color-primary);
+
+    --color-lime-50: var(--color-surface);
+    --color-lime-100: var(--color-surface);
+    --color-lime-200: var(--color-surface);
+    --color-lime-300: var(--color-muted);
+    --color-lime-400: var(--color-muted);
+    --color-lime-500: var(--color-muted);
+    --color-lime-600: var(--color-primary);
+    --color-lime-700: var(--color-primary);
+    --color-lime-800: var(--color-primary);
+    --color-lime-900: var(--color-primary);
+    --color-lime-950: var(--color-primary);
+
+    --color-green-50: var(--color-surface);
+    --color-green-100: var(--color-surface);
+    --color-green-200: var(--color-surface);
+    --color-green-300: var(--color-muted);
+    --color-green-400: var(--color-muted);
+    --color-green-500: var(--color-muted);
+    --color-green-600: var(--color-primary);
+    --color-green-700: var(--color-primary);
+    --color-green-800: var(--color-primary);
+    --color-green-900: var(--color-primary);
+    --color-green-950: var(--color-primary);
+
+    --color-emerald-50: var(--color-surface);
+    --color-emerald-100: var(--color-surface);
+    --color-emerald-200: var(--color-surface);
+    --color-emerald-300: var(--color-muted);
+    --color-emerald-400: var(--color-muted);
+    --color-emerald-500: var(--color-muted);
+    --color-emerald-600: var(--color-primary);
+    --color-emerald-700: var(--color-primary);
+    --color-emerald-800: var(--color-primary);
+    --color-emerald-900: var(--color-primary);
+    --color-emerald-950: var(--color-primary);
+
+    --color-teal-50: var(--color-surface);
+    --color-teal-100: var(--color-surface);
+    --color-teal-200: var(--color-surface);
+    --color-teal-300: var(--color-muted);
+    --color-teal-400: var(--color-muted);
+    --color-teal-500: var(--color-muted);
+    --color-teal-600: var(--color-primary);
+    --color-teal-700: var(--color-primary);
+    --color-teal-800: var(--color-primary);
+    --color-teal-900: var(--color-primary);
+    --color-teal-950: var(--color-primary);
+
+    --color-cyan-50: var(--color-surface);
+    --color-cyan-100: var(--color-surface);
+    --color-cyan-200: var(--color-surface);
+    --color-cyan-300: var(--color-muted);
+    --color-cyan-400: var(--color-muted);
+    --color-cyan-500: var(--color-muted);
+    --color-cyan-600: var(--color-primary);
+    --color-cyan-700: var(--color-primary);
+    --color-cyan-800: var(--color-primary);
+    --color-cyan-900: var(--color-primary);
+    --color-cyan-950: var(--color-primary);
+
+    --color-sky-50: var(--color-surface);
+    --color-sky-100: var(--color-surface);
+    --color-sky-200: var(--color-surface);
+    --color-sky-300: var(--color-muted);
+    --color-sky-400: var(--color-muted);
+    --color-sky-500: var(--color-muted);
+    --color-sky-600: var(--color-primary);
+    --color-sky-700: var(--color-primary);
+    --color-sky-800: var(--color-primary);
+    --color-sky-900: var(--color-primary);
+    --color-sky-950: var(--color-primary);
+
+    --color-blue-50: var(--color-surface);
+    --color-blue-100: var(--color-surface);
+    --color-blue-200: var(--color-surface);
+    --color-blue-300: var(--color-muted);
+    --color-blue-400: var(--color-muted);
+    --color-blue-500: var(--color-muted);
+    --color-blue-600: var(--color-primary);
+    --color-blue-700: var(--color-primary);
+    --color-blue-800: var(--color-primary);
+    --color-blue-900: var(--color-primary);
+    --color-blue-950: var(--color-primary);
+
+    --color-indigo-50: var(--color-surface);
+    --color-indigo-100: var(--color-surface);
+    --color-indigo-200: var(--color-surface);
+    --color-indigo-300: var(--color-muted);
+    --color-indigo-400: var(--color-muted);
+    --color-indigo-500: var(--color-muted);
+    --color-indigo-600: var(--color-primary);
+    --color-indigo-700: var(--color-primary);
+    --color-indigo-800: var(--color-primary);
+    --color-indigo-900: var(--color-primary);
+    --color-indigo-950: var(--color-primary);
+
+    --color-violet-50: var(--color-surface);
+    --color-violet-100: var(--color-surface);
+    --color-violet-200: var(--color-surface);
+    --color-violet-300: var(--color-muted);
+    --color-violet-400: var(--color-muted);
+    --color-violet-500: var(--color-muted);
+    --color-violet-600: var(--color-primary);
+    --color-violet-700: var(--color-primary);
+    --color-violet-800: var(--color-primary);
+    --color-violet-900: var(--color-primary);
+    --color-violet-950: var(--color-primary);
+
+    --color-purple-50: var(--color-surface-alt);
+    --color-purple-100: var(--color-brand-soft);
+    --color-purple-200: var(--color-brand-soft);
+    --color-purple-300: var(--color-brand-soft);
+    --color-purple-400: #b794d4;
+    --color-purple-500: var(--color-brand);
+    --color-purple-600: var(--color-brand);
+    --color-purple-700: var(--color-brand-hover);
+    --color-purple-800: var(--color-brand-hover);
+    --color-purple-900: var(--color-brand-hover);
+    --color-purple-950: var(--color-brand-hover);
+
+    --color-fuchsia-50: var(--color-surface);
+    --color-fuchsia-100: var(--color-surface);
+    --color-fuchsia-200: var(--color-surface);
+    --color-fuchsia-300: var(--color-muted);
+    --color-fuchsia-400: var(--color-muted);
+    --color-fuchsia-500: var(--color-muted);
+    --color-fuchsia-600: var(--color-primary);
+    --color-fuchsia-700: var(--color-primary);
+    --color-fuchsia-800: var(--color-primary);
+    --color-fuchsia-900: var(--color-primary);
+    --color-fuchsia-950: var(--color-primary);
+
+    --color-pink-50: var(--color-surface);
+    --color-pink-100: var(--color-surface);
+    --color-pink-200: var(--color-surface);
+    --color-pink-300: var(--color-muted);
+    --color-pink-400: var(--color-muted);
+    --color-pink-500: var(--color-muted);
+    --color-pink-600: var(--color-primary);
+    --color-pink-700: var(--color-primary);
+    --color-pink-800: var(--color-primary);
+    --color-pink-900: var(--color-primary);
+    --color-pink-950: var(--color-primary);
+
+    --color-rose-50: #fef2f2;
+    --color-rose-100: #ffe4e6;
+    --color-rose-200: #fecdd3;
+    --color-rose-300: #fda4af;
+    --color-rose-400: #fb7185;
+    --color-rose-500: #f44336;
+    --color-rose-600: #e53935;
+    --color-rose-700: #d32f2f;
+    --color-rose-800: #c62828;
+    --color-rose-900: #b71c1c;
+    --color-rose-950: #991b1b;
+}
+
+/* Gradients flattened to brand-safe solids */
+[class*="bg-gradient"] { background-image: none !important; background-color: var(--color-primary) !important; }
+[style*="linear-gradient"] { background-image: none !important; background-color: var(--color-primary) !important; }
+/* Interactive gradients (links/buttons) use the brand purple */
+a[class*="bg-gradient"],
+button[class*="bg-gradient"],
+[role="button"][class*="bg-gradient"] {
+    background-color: var(--color-brand) !important;
+    border-color: var(--color-brand) !important;
+}
+/* Content-area cards: keep light background so dark text is visible (override the flatten above) */
+.content-area div[class*="bg-gradient"] { background-color: var(--color-surface) !important; }
+.content-area div[class*="rounded-3xl"][class*="border"] { background-color: var(--color-surface) !important; border-color: var(--color-muted) !important; }
+
+/* Primary and secondary buttons */
+.btn-primary, button.btn-primary, a.btn-primary, button[type="submit"], [data-button="primary"] {
+    background-color: var(--color-brand) !important;
+    color: var(--color-surface) !important;
+    border: 1px solid var(--color-brand) !important;
+}
+.btn-primary:hover,
+button.btn-primary:hover,
+a.btn-primary:hover,
+button[type="submit"]:hover,
+[data-button="primary"]:hover,
+.btn-primary:focus-visible,
+button.btn-primary:focus-visible,
+a.btn-primary:focus-visible,
+button[type="submit"]:focus-visible,
+[data-button="primary"]:focus-visible {
+    background-color: var(--color-brand-hover) !important;
+    border-color: var(--color-brand-hover) !important;
+}
+.btn-secondary, button.btn-secondary, a.btn-secondary, [data-button="secondary"] {
+    background-color: var(--color-surface) !important;
+    color: var(--color-muted) !important;
+    border: 1px solid var(--color-muted) !important;
+}
+
+/* Common surfaces - light theme: ensure body and content use dark text on light background */
+body, html {
+    font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.875rem;
+    background-color: var(--color-surface);
+    color: var(--color-primary);
+}
+body { background-color: var(--color-surface); color: var(--color-primary); }
+.card, .panel, .content-area, main, section { background-color: var(--color-surface); border-color: var(--color-muted); color: var(--color-primary); }
+
+/* Content area: force all text to dark so it’s visible on light background (override any light Tailwind vars) */
+.content-area,
+.content-area * {
+    color: var(--color-primary) !important;
+}
+/* Labels and secondary text stay muted grey (same specificity as .content-area * so order wins) */
+.content-area *.text-muted,
+.content-area .text-muted,
+.content-area .help-text,
+.content-area small,
+.content-area label { color: var(--color-muted) !important; }
+/* Action buttons and primary/gradient CTAs keep light text */
+.content-area .btn-primary,
+.content-area .btn-primary *,
+.content-area button.bg-primary,
+.content-area button.bg-primary *,
+.content-area a.bg-primary,
+.content-area a.bg-primary *,
+.content-area a[class*="bg-gradient"] *,
+.content-area a[class*="bg-gradient"],
+.content-area button[class*="bg-gradient"],
+.content-area button[class*="bg-gradient"] * { color: var(--color-surface) !important; }
+
+.sidebar {
+    background-color: var(--color-surface) !important;
+    border-color: var(--color-muted) !important;
+    color: var(--color-primary) !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+}
+.topbar, header.topbar {
+    background-image: none !important;
+    background-color: var(--brand-landing-blue) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 1px 15px rgba(0, 0, 0, 0.12), 0 1px 6px rgba(0, 0, 0, 0.08) !important;
+    color: var(--brand-landing-text) !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+}
+.text-primary { color: var(--color-primary) !important; }
+.bg-primary { background-color: var(--color-brand) !important; }
+.text-muted, .help-text, small, label, .form-hint { color: var(--color-muted) !important; }
+.border, .border-muted, .divider, hr { border-color: var(--color-muted) !important; }
+
+/* Global form control reset to the three-color palette */
+input, select, textarea {
+    background-color: var(--color-surface) !important;
+    color: var(--color-primary) !important;
+    border: 1px solid var(--color-muted) !important;
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.95rem;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--color-brand) !important;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+input::placeholder,
+textarea::placeholder {
+    color: var(--color-muted) !important;
+}
+
+/* Tame legacy Tailwind-ish translucent utilities into palette */
+[class*="bg-white/"]:not([class*="hover:bg-white/"]):not([class*="focus:bg-white/"]):not([class*="active:bg-white/"]) {
+    background-color: var(--color-surface) !important;
+}
+[class*="border-white/"]:not([class*="hover:border-white/"]):not([class*="focus:border-white/"]):not([class*="active:border-white/"]) {
+    border-color: var(--color-muted) !important;
+}
+[class*="text-white/"] {
+    color: var(--color-primary) !important;
+}
+.topbar [class*="text-white/"],
+.customer-topbar [class*="text-white/"],
+.auth-page .auth-topbar [class*="text-white/"],
+.app-chrome-footer [class*="text-white/"] {
+    color: var(--brand-landing-text) !important;
+}
+
+/* Sidebar: light surface, dark text */
+.sidebar {
+    background-color: var(--color-surface) !important;
+    border-right: 1px solid var(--brand-border) !important;
+    box-shadow: 0 4px 20px 1px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.08) !important;
+    color: var(--color-primary) !important;
+}
+/* Prevent menu items from getting a white background (was making text invisible) */
+.sidebar nav,
+.sidebar nav a,
+.sidebar nav summary,
+.sidebar nav details,
+.sidebar nav details summary,
+.sidebar nav > div,
+.sidebar nav [class*="rounded"],
+.sidebar aside a,
+.sidebar aside summary {
+    background-color: transparent !important;
+}
+/* Override any white/surface background on sidebar menu elements */
+.sidebar nav [class*="bg-"] {
+    background-color: transparent !important;
+}
+.sidebar nav a:hover,
+.sidebar nav summary:hover,
+.sidebar nav details[open] > summary {
+    background-color: var(--color-surface-alt) !important;
+    color: var(--color-brand) !important;
+}
+.sidebar nav .active {
+    background-color: transparent !important;
+    color: var(--color-brand) !important;
+}
+.sidebar a,
+.sidebar summary {
+    color: var(--color-primary) !important;
+    border-radius: 14px;
+}
+.sidebar span,
+.sidebar svg,
+.sidebar .text-primary,
+.sidebar .text-muted,
+.sidebar .text-white,
+.sidebar [class*="text-white"],
+.sidebar [class*="text-white/"] {
+    color: var(--color-primary) !important;
+}
+
+/* Auth pages keep their own backgrounds and controls */
+.auth-page {
+    background-color: transparent !important;
+}
+.auth-page main,
+.auth-page section,
+.auth-page .card,
+.auth-page .panel,
+.auth-page .content-area {
+    background-color: transparent !important;
+    color: inherit !important;
+}
+.auth-page .auth-topbar {
+    background-image: none !important;
+    background-color: var(--brand-landing-blue) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 1px 15px rgba(0, 0, 0, 0.12), 0 1px 6px rgba(0, 0, 0, 0.08) !important;
+    color: var(--brand-landing-text) !important;
+}
+.auth-page .auth-topbar h1,
+.auth-page .auth-topbar p,
+.auth-page .auth-topbar .text-primary,
+.auth-page .auth-topbar .text-muted,
+.auth-page .auth-topbar .text-sky-100 {
+    color: var(--brand-landing-text) !important;
+}
+.admin-auth-page .auth-background-overlay {
+    background: transparent !important;
+}
+
+/* Customer auth: landing blue page with homepage side visual (web) */
+body.customer-auth-page {
+    background-color: var(--brand-landing-blue) !important;
+}
+.customer-auth-page .auth-background-overlay {
+    background: transparent !important;
+}
+.admin-auth-page .auth-surface.admin-auth-card {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.72) !important;
+    color: var(--color-primary) !important;
+}
+.admin-auth-page .auth-label {
+    color: var(--color-muted) !important;
+}
+.admin-auth-page .auth-input {
+    background-color: rgba(255, 255, 255, 0.94) !important;
+    color: var(--color-primary) !important;
+    border: 1px solid rgba(112, 101, 123, 0.35) !important;
+}
+.admin-auth-page .auth-input::placeholder {
+    color: var(--color-muted) !important;
+}
+.admin-auth-page .auth-input:focus {
+    border-color: var(--color-brand) !important;
+    box-shadow: 0 0 0 3px var(--focus-ring) !important;
+}
+.admin-auth-page .auth-link {
+    color: var(--color-brand) !important;
+}
+.admin-auth-page .auth-link:hover,
+.admin-auth-page .auth-link:focus-visible {
+    color: var(--color-brand-hover) !important;
+}
+.admin-auth-page .auth-toggle {
+    color: #64748b !important;
+}
+.admin-auth-page .auth-toggle:hover,
+.admin-auth-page .auth-toggle:focus-visible {
+    color: #334155 !important;
+}
+.admin-auth-page .auth-check {
+    background-color: #ffffff !important;
+    border-color: rgba(112, 101, 123, 0.55) !important;
+    color: var(--color-brand) !important;
+}
+.admin-auth-page .auth-submit-button {
+    background-image: linear-gradient(135deg, var(--color-brand), var(--color-brand-hover)) !important;
+    background-color: var(--color-brand) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+}
+.admin-auth-page .auth-submit-button:hover,
+.admin-auth-page .auth-submit-button:focus-visible {
+    background-image: linear-gradient(135deg, var(--color-brand-soft), var(--color-brand-hover)) !important;
+    background-color: var(--color-brand-soft) !important;
+}
+.sidebar * {
+    color: var(--color-primary) !important;
+}
+.sidebar a:hover,
+.sidebar summary:hover,
+.sidebar details[open] > summary {
+    background-color: var(--color-surface-alt) !important;
+    color: var(--color-brand) !important;
+}
+.sidebar .border-b {
+    border-color: var(--brand-border) !important;
+}
+.sidebar .group:hover .group-hover\:bg-white\/10 {
+    background-color: var(--color-surface-alt) !important;
+}
+/* Admin sidebar active menu states */
+.sidebar details[open] > summary.menu-group-open,
+.sidebar details[open] > summary.menu-item-active {
+    background-color: var(--color-surface-alt) !important;
+    color: var(--color-brand) !important;
+}
+.sidebar .menu-item-active {
+    background-color: transparent !important;
+    color: var(--color-brand) !important;
+    border-left: 3px solid var(--color-brand) !important;
+}
+.sidebar .submenu-item-active {
+    background-color: rgba(102, 51, 153, 0.1) !important;
+    color: var(--color-brand) !important;
+    border-left: 3px solid var(--color-brand) !important;
+    font-weight: 600;
+}
+.sidebar .submenu-item-active svg {
+    color: var(--color-brand) !important;
+}
+/* Dark theme overrides using the same palette */
+body[data-theme="dark"] {
+    background-color: #322740;
+    color: var(--color-surface);
+}
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .panel,
+body[data-theme="dark"] .content-area,
+body[data-theme="dark"] main,
+body[data-theme="dark"] section {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    border-color: var(--color-muted);
+}
+body[data-theme="dark"] .topbar {
+    background-color: var(--brand-landing-blue);
+    color: var(--brand-landing-text);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+body[data-theme="dark"] .sidebar {
+    background-color: var(--color-muted) !important;
+    color: var(--color-surface) !important;
+}
+body[data-theme="dark"] .sidebar *,
+body[data-theme="dark"] .sidebar a,
+body[data-theme="dark"] .sidebar summary {
+    color: var(--color-surface) !important;
+}
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea {
+    background-color: var(--color-muted) !important;
+    color: var(--color-surface) !important;
+    border-color: var(--color-surface) !important;
+}
+body[data-theme="dark"] .btn-secondary {
+    background-color: var(--color-primary) !important;
+    color: var(--color-surface) !important;
+    border-color: var(--color-surface) !important;
+}
+body[data-theme="dark"] .dataTable-wrapper,
+body[data-theme="dark"] table {
+    color: var(--color-surface);
+}
+body[data-theme="dark"] table thead th,
+body[data-theme="dark"] table tbody td {
+    color: var(--color-surface);
+    border-color: var(--color-surface);
+}
+body[data-theme="dark"] table tbody tr:hover {
+    background-color: var(--color-muted);
+    color: var(--color-surface);
+}
+
+/* Only apply text-white→primary in dark theme content area; never in sidebar/topbar */
+body[data-theme="dark"] .content-area [class*="text-white"],
+body[data-theme="dark"] main:not(.content-area) [class*="text-white"] {
+    color: var(--color-surface) !important;
+}
+/* Sidebar and topbar text colors (light chrome) */
+.sidebar,
+.sidebar * {
+    color: var(--color-primary) !important;
+}
+.topbar,
+.topbar * {
+    color: var(--brand-landing-text) !important;
+}
+.sidebar .menu-item-active,
+.sidebar .submenu-item-active,
+.sidebar nav .active,
+.sidebar .active {
+    color: var(--color-brand) !important;
+}
+.sidebar .menu-item-active *,
+.sidebar .submenu-item-active * {
+    color: var(--color-brand) !important;
+}
+.topbar a:hover,
+.topbar button:hover {
+    color: #ffffff !important;
+}
+
+/* Auth top-nav quick links (landing blue header) */
+.auth-nav-link {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--brand-landing-text) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease, color 150ms ease;
+}
+.auth-nav-link:hover,
+.auth-nav-link:focus-visible {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+}
+.auth-nav-link:active {
+    transform: translateY(0);
+}
+
+/* Admin topbar actions (landing blue header) */
+.topbar-icon-btn {
+    padding: 0.45rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: var(--brand-landing-text) !important;
+    transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.topbar-icon-btn:hover,
+.topbar-icon-btn:focus-visible {
+    background: rgba(255, 255, 255, 0.16) !important;
+    transform: translateY(-1px);
+}
+.topbar-icon-btn:active {
+    transform: translateY(0);
+}
+
+.topbar-action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--brand-landing-text) !important;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.topbar-action-link:hover,
+.topbar-action-link:focus-visible {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.topbar-menu {
+    background: var(--color-surface) !important;
+    border: 1px solid var(--brand-border) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+    backdrop-filter: none;
+    color: var(--color-primary) !important;
+}
+.topbar-menu-link {
+    color: inherit !important;
+    border-radius: 10px;
+    transition: background 120ms ease, color 120ms ease;
+}
+.topbar-menu-link:hover,
+.topbar-menu-link:focus-visible {
+    background: var(--color-surface-alt) !important;
+    color: var(--color-brand) !important;
+}
+
+.floating-help-button {
+    position: fixed;
+    right: 1.1rem;
+    bottom: 1.1rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-brand);
+    background: var(--color-brand);
+    color: #f8fafc !important;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 16px 34px -16px rgba(2, 6, 23, 0.65);
+    z-index: 45;
+    transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+.floating-help-button:hover,
+.floating-help-button:focus-visible {
+    transform: translateY(-1px) scale(1.03);
+    filter: brightness(1.08);
+    box-shadow: 0 18px 38px -18px rgba(2, 6, 23, 0.75);
+}
+
+@media (max-width: 768px) {
+    .floating-help-button {
+        bottom: 5.4rem;
+    }
+}
+
+/* Critical approve/reject buttons on customer show */
+.btn-approve-critical {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 0.9rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #f8fafc !important;
+    background: linear-gradient(135deg, #16a34a, #0f766e);
+    border: 1px solid #0f766e;
+    box-shadow: 0 12px 30px -16px rgba(15, 118, 110, 0.55);
+    transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+.btn-approve-critical:hover,
+.btn-approve-critical:focus-visible {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow: 0 16px 36px -18px rgba(15, 118, 110, 0.65);
+}
+.btn-approve-critical:active {
+    transform: translateY(0);
+}
+.btn-approve-critical *,
+.btn-reject-critical * {
+    color: inherit !important;
+}
+
+.btn-reject-critical {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 0.9rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fef2f2 !important;
+    background: linear-gradient(135deg, var(--color-brand), var(--color-brand-hover));
+    border: 1px solid var(--color-brand-hover);
+    box-shadow: 0 12px 30px -16px rgba(102, 51, 153, 0.45);
+    transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+.btn-reject-critical:hover,
+.btn-reject-critical:focus-visible {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow: 0 16px 36px -18px rgba(102, 51, 153, 0.55);
+}
+.btn-reject-critical:active {
+    transform: translateY(0);
+}
+
+.attention-banner {
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    box-shadow: 0 16px 40px -22px rgba(217, 119, 6, 0.45);
+}
+.attention-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #f97316;
+    color: #fff;
+    box-shadow: 0 10px 24px -16px rgba(249, 115, 22, 0.7);
+    flex-shrink: 0;
+}
+
+/* ---------- Semantic alerts (keep warning/errors visibly colored) ---------- */
+:root {
+    --alert-danger-bg: #fef2f2;
+    --alert-danger-border: #fecdd3;
+    --alert-danger-text: #b91c1c;
+    --alert-warning-bg: #fff7ed;
+    --alert-warning-border: #fed7aa;
+    --alert-warning-text: #c2410c;
+    --alert-success-bg: #ecfdf3;
+    --alert-success-border: #bbf7d0;
+    --alert-success-text: #166534;
+    --alert-info-bg: #eff6ff;
+    --alert-info-border: #bfdbfe;
+    --alert-info-text: #1d4ed8;
+}
+
+.alert {
+    position: relative;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.9rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.35);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.alert-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.05rem;
+    flex-shrink: 0;
+}
+
+.alert a { text-decoration: underline; }
+.alert strong { font-weight: 700; }
+.alert * { color: inherit !important; }
+
+.alert-danger {
+    background: var(--alert-danger-bg) !important;
+    border-color: var(--alert-danger-border) !important;
+    color: var(--alert-danger-text) !important;
+    box-shadow: 0 12px 30px -16px rgba(185, 28, 28, 0.35);
+}
+
+.alert-warning {
+    background: var(--alert-warning-bg) !important;
+    border-color: var(--alert-warning-border) !important;
+    color: var(--alert-warning-text) !important;
+    box-shadow: 0 12px 30px -16px rgba(194, 65, 12, 0.32);
+}
+
+.alert-success {
+    background: var(--alert-success-bg) !important;
+    border-color: var(--alert-success-border) !important;
+    color: var(--alert-success-text) !important;
+    box-shadow: 0 12px 30px -16px rgba(22, 101, 52, 0.28);
+}
+
+.alert-info {
+    background: var(--alert-info-bg) !important;
+    border-color: var(--alert-info-border) !important;
+    color: var(--alert-info-text) !important;
+    box-shadow: 0 12px 30px -16px rgba(29, 78, 216, 0.26);
+}
+
+/* Keep alert colors inside admin content area despite global color flattening */
+.content-area .alert,
+.content-area .alert * {
+    color: inherit !important;
+}
+
+/* Orange duplicate / fraud warning badge (must override .content-area * color flattening) */
+.duplicate-warning-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    background: var(--alert-warning-bg) !important;
+    border: 2px solid #f97316 !important;
+    color: var(--alert-warning-text) !important;
+    box-shadow: 0 12px 30px -16px rgba(249, 115, 22, 0.35);
+    transition: filter 120ms ease, box-shadow 120ms ease;
+}
+.duplicate-warning-badge:hover,
+.duplicate-warning-badge:focus-visible {
+    filter: brightness(0.96);
+    box-shadow: 0 14px 34px -14px rgba(249, 115, 22, 0.45);
+    color: #9a3412 !important;
+}
+.content-area a.duplicate-warning-badge,
+.content-area a.duplicate-warning-badge *,
+.content-area a.duplicate-warning-badge svg {
+    color: var(--alert-warning-text) !important;
+}
+.content-area a.duplicate-warning-badge:hover,
+.content-area a.duplicate-warning-badge:hover * {
+    color: #9a3412 !important;
+}
+body[data-theme="dark"] .duplicate-warning-badge {
+    background: rgba(249, 115, 22, 0.18) !important;
+    border-color: #fb923c !important;
+    color: #fdba74 !important;
+    box-shadow: 0 12px 30px -16px rgba(249, 115, 22, 0.4);
+}
+body[data-theme="dark"] .content-area a.duplicate-warning-badge,
+body[data-theme="dark"] .content-area a.duplicate-warning-badge *,
+body[data-theme="dark"] .content-area a.duplicate-warning-badge svg {
+    color: #fdba74 !important;
+}
+
+.form-error-text {
+    color: var(--alert-danger-text) !important;
+    font-weight: 600;
+}
+
+/* ---------- App chrome footer (landing blue) ---------- */
+.app-chrome-footer {
+    background-color: var(--brand-landing-blue) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--brand-landing-text) !important;
+    box-shadow: 0 -1px 12px rgba(0, 0, 0, 0.08);
+}
+.app-chrome-footer,
+.app-chrome-footer * {
+    color: var(--brand-landing-text) !important;
+}
+.app-chrome-footer a:hover,
+.app-chrome-footer a:focus-visible {
+    color: #ffffff !important;
+}
+
+/* ---------- Customer portal chrome ---------- */
+.customer-topbar {
+    background: var(--brand-landing-blue) !important;
+    color: var(--brand-landing-text) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 1px 15px rgba(0, 0, 0, 0.12), 0 1px 6px rgba(0, 0, 0, 0.08) !important;
+}
+.customer-topbar * {
+    color: var(--brand-landing-text) !important;
+}
+.customer-topbar .text-white,
+.customer-topbar .text-sky-100 {
+    color: var(--brand-landing-text) !important;
+}
+.customer-topbar .profile-menu {
+    background: rgba(21, 27, 84, 0.98) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+    backdrop-filter: blur(8px);
+}
+.customer-topbar .profile-menu,
+.customer-topbar .profile-menu * {
+    color: var(--brand-landing-text) !important;
+}
+.customer-topbar .profile-menu .profile-menu-link:hover,
+.customer-topbar .profile-menu .profile-menu-link:focus-visible {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+.customer-topbar .topbar-main-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+.customer-topbar .topbar-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.customer-topbar .topbar-primary-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.customer-topbar .topbar-label {
+    white-space: nowrap;
+}
+@media (max-width: 640px) {
+    .customer-topbar .topbar-main-row {
+        gap: 0.5rem;
+    }
+    .customer-topbar .topbar-controls,
+    .customer-topbar .topbar-primary-actions {
+        gap: 0.35rem;
+    }
+    .customer-topbar .topbar-primary-actions .topbar-action-link {
+        padding: 0.42rem 0.5rem !important;
+        min-width: 2.3rem;
+        justify-content: center;
+    }
+    .customer-topbar .topbar-primary-actions .topbar-label {
+        display: none;
+    }
+}
+.customer-aside {
+    background: var(--color-surface) !important;
+    border-color: var(--brand-border) !important;
+}
+.workspace {
+    background: var(--color-surface);
+    color: var(--color-primary);
+}
+.step-active {
+    background: var(--color-brand);
+    color: var(--color-surface);
+}
+.step-upcoming {
+    background: var(--color-muted);
+    color: var(--color-surface);
+}
+
+/* ---------- Admin data tables & tom-select ---------- */
+body.modal-open {
+    overflow: hidden;
+}
+table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+table thead th {
+    color: var(--color-primary);
+    border-bottom: 1px solid var(--brand-border);
+}
+table tbody td {
+    border-top: 1px solid var(--brand-border);
+    color: var(--color-primary);
+}
+table tbody tr:nth-child(odd),
+table tbody tr:nth-child(even) {
+    background: var(--color-surface);
+}
+table tbody tr:hover {
+    background: var(--color-surface-alt);
+    color: var(--color-primary);
+}
+.dataTable-wrapper {
+    border: 1px solid var(--brand-border);
+    border-radius: 1rem;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    overflow: hidden;
+}
+.dataTable-top,
+.dataTable-pagination {
+    color: var(--color-primary);
+    background: var(--color-surface);
+    border-color: var(--brand-border);
+}
+.dataTable-input,
+.dataTable-selector {
+    background: var(--color-surface);
+    border: 1px solid var(--brand-border);
+    color: var(--color-primary);
+    border-radius: 0.75rem;
+}
+.dataTable-pagination a {
+    border: 1px solid var(--brand-border);
+    color: var(--color-primary);
+    background: var(--color-surface);
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+}
+.dataTable-pagination a.current {
+    background: var(--color-brand);
+    color: var(--color-surface);
+    border-color: var(--color-brand);
+}
+.sort-indicator .sort-up,
+.sort-indicator .sort-down {
+    color: var(--color-primary);
+    opacity: 0.5;
+}
+.ts-wrapper {
+    width: 100%;
+}
+.ts-wrapper.single .ts-control {
+    min-height: 2.85rem;
+    border-radius: 1rem;
+    border: 1px solid var(--brand-border);
+    background: var(--color-surface);
+    box-shadow: none;
+    padding: 0.58rem 0.9rem;
+}
+.ts-wrapper.single .ts-control,
+.ts-wrapper.single .ts-control input,
+.ts-wrapper.single .ts-control .item {
+    color: var(--color-primary);
+}
+.ts-wrapper.single .ts-control input::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+}
+.ts-wrapper.focus .ts-control {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 2px var(--focus-ring);
+}
+.ts-dropdown {
+    border-radius: 0.85rem;
+    border: 1px solid var(--brand-border);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    overflow: hidden;
+}
+.ts-dropdown .option {
+    color: var(--color-primary);
+    padding: 0.58rem 0.9rem;
+}
+.ts-dropdown .active {
+    background: rgba(102, 51, 153, 0.1);
+    color: var(--color-primary);
+}
+.ts-dropdown .no-results {
+    color: var(--color-muted);
+    padding: 0.58rem 0.9rem;
+}

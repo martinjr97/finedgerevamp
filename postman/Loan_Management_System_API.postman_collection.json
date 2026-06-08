@@ -1,0 +1,1880 @@
+{
+	"info": {
+		"_postman_id": "loan-management-api-v1",
+		"name": "Loan Management System API",
+		"description": "Complete API collection for Loan Management System - Admin and Customer endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "loan-management-system"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"health"
+							]
+						},
+						"description": "Check API health status"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Public Configuration",
+			"item": [
+				{
+					"name": "Get App Configuration",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/config",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"config"
+							]
+						},
+						"description": "Get public application configuration including system name, tagline, logo URL, support information, and customer registration status. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Check Registration Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/config/registration-status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"config",
+								"registration-status"
+							]
+						},
+						"description": "Check if customer registration is enabled and get allowed products/groups. No authentication required."
+					},
+					"response": []
+				}
+			],
+			"description": "Public configuration endpoints - no authentication required"
+		},
+		{
+			"name": "Admin Authentication",
+			"item": [
+				{
+					"name": "Admin Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.data.token) {",
+									"        pm.environment.set(\"admin_token\", jsonData.data.token);",
+									"        pm.environment.set(\"admin_id\", jsonData.data.admin.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\",\n    \"device_name\": \"Postman Test Device\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate an admin user with email and password"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current Admin",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"auth",
+								"me"
+							]
+						},
+						"description": "Get authenticated admin details"
+					},
+					"response": []
+				},
+				{
+					"name": "Admin Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/auth/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Revoke the current admin access token"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Admin Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.data.token) {",
+									"        pm.environment.set(\"admin_token\", jsonData.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"device_name\": \"Postman Test Device\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Create a new admin token and revoke the current one"
+					},
+					"response": []
+				}
+			],
+			"description": "Admin authentication endpoints"
+		},
+		{
+			"name": "Customer Authentication",
+			"item": [
+				{
+					"name": "Customer Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.data.token) {",
+									"        pm.environment.set(\"customer_token\", jsonData.data.token);",
+									"        pm.environment.set(\"customer_id\", jsonData.data.customer.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"0977123456\",\n    \"pin\": \"1234\",\n    \"device_name\": \"Postman Test Device\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate a customer user with phone number and PIN. Returns customer details, token, and dashboard data (active loans, outstanding balance, available loan amount, next payment date, etc.)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current Customer",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"auth",
+								"me"
+							]
+						},
+						"description": "Get authenticated customer details"
+					},
+					"response": []
+				},
+				{
+					"name": "Customer Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/auth/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Revoke the current customer access token"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Customer Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.data.token) {",
+									"        pm.environment.set(\"customer_token\", jsonData.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"device_name\": \"Postman Test Device\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Create a new customer token and revoke the current one"
+					},
+					"response": []
+				}
+			],
+			"description": "Customer authentication endpoints"
+		},
+		{
+			"name": "Admin Protected Routes",
+			"item": [
+				{
+					"name": "Admin Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"dashboard"
+							]
+						},
+						"description": "Get admin dashboard data (placeholder endpoint)"
+					},
+					"response": []
+				},
+				{
+					"name": "Customers",
+					"item": [
+						{
+							"name": "List Customers",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customers?search=&status=&loan_product_id=&customer_group_id=&company_id=&date_from=&date_to=&per_page=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customers"
+									],
+									"query": [
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search by name, email, phone, or national ID"
+										},
+										{
+											"key": "status",
+											"value": "",
+											"description": "Filter by status (pending, active, inactive)"
+										},
+										{
+											"key": "loan_product_id",
+											"value": "",
+											"description": "Filter by loan product ID"
+										},
+										{
+											"key": "customer_group_id",
+											"value": "",
+											"description": "Filter by customer group ID"
+										},
+										{
+											"key": "company_id",
+											"value": "",
+											"description": "Filter by company ID"
+										},
+										{
+											"key": "date_from",
+											"value": "",
+											"description": "Filter from date (YYYY-MM-DD)"
+										},
+										{
+											"key": "date_to",
+											"value": "",
+											"description": "Filter to date (YYYY-MM-DD)"
+										},
+										{
+											"key": "per_page",
+											"value": "20",
+											"description": "Items per page (max 100)"
+										}
+									]
+								},
+								"description": "List customers with filters. Requires: customers.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Create Customer",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"company_id\": 1,\n    \"loan_product_id\": 1,\n    \"customer_group_id\": null,\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"0977123456\",\n    \"date_of_birth\": \"1990-01-01\",\n    \"gender\": \"male\",\n    \"national_id\": \"123456789\",\n    \"status\": \"pending\",\n    \"address_line1\": \"123 Main St\",\n    \"city\": \"Lusaka\",\n    \"country\": \"Zambia\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customers",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customers"
+									]
+								},
+								"description": "Create a new customer. Requires: customers.create permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Customer",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customers/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customers",
+										"1"
+									]
+								},
+								"description": "Get customer details. Requires: customers.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Update Customer",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe Updated\",\n    \"email\": \"john.doe.updated@example.com\",\n    \"phone\": \"0977123456\",\n    \"status\": \"active\",\n    \"address_line1\": \"456 Updated St\",\n    \"city\": \"Lusaka\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customers/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customers",
+										"1"
+									]
+								},
+								"description": "Update customer information. Requires: customers.update permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Find Customer by Phone or National ID",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customers/find?phone=0977123456",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customers",
+										"find"
+									],
+									"query": [
+										{
+											"key": "phone",
+											"value": "0977123456",
+											"description": "Phone number (optional if national_id is provided)"
+										},
+										{
+											"key": "national_id",
+											"value": "",
+											"description": "National ID (optional if phone is provided)"
+										}
+									]
+								},
+								"description": "Find customer by phone number or national ID. Requires either phone or national_id. Requires: customers.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Customer Loans",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customers/{{customer_id}}/loans",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customers",
+										"{{customer_id}}",
+										"loans"
+									]
+								},
+								"description": "Get all loans for a specific customer. Returns loans with summary statistics. Requires: customers.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Customer Repayments",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customers/{{customer_id}}/repayments?per_page=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customers",
+										"{{customer_id}}",
+										"repayments"
+									],
+									"query": [
+										{
+											"key": "per_page",
+											"value": "20",
+											"description": "Items per page (max 100)"
+										}
+									]
+								},
+								"description": "Get all repayments for a specific customer. Returns paginated repayments with summary statistics. Requires: customers.view permission"
+							},
+							"response": []
+						}
+					],
+					"description": "Customer management endpoints"
+				},
+				{
+					"name": "Customer Registration Requests",
+					"item": [
+						{
+							"name": "List Registration Requests",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customer-requests?status=&search=&loan_product_id=&customer_group_id=&per_page=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customer-requests"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "",
+											"description": "Filter by status (pending, approved, rejected, reverted)"
+										},
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search by reference, name, email, phone, or national ID"
+										},
+										{
+											"key": "loan_product_id",
+											"value": "",
+											"description": "Filter by loan product ID"
+										},
+										{
+											"key": "customer_group_id",
+											"value": "",
+											"description": "Filter by customer group ID"
+										},
+										{
+											"key": "per_page",
+											"value": "20",
+											"description": "Items per page (max 100)"
+										}
+									]
+								},
+								"description": "List customer registration requests. Requires: customer-requests.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Registration Request",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customer-requests/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customer-requests",
+										"1"
+									]
+								},
+								"description": "Get customer registration request details. Requires: customer-requests.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Approve Registration Request",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"approval_notes\": \"Approved after verification\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/customer-requests/1/approve",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"customer-requests",
+										"1",
+										"approve"
+									]
+								},
+								"description": "Approve a customer registration request. Requires: customer-requests.approve permission"
+							},
+							"response": []
+						}
+					],
+					"description": "Customer registration request management"
+				},
+				{
+					"name": "Companies",
+					"item": [
+						{
+							"name": "List Companies",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/companies?search=&status=&type=&per_page=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"companies"
+									],
+									"query": [
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search by name, code, or registration number"
+										},
+										{
+											"key": "status",
+											"value": "",
+											"description": "Filter by status (active, inactive, pending)"
+										},
+										{
+											"key": "type",
+											"value": "",
+											"description": "Filter by type"
+										},
+										{
+											"key": "per_page",
+											"value": "20",
+											"description": "Items per page (max 100)"
+										}
+									]
+								},
+								"description": "List companies. Requires: companies.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Create Company",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Example Company Ltd\",\n    \"code\": \"EXCO\",\n    \"registration_number\": \"123456\",\n    \"tpin\": \"TPIN123\",\n    \"sector_id\": 1,\n    \"contact_email\": \"contact@example.com\",\n    \"contact_phone\": \"+260123456789\",\n    \"address_line1\": \"123 Business St\",\n    \"city\": \"Lusaka\",\n    \"country\": \"Zambia\",\n    \"status\": \"active\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/companies",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"companies"
+									]
+								},
+								"description": "Create a new company. Requires: companies.create permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Company",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/companies/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"companies",
+										"1"
+									]
+								},
+								"description": "Get company details. Requires: companies.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Update Company",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Updated Company Name\",\n    \"contact_email\": \"newemail@example.com\",\n    \"status\": \"active\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/companies/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"companies",
+										"1"
+									]
+								},
+								"description": "Update company information. Requires: companies.update permission"
+							},
+							"response": []
+						}
+					],
+					"description": "Company management endpoints"
+				},
+				{
+					"name": "Loan Products",
+					"item": [
+						{
+							"name": "List Loan Products",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/loan-products?is_active=true&category=&search=&per_page=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"loan-products"
+									],
+									"query": [
+										{
+											"key": "is_active",
+											"value": "true",
+											"description": "Filter by active status"
+										},
+										{
+											"key": "category",
+											"value": "",
+											"description": "Filter by category"
+										},
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search by name or code"
+										},
+										{
+											"key": "per_page",
+											"value": "20",
+											"description": "Items per page (max 100)"
+										}
+									]
+								},
+								"description": "List loan products. Requires: loan-products.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Loan Product",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/loan-products/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"loan-products",
+										"1"
+									]
+								},
+								"description": "Get loan product details. Requires: loan-products.view permission"
+							},
+							"response": []
+						}
+					],
+					"description": "Loan product endpoints (view only)"
+				},
+				{
+					"name": "Support Tickets",
+					"item": [
+						{
+							"name": "List Support Tickets",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/support-tickets?status=&customer_id=&search=&per_page=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"support-tickets"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "",
+											"description": "Filter by status (new, in_progress, resolved, closed)"
+										},
+										{
+											"key": "customer_id",
+											"value": "",
+											"description": "Filter by customer ID"
+										},
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search by subject, message, name, email, or phone"
+										},
+										{
+											"key": "per_page",
+											"value": "20",
+											"description": "Items per page (max 100)"
+										}
+									]
+								},
+								"description": "List support tickets"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Support Ticket",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/support-tickets/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"support-tickets",
+										"1"
+									]
+								},
+								"description": "Get support ticket details"
+							},
+							"response": []
+						},
+						{
+							"name": "Update Support Ticket",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"resolved\",\n    \"resolution_note\": \"Issue resolved by updating account settings.\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/support-tickets/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"support-tickets",
+										"1"
+									]
+								},
+								"description": "Update support ticket status. Resolution note required when marking as resolved."
+							},
+							"response": []
+						}
+					],
+					"description": "Support ticket management endpoints"
+				},
+				{
+					"name": "Loans",
+					"item": [
+						{
+							"name": "List Loans",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/loans?status=&loan_product_id=&customer_id=&date_from=&date_to=&search=&per_page=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"loans"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "",
+											"description": "Filter by status"
+										},
+										{
+											"key": "loan_product_id",
+											"value": "",
+											"description": "Filter by loan product ID"
+										},
+										{
+											"key": "customer_id",
+											"value": "",
+											"description": "Filter by customer ID"
+										},
+										{
+											"key": "date_from",
+											"value": "",
+											"description": "Filter from date (YYYY-MM-DD)"
+										},
+										{
+											"key": "date_to",
+											"value": "",
+											"description": "Filter to date (YYYY-MM-DD)"
+										},
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search by loan number or customer details"
+										},
+										{
+											"key": "per_page",
+											"value": "20",
+											"description": "Items per page (max 100)"
+										}
+									]
+								},
+								"description": "List loans with filters. Requires: loans.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Loan",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/loans/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"loans",
+										"1"
+									]
+								},
+								"description": "Get loan details. Requires: loans.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Approve Loan",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"approval_notes\": \"Loan approved after verification\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/loans/1/approve",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"loans",
+										"1",
+										"approve"
+									]
+								},
+								"description": "Approve a loan. Requires: loans.approve permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Reject Loan",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"approval_notes\": \"Loan rejected due to insufficient documentation\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/loans/1/reject",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"loans",
+										"1",
+										"reject"
+									]
+								},
+								"description": "Reject a loan. Requires: loans.reject permission. Approval notes are required."
+							},
+							"response": []
+						}
+					],
+					"description": "Loan management endpoints"
+				},
+				{
+					"name": "Repayments",
+					"item": [
+						{
+							"name": "List Repayments",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/repayments?status=&customer_id=&channel_id=&date_from=&date_to=&search=&per_page=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"repayments"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "",
+											"description": "Filter by status"
+										},
+										{
+											"key": "customer_id",
+											"value": "",
+											"description": "Filter by customer ID"
+										},
+										{
+											"key": "channel_id",
+											"value": "",
+											"description": "Filter by channel ID"
+										},
+										{
+											"key": "date_from",
+											"value": "",
+											"description": "Filter from date (YYYY-MM-DD)"
+										},
+										{
+											"key": "date_to",
+											"value": "",
+											"description": "Filter to date (YYYY-MM-DD)"
+										},
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search by repayment number, reference, or customer details"
+										},
+										{
+											"key": "per_page",
+											"value": "20",
+											"description": "Items per page (max 100)"
+										}
+									]
+								},
+								"description": "List repayments. Requires: repayments.view permission"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Repayment",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/repayments/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"repayments",
+										"1"
+									]
+								},
+								"description": "Get repayment details. Requires: repayments.view permission"
+							},
+							"response": []
+						}
+					],
+					"description": "Repayment endpoints (view only)"
+				}
+			],
+			"description": "Protected admin endpoints - requires authentication"
+		},
+		{
+			"name": "Admin Password Reset",
+			"item": [
+				{
+					"name": "Send OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/password/send-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"password",
+								"send-otp"
+							]
+						},
+						"description": "Send password reset OTP to admin's registered phone number"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/password/verify-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"password",
+								"verify-otp"
+							]
+						},
+						"description": "Verify OTP and get password reset token"
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"reset-token-from-verify-otp\",\n    \"email\": \"admin@example.com\",\n    \"password\": \"newpassword123\",\n    \"password_confirmation\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/password/reset",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"password",
+								"reset"
+							]
+						},
+						"description": "Reset password using reset token from verify-otp endpoint"
+					},
+					"response": []
+				}
+			],
+			"description": "Admin password reset endpoints (public - no authentication required)"
+		},
+		{
+			"name": "Customer Protected Routes",
+			"item": [
+				{
+					"name": "Customer Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"dashboard"
+							]
+						},
+						"description": "Get customer dashboard data including active loans, outstanding balance, available loan amount, and next payment date"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"profile"
+							]
+						},
+						"description": "Get customer profile information"
+					},
+					"response": []
+				},
+				{
+					"name": "Change PIN",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"current_pin\": \"1234\",\n    \"new_pin\": \"5678\",\n    \"new_pin_confirmation\": \"5678\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/pin/change",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"pin",
+								"change"
+							]
+						},
+						"description": "Change PIN while authenticated. If must_change_pin is true, current_pin is not required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get FAQs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/faqs",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"faqs"
+							]
+						},
+						"description": "Get FAQs for authenticated customers. Returns FAQs with visibility 'authenticated' or 'both'."
+					},
+					"response": []
+				}
+			],
+			"description": "Protected customer endpoints - requires authentication"
+		},
+		{
+			"name": "Customer Password Reset",
+			"item": [
+				{
+					"name": "Send OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"0977123456\",\n    \"national_id\": \"123456789\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/password/send-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"password",
+								"send-otp"
+							]
+						},
+						"description": "Send PIN reset OTP to customer's registered phone number. Requires phone and national_id."
+					},
+					"response": []
+				},
+				{
+					"name": "Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"0977123456\",\n    \"national_id\": \"123456789\",\n    \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/password/verify-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"password",
+								"verify-otp"
+							]
+						},
+						"description": "Verify OTP and get security question. Returns security question that needs to be answered."
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Security Question",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"0977123456\",\n    \"national_id\": \"123456789\",\n    \"security_answer\": \"Your Answer\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/password/verify-security-question",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"password",
+								"verify-security-question"
+							]
+						},
+						"description": "Verify security question answer and get reset token. Use the reset token to reset PIN."
+					},
+					"response": []
+				},
+				{
+					"name": "Reset PIN",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"reset-token-from-verify-security-question\",\n    \"phone\": \"0977123456\",\n    \"national_id\": \"123456789\",\n    \"pin\": \"1234\",\n    \"pin_confirmation\": \"1234\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/password/reset",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"password",
+								"reset"
+							]
+						},
+						"description": "Reset PIN using reset token from verify-security-question endpoint"
+					},
+					"response": []
+				}
+			],
+			"description": "Customer PIN reset endpoints (public - no authentication required)"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "customer_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "admin_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "customer_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "company_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "loan_product_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+
