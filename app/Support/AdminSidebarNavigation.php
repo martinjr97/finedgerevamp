@@ -202,6 +202,8 @@ class AdminSidebarNavigation
                 'General Settings' => ['admin.settings.general.*', 'admin.settings.customer-registration.*', 'admin.settings.repayment-reminders.*', 'admin.settings.credit-score.*'],
                 'Security Questions' => ['admin.security-questions.*'],
                 'Banking Institutions' => ['admin.financial-institutions.*'],
+                'Payment Gateways' => ['admin.payment-gateways.*'],
+                'Gateway Routing' => ['admin.payment-gateway-routing.*'],
                 'Payment Channels' => ['admin.channels.*'],
                 'FAQs' => ['admin.faqs.*'],
             ],

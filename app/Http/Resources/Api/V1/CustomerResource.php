@@ -32,7 +32,6 @@ class CustomerResource extends JsonResource
             'preferred_language' => $this->preferred_language,
             'address' => [
                 'line1' => $this->address_line1,
-                'line2' => $this->address_line2,
                 'city' => $this->city,
                 'state' => $this->state,
                 'postal_code' => $this->postal_code,

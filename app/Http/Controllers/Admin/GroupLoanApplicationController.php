@@ -1581,7 +1581,6 @@ class GroupLoanApplicationController extends Controller
 
         $addressLines = collect([
             $company?->address_line1 ?: config('app.support_address_line1'),
-            $company?->address_line2,
             $locationLine,
             $company?->country ?: config('app.support_country'),
         ])->filter(fn ($line) => trim((string) $line) !== '')->values()->all();

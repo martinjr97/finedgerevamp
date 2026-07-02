@@ -14,11 +14,6 @@
         <input id="address_line1" name="address_line1" type="text" value="{{ old('address_line1') }}" required class="{{ $inputClass }}">
         @error('address_line1')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
     </div>
-    <div>
-        <label for="address_line2" class="block text-sm font-medium text-slate-800">Address line 2 (optional)</label>
-        <input id="address_line2" name="address_line2" type="text" value="{{ old('address_line2') }}" class="{{ $inputClass }}">
-        @error('address_line2')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
-    </div>
     <div class="grid gap-4 md:grid-cols-2">
         <div>
             <label for="city" class="block text-sm font-medium text-slate-800">City / town <span class="text-red-500">*</span></label>

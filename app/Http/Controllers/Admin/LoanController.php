@@ -22,6 +22,9 @@ use App\Services\LoanPaymentDetailsService;
 use App\Services\LoanRepaymentLedgerService;
 use App\Services\SharedPaymentDetailsDetectionService;
 use App\Services\LoanRepaymentRefundService;
+use App\Services\Loans\AutomaticLoanDisbursementService;
+use App\Services\Loans\DTOs\ManualDisbursementDTO;
+use App\Services\Loans\LoanDisbursementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -40,13 +43,19 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\PaymentPlatform\Services\GatewayIntegrationService;
+use App\PaymentPlatform\Support\CGrateIssuerNameResolver;
+use App\Models\PaymentGateway;
+use App\Models\PaymentGatewayAttempt;
+use App\PaymentPlatform\Enums\GatewayDirection;
 
 class LoanController extends Controller
 {
     public function __construct(
         private readonly CustomerNotificationService $customerNotificationService,
         private readonly LoanExtensionService $loanExtensionService,
-        private readonly LoanPaymentDetailsService $loanPaymentDetailsService
+        private readonly LoanPaymentDetailsService $loanPaymentDetailsService,
+        private readonly LoanDisbursementService $loanDisbursementService,
     )
     {
     }
@@ -526,6 +535,35 @@ class LoanController extends Controller
 
         $sharedPaymentDetails = app(SharedPaymentDetailsDetectionService::class)->forLoan($loan);
 
+        $activeDisbursementGateway = PaymentGateway::query()
+            ->where('code', 'cgrate')
+            ->first();
+
+        $disbursementGatewayAvailable = $activeDisbursementGateway
+            && $activeDisbursementGateway->isAvailableForDisbursement()
+            && $activeDisbursementGateway->hasLinkedFinancialAccount();
+
+        $disbursementDestinationPreview = null;
+        if ($disbursementGatewayAvailable) {
+            try {
+                $disbursementDestinationPreview = app(CGrateIssuerNameResolver::class)->resolveForLoan($loan);
+            } catch (\Throwable) {
+                $disbursementDestinationPreview = null;
+            }
+        }
+
+        $disbursementAttempts = PaymentGatewayAttempt::query()
+            ->where('attemptable_type', Loan::class)
+            ->where('attemptable_id', $loan->id)
+            ->where('direction', GatewayDirection::Disbursement)
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
+
+        $approvalAutoDisbursementPreview = $loan->status === 'pending_approval'
+            ? app(AutomaticLoanDisbursementService::class)->previewForApproval($loan)
+            : null;
+
         return view('admin.loans.show', compact(
             'loan',
             'disbursementType',
@@ -537,9 +575,14 @@ class LoanController extends Controller
             'extensionTypeOptions',
             'interestModeOptions',
             'refundableLoanRepayments',
+            'activeDisbursementGateway',
+            'disbursementGatewayAvailable',
+            'disbursementDestinationPreview',
+            'disbursementAttempts',
             'canRefundRepayments',
             'loanLedger',
             'sharedPaymentDetails',
+            'approvalAutoDisbursementPreview',
         ));
     }
 
@@ -849,24 +892,17 @@ class LoanController extends Controller
     }
 
     /**
-     * Manually record loan disbursement (for manual disbursement type).
+     * Manually record loan disbursement.
      */
     public function disburse(Request $request, Loan $loan): RedirectResponse
     {
         $admin = auth('admin')->user();
         abort_unless($admin?->can('loans.disburse'), 403);
 
-        // Only allow manual flow when configured and when loan is approved and pending disbursement
-        if (config('app.disbursement_type', 'manual') !== 'manual') {
+        if ($loan->status !== 'approved' || ! in_array($loan->disbursement_status, ['pending', 'failed'], true)) {
             return redirect()
                 ->route('admin.loans.show', $loan)
-                ->with('error', 'Manual disbursement is disabled by configuration.');
-        }
-
-        if ($loan->status !== 'approved' || $loan->disbursement_status !== 'pending') {
-            return redirect()
-                ->route('admin.loans.show', $loan)
-                ->with('error', 'Only approved loans with pending disbursement can be disbursed manually.');
+                ->with('error', 'Only approved loans with pending or failed disbursement can be disbursed manually.');
         }
 
         $validated = $request->validate([
@@ -893,89 +929,57 @@ class LoanController extends Controller
             $admin,
             'disbursement'
         );
-        $amount = (float) $loan->principal_amount;
 
         try {
-            DB::beginTransaction();
-
-            if ($validated['source_type'] === 'bank') {
-                /** @var Bank $source */
-                $source = Bank::query()
-                    ->where('is_active', true)
-                    ->lockForUpdate()
-                    ->findOrFail($validated['source_id']);
-            } else {
-                /** @var Wallet $source */
-                $source = Wallet::query()
-                    ->where('is_active', true)
-                    ->lockForUpdate()
-                    ->findOrFail($validated['source_id']);
-            }
-
-            if ((float) $source->current_balance < $amount) {
-                DB::rollBack();
-
-                return redirect()
-                    ->route('admin.loans.show', $loan)
-                    ->with('error', 'Insufficient balance on the selected account. Available: '.number_format((float) $source->current_balance, 2))
-                    ->withInput();
-            }
-
-            // Debit the source account
-            $source->updateBalance($amount, 'debit');
-
-            // Update loan disbursement details and activate for portfolio reporting
-            $loan->disbursed_via_type = $validated['source_type'];
-            $loan->disbursed_via_id = $validated['source_id'];
-            $loan->applyDisbursementCompleted(Carbon::parse($validated['disbursement_date']));
-            $loan->disbursement_reference = $validated['reference_number'];
-            $loan->disbursement_notes = $validated['description'] ?? null;
-            $loan->metadata = array_merge($loan->metadata ?? [], [
-                'disbursement_reference' => $validated['reference_number'] ?? null,
-                'disbursed_manually_by' => $admin?->id,
-            ]);
-            $loan->save();
-
-            if ($paymentDetailsChange) {
-                $this->loanPaymentDetailsService->recordAudit($loan, $paymentDetailsChange, $admin);
-            }
-
-            DB::commit();
+            $this->loanDisbursementService->completeManualDisbursement(
+                $loan,
+                new ManualDisbursementDTO(
+                    sourceType: $validated['source_type'],
+                    sourceId: (int) $validated['source_id'],
+                    referenceNumber: $validated['reference_number'],
+                    disbursementDate: Carbon::parse($validated['disbursement_date']),
+                    description: $validated['description'] ?? null,
+                ),
+                $admin,
+                $paymentDetailsChange
+            );
+        } catch (ValidationException $e) {
+            return redirect()
+                ->route('admin.loans.show', $loan)
+                ->withErrors($e->errors())
+                ->withInput();
         } catch (\Throwable $e) {
-            if (DB::transactionLevel() > 0) {
-                DB::rollBack();
-            }
-
             return redirect()
                 ->route('admin.loans.show', $loan)
                 ->with('error', 'Failed to record disbursement: '.$e->getMessage())
                 ->withInput();
         }
 
-        $freshLoan = $loan->fresh(['customer', 'loanProduct', 'channel']);
+        return redirect()
+            ->route('admin.loans.show', $loan)
+            ->with('status', 'Loan disbursement recorded successfully.');
+    }
 
-        if ($paymentDetailsChange) {
-            try {
-                $this->loanPaymentDetailsService->sendChangeNotification($freshLoan, $paymentDetailsChange);
-            } catch (\Throwable $notificationError) {
-                Log::error('Failed to send loan payment details change notifications', [
-                    'loan_id' => $loan->id,
-                    'error' => $notificationError->getMessage(),
-                ]);
-            }
-        }
+    public function disburseGateway(Loan $loan): RedirectResponse
+    {
+        $admin = auth('admin')->user();
+        abort_unless($admin?->can('loans.disburse'), 403);
 
-        try {
-            $this->customerNotificationService->sendLoanDisbursed($freshLoan);
-        } catch (\Throwable $notificationError) {
-            Log::error('Failed to send loan disbursement notifications', [
-                'loan_id' => $loan->id,
-                'error' => $notificationError->getMessage(),
-            ]);
+        $result = app(GatewayIntegrationService::class)->initiateDisbursement($loan);
+
+        if (! ($result['success'] ?? false)) {
+            return redirect()
+                ->route('admin.loans.show', $loan)
+                ->with('error', $result['message'] ?? 'Failed to initiate gateway disbursement.');
         }
 
         return redirect()
             ->route('admin.loans.show', $loan)
-            ->with('status', 'Loan disbursement recorded successfully.');
+            ->with('status', $result['message'] ?? 'Gateway disbursement initiated.');
+    }
+
+    public function retryDisburseGateway(Loan $loan): RedirectResponse
+    {
+        return $this->disburseGateway($loan);
     }
 }

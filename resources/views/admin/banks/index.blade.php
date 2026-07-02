@@ -23,7 +23,7 @@
                     <thead>
                         <tr class="text-base font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b-2 border-white/20">
                             <th class="px-4 py-4 text-lg border-r border-white/10">Name</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Account Number</th>
+                            <th class="px-4 py-4 text-lg border-r border-white/10">Last Digits</th>
                             <th class="px-4 py-4 text-lg border-r border-white/10">Bank Name</th>
                             <th class="px-4 py-4 text-lg border-r border-white/10">Currency</th>
                             <th class="px-4 py-4 text-lg border-r border-white/10">Current Balance</th>
@@ -35,7 +35,7 @@
                         @forelse ($banks as $bank)
                             <tr class="border-t border-white/40 text-center hover:bg-white/5 transition">
                                 <td class="px-4 py-4 font-medium text-white border-r border-white/5">{{ $bank->name }}</td>
-                                <td class="px-4 py-4 border-r border-white/5">{{ $bank->account_number }}</td>
+                                <td class="px-4 py-4 border-r border-white/5 font-mono">{{ $bank->account_reference }}</td>
                                 <td class="px-4 py-4 border-r border-white/5">{{ $bank->bank_name }}</td>
                                 <td class="px-4 py-4 border-r border-white/5">{{ $bank->currency }}</td>
                                 <td class="px-4 py-4 font-semibold border-r border-white/5 {{ $bank->current_balance >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">

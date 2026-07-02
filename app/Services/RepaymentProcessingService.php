@@ -8,37 +8,31 @@ use App\Models\Loan;
 use App\Models\LoanPaymentSchedule;
 use App\Models\LoanRepayment;
 use App\Models\Repayment;
+use App\PaymentPlatform\Services\GatewayIntegrationService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class RepaymentProcessingService
 {
     public function __construct(
-        private readonly LoanRepaymentLedgerService $ledgerService
+        private readonly LoanRepaymentLedgerService $ledgerService,
     ) {}
 
     /**
      * @return array{success: bool, reference?: string, transaction_id?: string, message?: string, metadata?: array}
      */
-    public function processPayment(float $amount, Channel $channel, ?string $phoneNumber): array
+    public function processPayment(float $amount, Channel $channel, ?string $phoneNumber, ?Repayment $repayment = null): array
     {
-        // TODO: Replace with real payment provider integration.
-        Log::info('Processing repayment through gateway', [
-            'amount' => $amount,
-            'channel' => $channel->name,
-            'phone_number' => $phoneNumber,
-        ]);
+        if (! $repayment) {
+            Log::warning('processPayment called without repayment record');
 
-        return [
-            'success' => true,
-            'reference' => 'EXT-'.strtoupper($channel->code).'-'.now()->format('YmdHis').'-'.str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT),
-            'transaction_id' => 'TXN-'.now()->timestamp.'-'.random_int(1000, 9999),
-            'message' => 'Payment prompt sent. Approve the prompt on your device to complete the repayment.',
-            'metadata' => [
-                'channel' => $channel->name,
-                'gateway_initiated_at' => now()->toIso8601String(),
-            ],
-        ];
+            return [
+                'success' => false,
+                'message' => 'Repayment record is required for gateway processing.',
+            ];
+        }
+
+        return app(GatewayIntegrationService::class)->initiateCollection($repayment, $channel, $phoneNumber);
     }
 
     /**
@@ -101,6 +95,7 @@ class RepaymentProcessingService
 
             $this->applyPaymentToLoan($repayment, $loan, $amount, $notePrefix);
             $this->refreshCustomerCreditScore($customer);
+
             return;
         }
 
@@ -117,6 +112,7 @@ class RepaymentProcessingService
         // Fallback allocation for any remaining amount (or loans with no schedules).
         foreach ($activeLoans->map(function (Loan $loan) {
             $loan->refresh();
+
             return $loan;
         })->sortBy(fn (Loan $loan) => $this->loanPriorityDate($loan)) as $loan) {
             if ($remainingAmount <= 0) {
@@ -166,12 +162,14 @@ class RepaymentProcessingService
             $loan = $loanMap->get($nextSchedule->loan_id);
             if (! $loan) {
                 $loanIds = array_values(array_diff($loanIds, [(int) $nextSchedule->loan_id]));
+
                 continue;
             }
 
             $loan->refresh();
             if ((float) $loan->outstanding_balance <= 0) {
                 $loanIds = array_values(array_diff($loanIds, [$loan->id]));
+
                 continue;
             }
 
@@ -183,6 +181,7 @@ class RepaymentProcessingService
 
             if ($payAmount <= 0) {
                 $loanIds = array_values(array_diff($loanIds, [$loan->id]));
+
                 continue;
             }
 

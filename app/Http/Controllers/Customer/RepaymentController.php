@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Support\ZambianPhoneRules;
 use App\Models\Channel;
 use App\Models\Loan;
 use App\Models\Repayment;
 use App\Services\RepaymentProcessingService;
+use App\Support\ZambianPhoneRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +16,7 @@ use Illuminate\View\View;
 
 class RepaymentController extends Controller
 {
-    public function __construct(private readonly RepaymentProcessingService $repaymentProcessingService)
-    {
-    }
+    public function __construct(private readonly RepaymentProcessingService $repaymentProcessingService) {}
 
     /**
      * Show repayment type selection page (Step 1)
@@ -232,7 +230,12 @@ class RepaymentController extends Controller
                     ]);
             }
 
-            $paymentResult = $this->repaymentProcessingService->processPayment($repaymentAmount, $channel, session('repayment.phone_number'));
+            $paymentResult = $this->repaymentProcessingService->processPayment(
+                $repaymentAmount,
+                $channel,
+                session('repayment.phone_number'),
+                $repayment
+            );
 
             if (! $paymentResult['success']) {
                 $repayment->update([
@@ -245,6 +248,7 @@ class RepaymentController extends Controller
                 ]);
 
                 DB::commit();
+
                 return redirect()->route('customer.repayments.confirm')
                     ->with('error', $paymentResult['message'] ?? 'Payment processing failed. Please try again or contact support.');
             }
@@ -319,6 +323,7 @@ class RepaymentController extends Controller
                         ->whereIn('status', ['approved', 'active'])
                         ->value('outstanding_balance') ?? 0)
                     : (float) $customer->getTotalOutstandingBalance();
+
                 return min($amount ?? 0, $maxAmount);
 
             case 'overdue':

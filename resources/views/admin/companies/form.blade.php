@@ -95,10 +95,6 @@
                 <label class="text-sm font-medium text-slate-300">Address Line 1</label>
                 <input type="text" name="address_line1" value="{{ old('address_line1', $isEdit ? $company->address_line1 : '') }}" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
             </div>
-            <div>
-                <label class="text-sm font-medium text-slate-300">Address Line 2</label>
-                <input type="text" name="address_line2" value="{{ old('address_line2', $isEdit ? $company->address_line2 : '') }}" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
-            </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-sm font-medium text-slate-300">City</label>

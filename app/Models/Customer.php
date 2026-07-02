@@ -46,7 +46,6 @@ class Customer extends Authenticatable
         'employment_status',
         'annual_income',
         'address_line1',
-        'address_line2',
         'city',
         'province_id',
         'state',
@@ -77,7 +76,6 @@ class Customer extends Authenticatable
         'department',
         // Work address fields
         'work_address_line1',
-        'work_address_line2',
         'work_city',
         'work_province_id',
         'work_district_id',
@@ -97,7 +95,6 @@ class Customer extends Authenticatable
         'next_of_kin_phone',
         'next_of_kin_relationship',
         'next_of_kin_address_line1',
-        'next_of_kin_address_line2',
         'next_of_kin_city',
         'next_of_kin_country',
         'is_employed',

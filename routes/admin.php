@@ -7,35 +7,35 @@ use App\Http\Controllers\Admin\Auth\PasswordController;
 use App\Http\Controllers\Admin\Auth\PasswordResetController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\BankController;
+use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\BulkRepaymentController;
-use App\Http\Controllers\Admin\PmecSubmissionController;
 use App\Http\Controllers\Admin\ChannelController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CreditorController;
-use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\CreditScoreSettingController;
 use App\Http\Controllers\Admin\CustomerBulkUploadController;
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\CustomerGroupController;
 use App\Http\Controllers\Admin\CustomerRegistrationRequestController as AdminCustomerRegistrationRequestController;
+use App\Http\Controllers\Admin\CustomerRegistrationSettingController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\FinancialInstitutionController;
 use App\Http\Controllers\Admin\FinancialStatementController;
 use App\Http\Controllers\Admin\FinancialTransactionController;
-use App\Http\Controllers\Admin\KycController;
-use App\Http\Controllers\Admin\LoanProductController;
-use App\Http\Controllers\Admin\LoanRateTypeController;
-use App\Http\Controllers\Admin\MarketController;
-use App\Http\Controllers\Admin\LoanPurposeController;
-use App\Http\Controllers\Admin\MinistryController;
-use App\Http\Controllers\Admin\ProfileController;
-use App\Http\Controllers\Admin\ProvinceController;
-use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\FraudProtectionController;
 use App\Http\Controllers\Admin\GeneralSettingController;
 use App\Http\Controllers\Admin\GroupLoanApplicationController;
-use App\Http\Controllers\Admin\CustomerRegistrationSettingController;
-use App\Http\Controllers\Admin\RepaymentReminderSettingController;
-use App\Http\Controllers\Admin\CreditScoreSettingController;
-use App\Http\Controllers\Admin\FraudProtectionController;
+use App\Http\Controllers\Admin\KycController;
+use App\Http\Controllers\Admin\LoanProductController;
+use App\Http\Controllers\Admin\LoanPurposeController;
+use App\Http\Controllers\Admin\LoanRateTypeController;
+use App\Http\Controllers\Admin\MarketController;
+use App\Http\Controllers\Admin\MinistryController;
+use App\Http\Controllers\Admin\PmecSubmissionController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\ProvinceController;
 use App\Http\Controllers\Admin\RepaymentController;
+use App\Http\Controllers\Admin\RepaymentReminderSettingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SectorController;
 use App\Http\Controllers\Admin\SecurityQuestionController;
@@ -52,13 +52,14 @@ Route::get('/', function () {
     if (auth('admin')->check()) {
         return redirect()->route('admin.dashboard');
     }
+
     return redirect()->route('admin.login');
 })->name('index');
 
 Route::middleware('guest:admin')->group(function (): void {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
-    
+
     // Password Reset Routes
     Route::get('password/forgot', [PasswordResetController::class, 'showForgotPasswordForm'])->name('password.forgot');
     Route::post('password/email', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
@@ -89,11 +90,11 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('companies/{company}/payment-due-report', [CompanyController::class, 'showPaymentDueReport'])->name('companies.payment-due-report');
         Route::post('companies/{company}/payment-due-report', [CompanyController::class, 'generatePaymentDueReport'])->name('companies.payment-due-report.generate');
         Route::get('companies/{company}/payment-due-report/export', [CompanyController::class, 'exportPaymentDueReport'])->name('companies.payment-due-report.export');
-        
+
         // Payment Due Report (from menu)
         Route::get('payment-due-report/select', [CompanyController::class, 'selectPaymentDueReport'])->name('payment-due-report.select');
         Route::post('payment-due-report/generate', [CompanyController::class, 'generatePaymentDueReportFromSelect'])->name('payment-due-report.generate');
-        
+
         Route::resource('companies', CompanyController::class);
         Route::get('customers/select-product-type', [CustomerController::class, 'selectProductType'])->name('customers.select-product-type');
         Route::get('customers/export', [CustomerController::class, 'export'])->name('customers.export');
@@ -104,7 +105,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('customers/{customer}/repayments', [RepaymentController::class, 'storeForCustomer'])->name('customers.repayments.store');
         Route::get('customers/{customer}/login-audit', [CustomerController::class, 'loginAudit'])->name('customers.login-audit');
         Route::resource('customers', CustomerController::class);
-        
+
         // Bulk Upload Routes
         Route::get('customers/upload/template/{product}', [CustomerBulkUploadController::class, 'downloadTemplate'])->name('customers.upload.template');
         Route::post('customers/upload', [CustomerBulkUploadController::class, 'upload'])->name('customers.upload');
@@ -121,12 +122,14 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('loans/{loan}/refund', [\App\Http\Controllers\Admin\LoanController::class, 'storeRefund'])->name('loans.refund');
         Route::post('loans/{loan}/payment-details', [\App\Http\Controllers\Admin\LoanController::class, 'updatePaymentDetails'])->name('loans.payment-details');
         Route::post('loans/{loan}/disburse', [\App\Http\Controllers\Admin\LoanController::class, 'disburse'])->name('loans.disburse');
+        Route::post('loans/{loan}/disburse/gateway', [\App\Http\Controllers\Admin\LoanController::class, 'disburseGateway'])->name('loans.disburse.gateway');
+        Route::post('loans/{loan}/disburse/gateway/retry', [\App\Http\Controllers\Admin\LoanController::class, 'retryDisburseGateway'])->name('loans.disburse.gateway.retry');
         Route::post('loans/{loan}/extend/preview', [\App\Http\Controllers\Admin\LoanController::class, 'previewExtension'])->name('loans.extend.preview');
         Route::post('loans/{loan}/extend', [\App\Http\Controllers\Admin\LoanController::class, 'extend'])->name('loans.extend');
         Route::get('loans/{loan}/settlement/quote', [\App\Http\Controllers\Admin\LoanSettlementController::class, 'quote'])->name('loans.settlement.quote');
         Route::post('loans/{loan}/settlement', [\App\Http\Controllers\Admin\LoanSettlementController::class, 'apply'])->name('loans.settlement.apply');
         Route::resource('loans', \App\Http\Controllers\Admin\LoanController::class)->only(['index', 'show']);
-        
+
         // Bulk Repayment
         Route::get('bulk-repayments', [BulkRepaymentController::class, 'index'])->name('bulk-repayments.index');
         Route::get('bulk-repayments/sample', [BulkRepaymentController::class, 'downloadSample'])->name('bulk-repayments.sample');
@@ -143,12 +146,16 @@ Route::middleware('auth:admin')->group(function (): void {
             Route::post('items/{item}/mark-failed', [PmecSubmissionController::class, 'markItemFailed'])->name('items.mark-failed');
             Route::post('items/{item}/mark-submitted', [PmecSubmissionController::class, 'markItemSubmitted'])->name('items.mark-submitted');
         });
-        
+
         // Financial Module
         Route::resource('banks', BankController::class);
         Route::resource('wallets', WalletController::class);
+        Route::get('payment-gateway-routing', [\App\Http\Controllers\Admin\PaymentGatewayRoutingController::class, 'index'])->name('payment-gateway-routing.index');
+        Route::put('payment-gateway-routing/{paymentGatewayRoute}', [\App\Http\Controllers\Admin\PaymentGatewayRoutingController::class, 'update'])->name('payment-gateway-routing.update');
+        Route::redirect('payment-gateways/routing', '/admin/payment-gateway-routing')->name('payment-gateways.routing');
+        Route::resource('payment-gateways', \App\Http\Controllers\Admin\PaymentGatewayController::class)->only(['index', 'show', 'edit', 'update']);
         Route::resource('creditors', CreditorController::class);
-        
+
         // Financial Transactions
         Route::get('financial-transactions', [FinancialTransactionController::class, 'index'])->name('financial-transactions.index');
         Route::get('financial-transactions/income/create', [FinancialTransactionController::class, 'createIncome'])->name('financial-transactions.income.create');
@@ -157,7 +164,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('financial-transactions/expense', [FinancialTransactionController::class, 'storeExpense'])->name('financial-transactions.expense.store');
         Route::get('financial-transactions/{financialTransaction}', [FinancialTransactionController::class, 'show'])->name('financial-transactions.show');
         Route::delete('financial-transactions/{financialTransaction}', [FinancialTransactionController::class, 'destroy'])->name('financial-transactions.destroy');
-        
+
         // Transfers
         Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
         Route::get('transfers/create', [TransferController::class, 'create'])->name('transfers.create');
@@ -165,18 +172,18 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('transfers/{transfer}', [TransferController::class, 'show'])->name('transfers.show');
         Route::post('transfers/{transfer}/approve', [TransferController::class, 'approve'])->name('transfers.approve');
         Route::post('transfers/{transfer}/reject', [TransferController::class, 'reject'])->name('transfers.reject');
-        
+
         // Financial Statements
         Route::prefix('financial-statements')->name('financial-statements.')->group(function () {
             Route::get('balance-sheet', [FinancialStatementController::class, 'balanceSheet'])->name('balance-sheet');
             Route::get('cash-flow', [FinancialStatementController::class, 'cashFlow'])->name('cash-flow');
             Route::get('income-statement', [FinancialStatementController::class, 'incomeStatement'])->name('income-statement');
         });
-        
+
         // Communications
         Route::resource('communications', \App\Http\Controllers\Admin\CommunicationController::class)->only(['index', 'create', 'store', 'show']);
         Route::post('customers/{customer}/send-message', [\App\Http\Controllers\Admin\CommunicationController::class, 'sendToCustomer'])->name('customers.send-message');
-        
+
         // Loan Applications
         Route::prefix('loan-applications')->name('loan-applications.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\LoanApplicationController::class, 'index'])->name('index');
@@ -219,18 +226,18 @@ Route::middleware('auth:admin')->group(function (): void {
         });
         Route::get('repayments/export', [RepaymentController::class, 'export'])->name('repayments.export');
         Route::post('repayments/{repayment}/processing-status', [RepaymentController::class, 'updateProcessingStatus'])->name('repayments.processing-status');
-	        Route::post('repayments/{repayment}/approve', [RepaymentController::class, 'approve'])->name('repayments.approve');
-	        Route::post('repayments/{repayment}/reject', [RepaymentController::class, 'reject'])->name('repayments.reject');
-	        Route::resource('repayments', RepaymentController::class)->only(['index', 'show']);
-	        Route::get('customers/{customer}/change-group', [CustomerController::class, 'changeGroup'])->name('customers.change-group');
-	        Route::post('customers/{customer}/change-group', [CustomerController::class, 'updateGroup'])->name('customers.update-group');
-	        Route::post('customers/{customer}/reset-pin', [CustomerController::class, 'resetPin'])->name('customers.reset-pin');
-	        Route::get('customers/{customer}/payment-details/edit', [CustomerController::class, 'editPaymentDetails'])->name('customers.payment-details.edit');
-	        Route::put('customers/{customer}/payment-details', [CustomerController::class, 'updatePaymentDetails'])->name('customers.payment-details.update');
-	        Route::post('customers/{customer}/recalculate-credit-score', [CustomerController::class, 'recalculateCreditScore'])->name('customers.recalculate-credit-score');
-	        Route::get('customers/{customer}/kyc/create', [KycController::class, 'create'])->name('customers.kyc.create');
-	        Route::get('customers/{customer}/kyc', [KycController::class, 'show'])->name('customers.kyc.show');
-	        Route::post('customers/{customer}/kyc', [KycController::class, 'store'])->name('customers.kyc.store');
+        Route::post('repayments/{repayment}/approve', [RepaymentController::class, 'approve'])->name('repayments.approve');
+        Route::post('repayments/{repayment}/reject', [RepaymentController::class, 'reject'])->name('repayments.reject');
+        Route::resource('repayments', RepaymentController::class)->only(['index', 'show']);
+        Route::get('customers/{customer}/change-group', [CustomerController::class, 'changeGroup'])->name('customers.change-group');
+        Route::post('customers/{customer}/change-group', [CustomerController::class, 'updateGroup'])->name('customers.update-group');
+        Route::post('customers/{customer}/reset-pin', [CustomerController::class, 'resetPin'])->name('customers.reset-pin');
+        Route::get('customers/{customer}/payment-details/edit', [CustomerController::class, 'editPaymentDetails'])->name('customers.payment-details.edit');
+        Route::put('customers/{customer}/payment-details', [CustomerController::class, 'updatePaymentDetails'])->name('customers.payment-details.update');
+        Route::post('customers/{customer}/recalculate-credit-score', [CustomerController::class, 'recalculateCreditScore'])->name('customers.recalculate-credit-score');
+        Route::get('customers/{customer}/kyc/create', [KycController::class, 'create'])->name('customers.kyc.create');
+        Route::get('customers/{customer}/kyc', [KycController::class, 'show'])->name('customers.kyc.show');
+        Route::post('customers/{customer}/kyc', [KycController::class, 'store'])->name('customers.kyc.store');
 
         // Loan Calculator
         Route::prefix('loan-calculator')->name('loan-calculator.')->group(function () {
@@ -239,7 +246,7 @@ Route::middleware('auth:admin')->group(function (): void {
             Route::post('calculate', [\App\Http\Controllers\Admin\LoanCalculatorController::class, 'calculate'])->name('calculate');
         });
         Route::resource('roles', RoleController::class);
-        
+
         // Customer self-registration requests
         Route::prefix('customer-requests')->name('customer-requests.')->group(function (): void {
             Route::get('/', [AdminCustomerRegistrationRequestController::class, 'index'])->name('index');
@@ -248,7 +255,7 @@ Route::middleware('auth:admin')->group(function (): void {
             Route::post('{registrationRequest}/reject', [AdminCustomerRegistrationRequestController::class, 'reject'])->name('reject');
             Route::post('{registrationRequest}/revert', [AdminCustomerRegistrationRequestController::class, 'revert'])->name('revert');
         });
-        
+
         // Configuration routes
         Route::resource('loan-products', LoanProductController::class);
         Route::prefix('loan-products/{loanProduct}')->name('loan-products.')->group(function () {
@@ -289,13 +296,13 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('fraud-protection/customers/{customer}', [FraudProtectionController::class, 'show'])->name('fraud-protection.show');
         Route::post('fraud-protection/customers/{customer}/clear-duplicate', [FraudProtectionController::class, 'clearDuplicate'])->name('fraud-protection.clear-duplicate');
         Route::post('fraud-protection/customers/{customer}/clear-all', [FraudProtectionController::class, 'clearAllDuplicates'])->name('fraud-protection.clear-all');
-	        Route::resource('security-questions', SecurityQuestionController::class)->except(['show']);
-	        Route::resource('channels', ChannelController::class);
-	        Route::resource('wallet-providers', WalletProviderController::class)->except(['show']);
-	        Route::get('financial-institutions/{financial_institution}/branches', [FinancialInstitutionController::class, 'branches'])->name('financial-institutions.branches');
-	        Route::post('financial-institutions/{financial_institution}/branches', [FinancialInstitutionController::class, 'storeBranch'])->name('financial-institutions.branches.store');
-	        Route::get('financial-institutions/{financial_institution}/branches/{branch}/edit', [FinancialInstitutionController::class, 'editBranch'])->name('financial-institutions.branches.edit');
-	        Route::put('financial-institutions/{financial_institution}/branches/{branch}', [FinancialInstitutionController::class, 'updateBranch'])->name('financial-institutions.branches.update');
+        Route::resource('security-questions', SecurityQuestionController::class)->except(['show']);
+        Route::resource('channels', ChannelController::class);
+        Route::resource('wallet-providers', WalletProviderController::class)->except(['show']);
+        Route::get('financial-institutions/{financial_institution}/branches', [FinancialInstitutionController::class, 'branches'])->name('financial-institutions.branches');
+        Route::post('financial-institutions/{financial_institution}/branches', [FinancialInstitutionController::class, 'storeBranch'])->name('financial-institutions.branches.store');
+        Route::get('financial-institutions/{financial_institution}/branches/{branch}/edit', [FinancialInstitutionController::class, 'editBranch'])->name('financial-institutions.branches.edit');
+        Route::put('financial-institutions/{financial_institution}/branches/{branch}', [FinancialInstitutionController::class, 'updateBranch'])->name('financial-institutions.branches.update');
         Route::resource('financial-institutions', FinancialInstitutionController::class)->except(['show', 'destroy']);
         Route::resource('faqs', FaqController::class)->except(['show', 'destroy']);
         Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
@@ -319,7 +326,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('support-tickets/{supportTicket}/comments', [SupportTicketController::class, 'storeComment'])->name('support-tickets.comments.store');
         Route::patch('support-tickets/{supportTicket}/status', [SupportTicketController::class, 'updateStatus'])->name('support-tickets.status.update');
         Route::patch('support-tickets/{supportTicket}', [SupportTicketController::class, 'update'])->name('support-tickets.update');
-        
+
         // Reports routes
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('index');
@@ -346,7 +353,7 @@ Route::middleware('auth:admin')->group(function (): void {
                 ->whereIn('format', ['excel', 'csv', 'pdf'])
                 ->name('relationship-manager.export');
         });
-        
+
         // Approval routes
         Route::get('approvals', [ApprovalController::class, 'index'])->name('approvals.index');
         Route::post('approvals/admins/{admin}/approve', [ApprovalController::class, 'approveAdmin'])->name('approvals.admins.approve');

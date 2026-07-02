@@ -8,6 +8,7 @@ use App\Models\FinancialInstitution;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class BankController extends Controller
@@ -42,7 +43,7 @@ class BankController extends Controller
         abort_unless(auth('admin')->user()?->can('banks.create'), 403);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'account_number' => ['required', 'string', 'max:50', 'unique:banks,account_number'],
+            'account_number' => $this->accountNumberRules($request),
             'account_name' => ['required', 'string', 'max:255'],
             'bank_name' => ['required', 'string', 'max:255'],
             'branch' => ['nullable', 'string', 'max:255'],
@@ -92,7 +93,7 @@ class BankController extends Controller
         abort_unless(auth('admin')->user()?->can('banks.update'), 403);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'account_number' => ['required', 'string', 'max:50', 'unique:banks,account_number,' . $bank->id],
+            'account_number' => $this->accountNumberRules($request, $bank),
             'account_name' => ['required', 'string', 'max:255'],
             'bank_name' => ['required', 'string', 'max:255'],
             'branch' => ['nullable', 'string', 'max:255'],
@@ -136,5 +137,25 @@ class BankController extends Controller
             ->with(['branches' => fn ($query) => $query->active()->orderBy('name')])
             ->orderBy('name')
             ->get();
+    }
+
+    /**
+     * @return list<string|\Illuminate\Validation\Rules\Unique>
+     */
+    private function accountNumberRules(Request $request, ?Bank $bank = null): array
+    {
+        $unique = Rule::unique('banks', 'account_number')
+            ->where(fn ($query) => $query->where('bank_name', $request->input('bank_name')));
+
+        if ($bank !== null) {
+            $unique->ignore($bank->id);
+        }
+
+        return [
+            'required',
+            'string',
+            'regex:/^\d{2,6}$/',
+            $unique,
+        ];
     }
 }

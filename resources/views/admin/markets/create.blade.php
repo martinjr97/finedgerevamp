@@ -74,13 +74,6 @@
                             <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="text-sm font-medium {{ $labelClass }}">Address Line 2</label>
-                        <input type="text" name="address_line2" value="{{ old('address_line2') }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
-                        @error('address_line2')
-                            <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
-                        @enderror
-                    </div>
                     <div>
                         <label class="text-sm font-medium {{ $labelClass }}">City</label>
                         <input type="text" name="city" value="{{ old('city') }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">

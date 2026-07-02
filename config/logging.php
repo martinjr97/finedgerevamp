@@ -127,6 +127,14 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'cgrate_uat' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cgrate-uat.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('CGRATE_UAT_LOG_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

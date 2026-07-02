@@ -36,7 +36,6 @@ class Company extends Model
         'contact_email',
         'contact_phone',
         'address_line1',
-        'address_line2',
         'city',
         'state',
         'postal_code',

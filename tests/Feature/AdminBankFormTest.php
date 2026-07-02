@@ -67,14 +67,13 @@ class AdminBankFormTest extends TestCase
         $response = $this->actingAs($admin, 'admin')->get(route('admin.banks.create'));
 
         $response->assertOk();
-        $response->assertSee('Account label', false);
+        $response->assertSee('Display name', false);
+        $response->assertSee('Last account digits', false);
         $response->assertSee('placeholder="e.g. Main Operations — Zanaco"', false);
-        $response->assertSee('placeholder="e.g. Havencrest Finance Limited"', false);
+        $response->assertSee('placeholder="e.g. 7890"', false);
         $response->assertSee('id="bank_financial_institution"', false);
-        $response->assertSee('id="bank_branch"', false);
-        $response->assertSee('data-bank-institution-select', false);
+        $response->assertDontSee('id="bank_branch"', false);
         $response->assertSee('Zanaco (ZAN)', false);
-        $response->assertSee('Cairo Road', false);
     }
 
     public function test_admin_can_create_bank_using_institution_and_branch_dropdowns(): void
@@ -96,10 +95,9 @@ class AdminBankFormTest extends TestCase
 
         $response = $this->actingAs($admin, 'admin')->post(route('admin.banks.store'), [
             'name' => 'Disbursements — Stanbic',
-            'account_number' => '9988776655',
+            'account_number' => '6655',
             'account_name' => 'Havencrest Finance Limited',
             'bank_name' => 'Stanbic Bank',
-            'branch' => 'Acacia Park',
             'currency' => 'ZMW',
             'opening_balance' => 10000,
             'is_active' => '1',
@@ -108,12 +106,12 @@ class AdminBankFormTest extends TestCase
         $response->assertRedirect(route('admin.banks.index'));
         $response->assertSessionHas('status', 'Bank created successfully.');
 
-        $bank = Bank::query()->where('account_number', '9988776655')->first();
+        $bank = Bank::query()->where('account_number', '6655')->where('bank_name', 'Stanbic Bank')->first();
 
         $this->assertNotNull($bank);
         $this->assertSame('Disbursements — Stanbic', $bank->name);
         $this->assertSame('Havencrest Finance Limited', $bank->account_name);
         $this->assertSame('Stanbic Bank', $bank->bank_name);
-        $this->assertSame('Acacia Park', $bank->branch);
+        $this->assertNull($bank->branch);
     }
 }

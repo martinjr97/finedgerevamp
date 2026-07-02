@@ -11,6 +11,7 @@ use App\Models\Loan;
 use App\Models\LoanProduct;
 use App\Models\LoanPaymentSchedule;
 use App\Models\Repayment;
+use App\Services\Loans\GatewayAutoDisbursementBalanceAlertService;
 use Carbon\Carbon;
 use Illuminate\View\View;
 
@@ -241,6 +242,9 @@ class DashboardController extends Controller
             ->limit(12)
             ->get();
 
+        $gatewayAutoDisbursementBalanceAlerts = app(GatewayAutoDisbursementBalanceAlertService::class)
+            ->alertsForAdmin($admin);
+
         return view('admin.dashboard', [
             'todayStats' => $todayStats,
             'weekStats' => $weekStats,
@@ -251,6 +255,7 @@ class DashboardController extends Controller
             'overduePendingDisbursementCount' => $overduePendingDisbursementCount,
             'pendingDisbursementAmount' => $pendingDisbursementAmount,
             'pendingDisbursementLoans' => $pendingDisbursementLoans,
+            'gatewayAutoDisbursementBalanceAlerts' => $gatewayAutoDisbursementBalanceAlerts,
             'dashboardToday' => $today,
         ]);
     }

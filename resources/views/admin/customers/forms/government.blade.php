@@ -199,13 +199,6 @@
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>
-            <div class="md:col-span-2">
-                <label class="text-sm font-medium {{ $labelClass }}">Work Address Line 2</label>
-                <input type="text" name="work_address_line2" value="{{ old('work_address_line2') }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} {{ $inputFocusClass }} text-white px-4 py-3">
-                @error('work_address_line2')
-                    <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">Work City</label>
                 <input type="text" name="work_city" value="{{ old('work_city') }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} {{ $inputFocusClass }} text-white px-4 py-3">
@@ -282,13 +275,6 @@
                 <label class="text-sm font-medium {{ $labelClass }}">Address Line 1 <span class="{{ $requiredClass }}">*</span></label>
                 <input type="text" name="address_line1" value="{{ old('address_line1') }}" required class="mt-2 w-full rounded-2xl {{ $inputClass }} {{ $inputFocusClass }} text-white px-4 py-3">
                 @error('address_line1')
-                    <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="md:col-span-2">
-                <label class="text-sm font-medium {{ $labelClass }}">Address Line 2</label>
-                <input type="text" name="address_line2" value="{{ old('address_line2') }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} {{ $inputFocusClass }} text-white px-4 py-3">
-                @error('address_line2')
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>

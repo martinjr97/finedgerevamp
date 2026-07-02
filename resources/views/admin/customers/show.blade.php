@@ -36,13 +36,6 @@
                                 Upload KYC Documents
                             </a>
                             @endcan
-                        @else
-                            @can('approvals.approve')
-                            <button type="button" onclick="showApproveModal({{ $customer->id }})" class="btn-approve-critical px-3 py-2">Approve</button>
-                            @endcan
-                            @can('approvals.reject')
-                            <button type="button" onclick="showRejectModal({{ $customer->id }})" class="btn-reject-critical px-3 py-2">Reject</button>
-                            @endcan
                         @endif
                     </div>
                 </div>
@@ -610,7 +603,6 @@
                             <p class="mt-1 font-medium text-white">
                                 @if ($customer->work_address_line1)
                                     {{ $customer->work_address_line1 }}<br>
-                                    @if ($customer->work_address_line2){{ $customer->work_address_line2 }}<br>@endif
                                     {{ $customer->work_city ?? '' }}{{ $customer->work_city && ($customer->workProvince || $customer->workDistrict) ? ', ' : '' }}{{ $customer->workProvince->name ?? '' }}{{ $customer->workProvince && $customer->workDistrict ? ', ' : '' }}{{ $customer->workDistrict->name ?? '' }}<br>
                                     {{ $customer->work_postal_code ?? '' }}<br>
                                     {{ $customer->work_country ?? '' }}
@@ -740,7 +732,6 @@
                             <span class="text-slate-400">Address:</span>
                             <p class="mt-1 font-medium text-white">
                                 {{ $customer->next_of_kin_address_line1 }}<br>
-                                @if ($customer->next_of_kin_address_line2){{ $customer->next_of_kin_address_line2 }}<br>@endif
                                 {{ $customer->next_of_kin_city ?? '' }}{{ $customer->next_of_kin_city && $customer->next_of_kin_country ? ', ' : '' }}{{ $customer->next_of_kin_country ?? '' }}
                             </p>
                         </div>
@@ -759,7 +750,6 @@
                         <p class="mt-1 font-medium text-white">
                             @if ($customer->address_line1)
                                 {{ $customer->address_line1 }}<br>
-                                @if ($customer->address_line2){{ $customer->address_line2 }}<br>@endif
                                 {{ $customer->city ?? '' }}{{ $customer->city && $customer->state ? ', ' : '' }}{{ $customer->state ?? '' }}<br>
                                 {{ $customer->postal_code ?? '' }}<br>
                                 {{ $customer->country ?? '' }}

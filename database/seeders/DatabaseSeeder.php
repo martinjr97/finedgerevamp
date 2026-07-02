@@ -30,8 +30,10 @@ class DatabaseSeeder extends Seeder
 	                FinancialInstitutionSeeder::class,
 	                WalletProviderSeeder::class,
 	                SecurityQuestionSeeder::class,
-	                VstRateTableSeeder::class,
+	                RateTableSeeder::class,
 	                GovernmentSampleCustomerSeeder::class,
+					CGratePaymentGatewaySeeder::class,
+					PaymentGatewayRouteSeeder::class,
 	            ]);
     }
 }

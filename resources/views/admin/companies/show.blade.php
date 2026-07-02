@@ -222,9 +222,6 @@
                     @if($company->address_line1)
                         <p>{{ $company->address_line1 }}</p>
                     @endif
-                    @if($company->address_line2)
-                        <p>{{ $company->address_line2 }}</p>
-                    @endif
                     <p>{{ collect([$company->city, $company->state, $company->postal_code])->filter()->implode(', ') }}</p>
                     @if($company->country)
                         <p>{{ $company->country }}</p>

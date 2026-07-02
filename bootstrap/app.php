@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/*',
+        ]);
+
         $middleware->alias([
             'password.changed' => \App\Http\Middleware\EnsurePasswordIsChanged::class,
             'api.admin' => \App\Http\Middleware\EnsureApiAdmin::class,
@@ -27,6 +31,10 @@ return Application::configure(basePath: dirname(__DIR__))
             ->timezone('Africa/Lusaka')
             ->withoutOverlapping()
             ->runInBackground();
+
+        $schedule->call(function () {
+            app(\App\PaymentPlatform\Services\GatewayPollingService::class)->dispatchDueAttempts();
+        })->everyMinute()->name('gateway-poll-due-attempts')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Handle API exceptions with JSON responses

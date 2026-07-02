@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Loan;
+use App\Services\Loans\AutomaticLoanDisbursementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -117,10 +118,10 @@ class LoanController extends Controller
             ], 403);
         }
 
-        if ($loan->status !== 'pending') {
+        if ($loan->status !== 'pending_approval') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only pending loans can be approved.',
+                'message' => 'Only loans pending approval can be approved.',
             ], 422);
         }
 
@@ -134,11 +135,16 @@ class LoanController extends Controller
         $loan->approval_notes = $validated['approval_notes'] ?? null;
         $loan->save();
 
+        $autoDisbursementResult = app(AutomaticLoanDisbursementService::class)->handle($loan->fresh());
+
         $loan->load(['customer', 'loanProduct', 'customerGroup', 'channel', 'approver']);
 
         return response()->json([
             'success' => true,
             'message' => 'Loan approved successfully.',
+            'auto_disbursement_status' => $autoDisbursementResult->status->value,
+            'auto_disbursement_message' => $autoDisbursementResult->message,
+            'gateway_attempt_id' => $autoDisbursementResult->gatewayAttemptId(),
             'data' => new \App\Http\Resources\Api\V1\LoanResource($loan),
         ]);
     }

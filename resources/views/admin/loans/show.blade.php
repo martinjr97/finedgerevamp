@@ -46,9 +46,8 @@
 
                 {{-- Manual disbursement button --}}
                 @if(
-                    isset($disbursementType) && $disbursementType === 'manual' &&
                     $loan->status === 'approved' &&
-                    $loan->disbursement_status === 'pending'
+                    in_array($loan->disbursement_status, ['pending', 'failed'], true)
                 )
                     @can('loans.disburse')
                     <button type="button"
@@ -59,6 +58,45 @@
                         </svg>
                         Record Disbursement
                     </button>
+                    @endcan
+                @endif
+
+                @if(
+                    ($disbursementGatewayAvailable ?? false) &&
+                    $loan->status === 'approved' &&
+                    in_array($loan->disbursement_status, ['pending', 'failed'], true) &&
+                    ($disbursementDestinationPreview ?? null)
+                )
+                    @can('loans.disburse')
+                    <form method="POST" action="{{ route('admin.loans.disburse.gateway', $loan) }}" class="inline"
+                          onsubmit="return confirm('Submit disbursement of ZMW {{ number_format($loan->principal_amount, 2) }} via cGrate to {{ $disbursementDestinationPreview['customer_account'] }} ({{ $disbursementDestinationPreview['issuer_name'] }})?');">
+                        @csrf
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 rounded-2xl border border-emerald-200/40 bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 font-semibold text-white shadow-lg shadow-emerald-500/30 hover:from-emerald-700 hover:to-teal-700 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            Disburse via cGrate
+                        </button>
+                    </form>
+                    @endcan
+                @endif
+
+                @if(
+                    ($disbursementGatewayAvailable ?? false) &&
+                    $loan->status === 'approved' &&
+                    $loan->disbursement_status === 'failed' &&
+                    ($disbursementDestinationPreview ?? null)
+                )
+                    @can('loans.disburse')
+                    <form method="POST" action="{{ route('admin.loans.disburse.gateway.retry', $loan) }}" class="inline"
+                          onsubmit="return confirm('Retry cGrate disbursement for this loan?');">
+                        @csrf
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 rounded-2xl border border-amber-200/40 bg-amber-600/20 px-4 py-3 font-semibold text-amber-200 hover:bg-amber-600/30 transition">
+                            Retry cGrate Disbursement
+                        </button>
+                    </form>
                     @endcan
                 @endif
 
@@ -293,6 +331,32 @@
                         <div>
                             <span class="text-slate-400">Disbursement Description:</span>
                             <p class="font-medium text-white mt-1">{{ $loan->disbursement_notes }}</p>
+                        </div>
+                    @endif
+                    @if(($activeDisbursementGateway ?? null) && ($disbursementGatewayAvailable ?? false))
+                        <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm">
+                            <p class="text-emerald-200 font-medium">cGrate treasury</p>
+                            <p class="text-slate-300 mt-1">{{ $activeDisbursementGateway->linkedAccountLabel() }}</p>
+                            <p class="text-slate-400 mt-1">Balance: ZMW {{ number_format((float) $activeDisbursementGateway->linkedAccountBalance(), 2) }}</p>
+                        </div>
+                    @endif
+                    @if(($disbursementAttempts ?? collect())->isNotEmpty())
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm space-y-2">
+                            <p class="text-slate-300 font-medium">Gateway disbursement attempts</p>
+                            @foreach($disbursementAttempts as $attempt)
+                                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-2 first:border-t-0 first:pt-0">
+                                    <span class="text-slate-400">{{ $attempt->provider_reference ?? $attempt->internal_reference }}</span>
+                                    <span class="rounded-full px-2 py-0.5 text-xs bg-white/10 text-slate-200">{{ ucfirst($attempt->status->value) }}</span>
+                                </div>
+                                @if($attempt->response_message)
+                                    <p class="text-xs text-slate-500">{{ $attempt->response_message }}</p>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endif
+                    @if($loan->disbursement_status === 'processing')
+                        <div class="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-200">
+                            Disbursement is processing via cGrate. Refresh this page to check status.
                         </div>
                     @endif
                 </div>
@@ -570,10 +634,9 @@
 
         {{-- Manual Disbursement Modal --}}
         @if(
-            isset($disbursementType, $banks, $wallets) &&
-            $disbursementType === 'manual' &&
+            isset($banks, $wallets) &&
             $loan->status === 'approved' &&
-            $loan->disbursement_status === 'pending'
+            in_array($loan->disbursement_status, ['pending', 'failed'], true)
         )
             <div id="disbursementModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                 <div id="disbursementModalContent" class="modal-content rounded-3xl border p-6 w-full max-w-5xl max-h-[90vh] shadow-2xl relative flex flex-col min-h-0">
@@ -1806,25 +1869,33 @@
 
     @if ($loan->status === 'pending_approval')
         <!-- Approve Modal -->
-        <div id="approveModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div class="rounded-3xl border border-white/10 bg-slate-900 p-6 w-full max-w-2xl shadow-2xl">
+        <div id="approveModal" class="hidden fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-4 py-8">
+            <div class="rounded-3xl border border-white/10 bg-slate-900 p-6 w-full max-w-5xl shadow-2xl my-auto">
                 <h3 class="text-xl font-semibold text-white mb-2">Approve Loan</h3>
                 <p class="text-sm text-slate-300 mb-4">Confirm approval for this loan. Update payout details separately if needed before approving.</p>
 
-                <div class="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm space-y-3">
-                    <p class="text-slate-300 font-medium">Customer disbursement destination</p>
-                    @include('partials.admin.disbursement-destination-summary', ['loan' => $loan])
-                    @can('loans.update-payment-details')
-                        @if($paymentDetailsEditable)
-                            <button
-                                type="button"
-                                onclick="openPaymentDetailsFromApprove()"
-                                class="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-200 hover:bg-amber-500/20 transition"
-                            >
-                                Change Payment Details
-                            </button>
-                        @endif
-                    @endcan
+                <div class="grid gap-4 lg:grid-cols-2 mb-4">
+                    <div class="min-w-0">
+                        @include('partials.admin.loan-approval-auto-disbursement-notice', [
+                            'approvalAutoDisbursementPreview' => $approvalAutoDisbursementPreview ?? null,
+                        ])
+                    </div>
+
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm space-y-3 min-w-0">
+                        <p class="text-slate-300 font-medium">Customer disbursement destination</p>
+                        @include('partials.admin.disbursement-destination-summary', ['loan' => $loan])
+                        @can('loans.update-payment-details')
+                            @if($paymentDetailsEditable)
+                                <button
+                                    type="button"
+                                    onclick="openPaymentDetailsFromApprove()"
+                                    class="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-200 hover:bg-amber-500/20 transition"
+                                >
+                                    Change Payment Details
+                                </button>
+                            @endif
+                        @endcan
+                    </div>
                 </div>
 
                 <form id="approveForm" method="POST" action="{{ route('admin.approvals.loans.approve', $loan) }}">

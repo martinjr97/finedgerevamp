@@ -158,10 +158,6 @@
             <input type="text" name="address_line1" value="{{ old('address_line1') }}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
         </div>
         <div>
-            <label class="block text-sm font-semibold text-primary">Address Line 2</label>
-            <input type="text" name="address_line2" value="{{ old('address_line2') }}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
-        </div>
-        <div>
             <label class="block text-sm font-semibold text-primary">City</label>
             <input type="text" name="city" value="{{ old('city') }}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
         </div>

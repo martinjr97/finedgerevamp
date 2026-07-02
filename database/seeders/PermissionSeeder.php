@@ -10,8 +10,11 @@ use Spatie\Permission\PermissionRegistrar;
 class PermissionSeeder extends Seeder
 {
     public const SUPER_ADMIN_ROLE = 'super-admin';
+
     public const IT_ROLE = 'IT Admin';
+
     public const GROUP_LOANS_ASSIGN_RELATIONSHIP_MANAGER_PERMISSION = 'can assign relationship manager to group';
+
     private const ADMIN_GUARD = 'admin';
 
     /**
@@ -34,9 +37,9 @@ class PermissionSeeder extends Seeder
      *
      * @return array<string, string[]>
      */
-	    public static function permissionMatrix(): array
-	    {
-	        return [
+    public static function permissionMatrix(): array
+    {
+        return [
             'admins' => ['view', 'create', 'update', 'delete'],
             'customers' => ['view', 'create', 'update', 'delete', 'reset-pin', 'send-message', 'loans', 'repayments', 'change-group', 'export'],
             'customer-requests' => ['view', 'update', 'approve', 'reject', 'revert'],
@@ -50,10 +53,10 @@ class PermissionSeeder extends Seeder
             'loan-purposes' => ['view', 'create', 'update', 'delete'],
             'security-questions' => ['view', 'create', 'update', 'delete'],
             'channels' => ['view', 'create', 'update', 'delete'],
-	            'financial-institutions' => ['view', 'create', 'update', 'delete'],
-	            'wallet-providers' => ['view', 'create', 'update', 'delete'],
-	            'permissions' => ['view', 'update'],
-	            'roles' => ['view', 'create', 'update', 'delete'],
+            'financial-institutions' => ['view', 'create', 'update', 'delete'],
+            'wallet-providers' => ['view', 'create', 'update', 'delete'],
+            'permissions' => ['view', 'update'],
+            'roles' => ['view', 'create', 'update', 'delete'],
             'audit-logs' => ['view'],
             'reports' => ['view'],
             'loans' => ['view', 'create', 'approve', 'reject', 'export', 'backfill-repayment', 'disburse', 'update-payment-details'],
@@ -67,6 +70,7 @@ class PermissionSeeder extends Seeder
             'transfers' => ['view', 'create', 'approve', 'reject'],
             'banks' => ['view', 'create', 'update', 'delete'],
             'wallets' => ['view', 'create', 'update', 'delete'],
+            'payment-gateways' => ['view', 'manage'],
             'creditors' => ['view', 'create', 'update', 'delete'],
             'customer-groups' => ['view', 'create', 'update', 'delete'],
             'branches' => ['view', 'create', 'update', 'delete'],

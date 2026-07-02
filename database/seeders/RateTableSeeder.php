@@ -8,7 +8,7 @@ use App\Models\LoanRate;
 use App\Models\LoanRateType;
 use Illuminate\Database\Seeder;
 
-class VstRateTableSeeder extends Seeder
+class RateTableSeeder extends Seeder
 {
     public function run(): void
     {
@@ -21,11 +21,11 @@ class VstRateTableSeeder extends Seeder
         }
 
         $rateType = LoanRateType::updateOrCreate(
-            ['code' => 'VST-TERM-RATES'],
+            ['code' => 'TERM-RATES'],
             [
                 'loan_product_id' => $loanProduct->id,
-                'name' => 'VST Standard Term Rates',
-                'description' => 'Government business term percentage rates from the VST rate table.',
+                'name' => 'Standard Term Rates',
+                'description' => 'Government business term percentage rates from the rate table.',
                 'interest_behavior' => LoanRateType::INTEREST_BEHAVIOR_UPFRONT_FLAT,
                 'rate_input_mode' => LoanRateType::RATE_INPUT_TERM_PERCENTAGE,
                 'accrual_period' => LoanRateType::ACCRUAL_PERIOD_DAILY,
@@ -85,6 +85,6 @@ class VstRateTableSeeder extends Seeder
             ]);
         }
 
-        $this->command?->info('VST government term rate tables seeded successfully.');
+        $this->command?->info(' government term rate tables seeded successfully.');
     }
 }

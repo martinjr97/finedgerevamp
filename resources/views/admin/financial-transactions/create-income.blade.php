@@ -68,7 +68,7 @@
                             <select name="destination_id" id="destination_id" required class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
                                 <option value="">Select Account</option>
                                 @foreach($banks as $bank)
-                                    <option value="{{ $bank->id }}" data-type="bank" @selected(old('destination_id') == $bank->id)>{{ $bank->name }} - {{ $bank->account_number }}</option>
+                                    <option value="{{ $bank->id }}" data-type="bank" @selected(old('destination_id') == $bank->id)>{{ $bank->name }} - {{ $bank->account_reference }}</option>
                                 @endforeach
                                 @foreach($wallets as $wallet)
                                     <option value="{{ $wallet->id }}" data-type="wallet" @selected(old('destination_id') == $wallet->id)>{{ $wallet->name }} - {{ $wallet->wallet_number }}</option>

@@ -139,13 +139,6 @@
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>
-            <div class="md:col-span-2">
-                <label class="text-sm font-medium {{ $labelClass }}">Address Line 2</label>
-                <input type="text" name="address_line2" value="{{ old('address_line2', $customer->address_line2) }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
-                @error('address_line2')
-                    <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">City <span class="{{ $requiredClass }}">*</span></label>
                 <input type="text" name="city" value="{{ old('city', $customer->city) }}" required class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
@@ -230,13 +223,6 @@
                 <label class="text-sm font-medium {{ $labelClass }}">Address Line 1</label>
                 <input type="text" name="next_of_kin_address_line1" value="{{ old('next_of_kin_address_line1', $customer->next_of_kin_address_line1) }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
                 @error('next_of_kin_address_line1')
-                    <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="md:col-span-2">
-                <label class="text-sm font-medium {{ $labelClass }}">Address Line 2</label>
-                <input type="text" name="next_of_kin_address_line2" value="{{ old('next_of_kin_address_line2', $customer->next_of_kin_address_line2) }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
-                @error('next_of_kin_address_line2')
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>

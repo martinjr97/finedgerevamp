@@ -28,6 +28,7 @@ class Repayment extends Model
         'metadata',
         'received_via_type',
         'received_via_id',
+        'payment_gateway_attempt_id',
     ];
 
     protected function casts(): array
@@ -47,6 +48,11 @@ class Repayment extends Model
     public function channel(): BelongsTo
     {
         return $this->belongsTo(Channel::class);
+    }
+
+    public function gatewayAttempt(): BelongsTo
+    {
+        return $this->belongsTo(PaymentGatewayAttempt::class, 'payment_gateway_attempt_id');
     }
 
     public function loanRepayments(): HasMany
@@ -93,13 +99,13 @@ class Repayment extends Model
     {
         $prefix = 'REP';
         $date = now()->format('Ymd');
-        
+
         // Generate unique repayment number
         do {
             $random = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-            $repaymentNumber = $prefix . '-' . $date . '-' . $random;
+            $repaymentNumber = $prefix.'-'.$date.'-'.$random;
         } while (self::where('repayment_number', $repaymentNumber)->exists());
-        
+
         return $repaymentNumber;
     }
 }

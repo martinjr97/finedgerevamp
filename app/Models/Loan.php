@@ -72,6 +72,7 @@ class Loan extends Model
         'disbursed_at',
         'disbursement_notes',
         'disbursement_reference',
+        'payment_gateway_attempt_id',
         'metadata',
         'disbursed_via_type',
         'disbursed_via_id',
@@ -134,6 +135,11 @@ class Loan extends Model
     public function channel(): BelongsTo
     {
         return $this->belongsTo(Channel::class);
+    }
+
+    public function gatewayAttempt(): BelongsTo
+    {
+        return $this->belongsTo(PaymentGatewayAttempt::class, 'payment_gateway_attempt_id');
     }
 
     public function disbursementFinancialInstitution(): BelongsTo

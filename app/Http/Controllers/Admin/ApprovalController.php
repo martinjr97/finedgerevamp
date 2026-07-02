@@ -14,6 +14,7 @@ use App\Models\Repayment;
 use App\Notifications\AdminUserInvited;
 use App\Notifications\CustomerApprovalNotification;
 use App\Services\LoanPaymentDetailsService;
+use App\Services\Loans\AutomaticLoanDisbursementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -374,15 +375,19 @@ class ApprovalController extends Controller
                 ->withInput();
         }
 
+        $autoDisbursementResult = app(AutomaticLoanDisbursementService::class)->handle($loan->fresh());
+        $flashKey = $autoDisbursementResult->flashSessionKey();
+        $flashMessage = $autoDisbursementResult->userFlashMessage();
+
         if ($redirectToLoan) {
             return redirect()
                 ->route('admin.loans.show', $loan)
-                ->with('status', 'Loan approved successfully.');
+                ->with($flashKey, $flashMessage);
         }
 
         return redirect()
             ->route('admin.approvals.index')
-            ->with('status', 'Loan approved successfully.');
+            ->with($flashKey, $flashMessage);
     }
 
     public function rejectLoan(Loan $loan, Request $request): RedirectResponse

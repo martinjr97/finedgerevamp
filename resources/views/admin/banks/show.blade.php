@@ -26,8 +26,8 @@
                 </div>
 
                 <div>
-                    <label class="text-sm text-slate-400">Account Number</label>
-                    <p class="text-white font-medium">{{ $bank->account_number }}</p>
+                    <label class="text-sm text-slate-400">Last account digits</label>
+                    <p class="text-white font-medium font-mono">{{ $bank->account_reference }}</p>
                 </div>
 
                 <div>

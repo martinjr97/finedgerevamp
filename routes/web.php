@@ -48,6 +48,10 @@ Route::get('/support', [SupportController::class, 'create'])->name('support');
 Route::post('/support', [SupportController::class, 'store'])->name('support.store');
 Route::get('/faq', [FaqController::class, 'public'])->name('faq');
 
+Route::post('/webhooks/gateways/{gatewayCode}', [\App\Http\Controllers\Webhooks\GatewayCallbackController::class, 'handle'])
+    ->middleware('throttle:120,1')
+    ->name('webhooks.gateways');
+
 // Account deletion (public page for Google Play: login here, then confirm deletion)
 Route::get('/account/delete', [\App\Http\Controllers\Customer\AccountDeletionController::class, 'show'])
     ->name('customer.account.delete');
@@ -76,7 +80,7 @@ if (app()->environment('local')) {
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to generate sample data: ' . $e->getMessage(),
+                'message' => 'Failed to generate sample data: '.$e->getMessage(),
                 'note' => 'For production, use: php artisan sample-data:generate',
             ], 500);
         }

@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Support\RepaymentRecoveryMethod;
-use App\Support\ZambianPhoneRules;
 use App\Models\Bank;
 use App\Models\CashRegister;
 use App\Models\Channel;
@@ -16,6 +14,9 @@ use App\Services\CashRegisterService;
 use App\Services\CustomerNotificationService;
 use App\Services\LoanRepaymentLedgerService;
 use App\Services\RepaymentProcessingService;
+use App\Services\Repayments\RepaymentFinancePostingService;
+use App\Support\RepaymentRecoveryMethod;
+use App\Support\ZambianPhoneRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,8 @@ class RepaymentController extends Controller
         private readonly RepaymentProcessingService $repaymentProcessingService,
         private readonly CustomerNotificationService $customerNotificationService,
         private readonly LoanRepaymentLedgerService $ledgerService,
-        private readonly CashRegisterService $cashRegisterService
+        private readonly CashRegisterService $cashRegisterService,
+        private readonly RepaymentFinancePostingService $financePostingService,
     ) {}
 
     public function index(Request $request): View
@@ -150,7 +152,7 @@ class RepaymentController extends Controller
 
         $repayments = $query->latest('created_at')->get();
 
-        $filename = 'repayments_export_' . now()->format('Y-m-d_His') . '.csv';
+        $filename = 'repayments_export_'.now()->format('Y-m-d_His').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -469,7 +471,8 @@ class RepaymentController extends Controller
             $paymentResult = $this->repaymentProcessingService->processPayment(
                 $repaymentAmount,
                 $channel,
-                $validated['phone_number'] ?? $customer->phone
+                $validated['phone_number'] ?? $customer->phone,
+                $repayment
             );
 
             if (! $paymentResult['success']) {
@@ -615,20 +618,12 @@ class RepaymentController extends Controller
                 'metadata' => $updatedMetadata,
             ]);
 
-            if ($receivedViaType === 'bank' && $receivedViaId) {
-                $bank = Bank::find($receivedViaId);
-                $bank?->updateBalance((float) $repayment->total_amount, 'credit');
-            }
-
-            if ($receivedViaType === 'wallet' && $receivedViaId) {
-                $wallet = Wallet::find($receivedViaId);
-                $wallet?->updateBalance((float) $repayment->total_amount, 'credit');
-            }
-
-            if ($receivedViaType === 'cash' && $receivedViaId) {
-                $cashRegister = CashRegister::find($receivedViaId);
-                $cashRegister?->updateBalance((float) $repayment->total_amount, 'credit');
-            }
+            $this->financePostingService->creditReceivedAccount(
+                $repayment,
+                $receivedViaType,
+                (int) $receivedViaId,
+                (float) $repayment->total_amount
+            );
 
             $this->repaymentProcessingService->applyRepaymentToLoans(
                 $repayment,

@@ -991,6 +991,68 @@ body[data-theme="dark"] .content-area a.duplicate-warning-badge svg {
     font-weight: 600;
 }
 
+/* Gateway routing premium toggles (green on / red off) */
+.gateway-toggle {
+    position: relative;
+    width: 3rem;
+    height: 1.75rem;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    flex-shrink: 0;
+}
+.gateway-toggle--on {
+    background-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.28);
+}
+.gateway-toggle--off {
+    background-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22);
+}
+.gateway-toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
+    background: #ffffff !important;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+.gateway-toggle-knob--on {
+    transform: translateX(1.25rem);
+}
+.gateway-toggle-label--on {
+    color: #059669 !important;
+}
+.gateway-toggle-label--off {
+    color: #dc2626 !important;
+}
+.gateway-toggle-input:checked + .gateway-toggle-track {
+    background-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.28);
+}
+.gateway-toggle-input:not(:checked) + .gateway-toggle-track {
+    background-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22);
+}
+.gateway-toggle-input:checked + .gateway-toggle-track .gateway-toggle-knob {
+    transform: translateX(1.25rem);
+}
+.gateway-toggle-input:focus-visible + .gateway-toggle-track {
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+}
+.gateway-routing-save-bar {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 20;
+    border: 1px solid var(--color-muted);
+    background: var(--color-surface);
+    box-shadow: 0 12px 40px rgba(21, 27, 84, 0.12);
+}
+
 /* ---------- App chrome footer (landing blue) ---------- */
 .app-chrome-footer {
     background-color: var(--brand-landing-blue) !important;

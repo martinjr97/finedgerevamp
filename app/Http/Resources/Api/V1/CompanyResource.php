@@ -34,7 +34,6 @@ class CompanyResource extends JsonResource
             'contact_phone' => $this->contact_phone,
             'address' => [
                 'line1' => $this->address_line1,
-                'line2' => $this->address_line2,
                 'city' => $this->city,
                 'state' => $this->state,
                 'postal_code' => $this->postal_code,

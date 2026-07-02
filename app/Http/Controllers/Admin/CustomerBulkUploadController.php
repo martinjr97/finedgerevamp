@@ -98,7 +98,6 @@ class CustomerBulkUploadController extends Controller
             'Date of Birth' => '1990-01-15',
             'Gender' => 'male',
             'Address Line 1' => '123 Main Street',
-            'Address Line 2' => 'Apt 4B',
             'City' => 'Lusaka',
             'Province' => 'Lusaka',
             'Postal Code' => '10101',
@@ -342,7 +341,6 @@ class CustomerBulkUploadController extends Controller
         $dateOfBirth = $this->getValue($row, ['date of birth', 'date_of_birth', 'dob']);
         $gender = $this->getValue($row, ['gender']);
         $addressLine1 = $this->getValue($row, ['address line 1', 'address_line1', 'address']);
-        $addressLine2 = $this->getValue($row, ['address line 2', 'address_line2']);
         $city = $this->getValue($row, ['city']);
         $provinceName = $this->getValue($row, ['province']);
         $postalCode = $this->getValue($row, ['postal code', 'postal_code']);
@@ -433,7 +431,6 @@ class CustomerBulkUploadController extends Controller
             'date_of_birth' => $dateOfBirth ? Carbon::parse($dateOfBirth)->format('Y-m-d') : null,
             'gender' => $genderValue,
             'address_line1' => $addressLine1,
-            'address_line2' => $addressLine2,
             'city' => $city,
             'province_id' => $provinceId,
             'postal_code' => $postalCode,

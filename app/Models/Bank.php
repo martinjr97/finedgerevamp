@@ -97,10 +97,44 @@ class Bank extends Model
     }
 
     /**
+     * Digits stored for treasury account identification (typically last 2–6 digits).
+     */
+    public function editableAccountDigits(): string
+    {
+        $digits = preg_replace('/\D/', '', (string) $this->account_number) ?? '';
+
+        if ($digits === '') {
+            return '';
+        }
+
+        if (strlen($digits) <= 6) {
+            return $digits;
+        }
+
+        return substr($digits, -4);
+    }
+
+    /**
+     * Masked reference for lists and dropdowns.
+     */
+    public function getAccountReferenceAttribute(): string
+    {
+        $digits = preg_replace('/\D/', '', (string) $this->account_number) ?? '';
+
+        if ($digits === '') {
+            return '—';
+        }
+
+        $visible = strlen($digits) <= 4 ? $digits : substr($digits, -4);
+
+        return '····'.$visible;
+    }
+
+    /**
      * Get display name
      */
     public function getDisplayNameAttribute(): string
     {
-        return "{$this->name} - {$this->account_number} ({$this->bank_name})";
+        return "{$this->name} - {$this->account_reference} ({$this->bank_name})";
     }
 }

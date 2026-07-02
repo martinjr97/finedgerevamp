@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use App\Models\Bank;
-use App\Models\CashRegister;
 use App\Models\Channel;
 use App\Models\Company;
 use App\Models\Customer;
@@ -12,12 +11,14 @@ use App\Models\Loan;
 use App\Models\LoanPaymentSchedule;
 use App\Models\LoanProduct;
 use App\Models\LoanRepayment;
+use App\Models\PaymentGateway;
 use App\Models\Repayment;
-use App\Services\CustomerLifetimeStatementService;
-use App\Services\LoanRepaymentRefundService;
+use App\PaymentPlatform\Enums\PaymentGatewayStatus;
 use App\Support\RepaymentRecoveryMethod;
 use App\Services\CashRegisterService;
+use App\Services\CustomerLifetimeStatementService;
 use App\Services\LoanRepaymentLedgerService;
+use Database\Seeders\CGratePaymentGatewaySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
@@ -72,8 +73,7 @@ class RepaymentWorkflowTest extends TestCase
         Channel $channel,
         float $outstanding = 1000,
         ?string $dueDate = null
-    ): Loan
-    {
+    ): Loan {
         $loan = Loan::create([
             'customer_id' => $customer->id,
             'loan_product_id' => $loanProduct->id,
@@ -287,10 +287,17 @@ class RepaymentWorkflowTest extends TestCase
         $channel = Channel::create([
             'name' => 'Integrated Wallet '.$suffix,
             'code' => 'INT-'.$suffix,
+            'type' => Channel::TYPE_MOBILE_WALLET,
             'can_disburse' => true,
             'can_repay' => true,
             'is_repayment_integrated' => true,
             'is_active' => true,
+        ]);
+
+        $this->seed(CGratePaymentGatewaySeeder::class);
+        config(['cgrate.enabled' => true]);
+        PaymentGateway::query()->where('code', 'cgrate')->update([
+            'status' => PaymentGatewayStatus::Active,
         ]);
 
         $customer = $this->makeCustomer($company, $loanProduct, $suffix);

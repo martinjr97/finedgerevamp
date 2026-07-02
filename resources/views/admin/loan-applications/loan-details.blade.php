@@ -6,7 +6,7 @@
     <div class="space-y-8">
         @include('partials.admin.page-header', [
             'title' => 'Loan Details',
-            'description' => 'Enter loan amount and tenure, calculate repayments, then add disbursement details to continue',
+            'description' => 'Enter loan amount and tenure, calculate repayments, confirm the quote, then add disbursement details',
             'buttons' => [
                 [
                     'action' => 'secondary',
@@ -147,95 +147,50 @@
                         </button>
                     </div>
 
-                    {{-- Calculation + applicable rates (directly below loan inputs) --}}
-                    <div id="calculationResults" class="hidden md:col-span-2 rounded-2xl border border-cyan-500/30 bg-cyan-950/30 p-6 space-y-5">
-                        <div>
-                            <h3 class="text-lg font-semibold text-white">Applicable rates</h3>
-                            <p class="text-xs text-slate-400 mt-1">
-                                {{ $rateType->name }} · {{ ucfirst(str_replace('_', ' ', $rateType->accrual_period)) }} accrual
-                            </p>
-                        </div>
-                        <div id="ratesForTenureList" class="space-y-2"></div>
-                        <div id="appliedRateSummary" class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4 text-sm text-slate-200 hidden"></div>
+                    <div id="postCalculationSection" class="hidden md:col-span-2 space-y-6 pt-4 border-t border-white/10">
+                        @include('partials.loan-purpose-select', [
+                            'loanPurposes' => $loanPurposes,
+                            'selected' => $sessionLoanData['loan_purpose_id'] ?? null,
+                            'wrapperClass' => '',
+                        ])
 
-                        <h3 class="text-lg font-semibold text-white pt-2 border-t border-white/10">Loan calculation</h3>
-                        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <div>
-                                <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Principal Amount</p>
-                                <p id="calcPrincipal" class="text-lg font-semibold text-white">-</p>
+                        @if($paymentDetailsPrefilled ?? false)
+                            <div class="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-100">
+                                Loaded this customer’s saved payment details. Review and adjust if needed before continuing.
                             </div>
-                            <div>
-                                <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Processing Fee</p>
-                                <p id="calcProcessingFee" class="text-lg font-semibold text-white">-</p>
-                            </div>
-                            <div>
-                                <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Interest</p>
-                                <p id="calcInterest" class="text-lg font-semibold text-white">-</p>
-                            </div>
-                            <div>
-                                <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Total Amount</p>
-                                <p id="calcTotal" class="text-lg font-semibold text-emerald-400">-</p>
-                            </div>
-                            <div>
-                                <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Amount Per Installment</p>
-                                <p id="calcInstallmentAmount" class="text-lg font-semibold text-cyan-300">-</p>
-                            </div>
-                        </div>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Loan End Date</p>
-                                <p id="calcEndDate" class="text-sm font-medium text-white">-</p>
-                            </div>
-                            <div>
-                                <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Duration</p>
-                                <p id="calcDays" class="text-sm font-medium text-white">-</p>
-                            </div>
+                        @endif
+
+                        <div class="rounded-2xl border border-cyan-500/30 bg-cyan-950/20 px-4 py-3">
+                            <p class="text-sm font-semibold text-white">Disbursement details</p>
+                            <p class="text-xs text-slate-400 mt-1">Select how the customer will receive the loan funds, then continue to the next step.</p>
                         </div>
 
-                        <div id="repaymentScheduleSection" class="hidden space-y-3 pt-2 border-t border-white/10">
-                            <h4 class="text-sm font-semibold text-white">Repayment schedule</h4>
-                            <div class="overflow-x-auto rounded-xl border border-white/10">
-                                <table class="min-w-full text-sm text-slate-300">
-                                    <thead class="bg-white/[0.03] text-xs uppercase tracking-[0.2em] text-slate-400">
-                                        <tr>
-                                            <th class="px-4 py-3 text-left">Installment #</th>
-                                            <th class="px-4 py-3 text-left">Due Date</th>
-                                            <th class="px-4 py-3 text-left">Amount Due</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="repaymentScheduleBody"></tbody>
-                                </table>
-                            </div>
+                        @include('partials.disbursement-destination-fields', [
+                            'channels' => $channels,
+                            'financialInstitutions' => $financialInstitutions,
+                            'selectedChannelId' => old('channel_id', $disbursementDefaults['channel_id'] ?? ''),
+                            'defaultPhone' => $customer->phone ?? '',
+                            'disbursementPhoneNumber' => $disbursementDefaults['disbursement_phone_number'] ?? null,
+                            'disbursementFinancialInstitutionId' => $disbursementDefaults['disbursement_financial_institution_id'] ?? null,
+                            'disbursementFinancialInstitutionBranchId' => $disbursementDefaults['disbursement_financial_institution_branch_id'] ?? null,
+                            'disbursementAccountHolderName' => $disbursementDefaults['disbursement_account_holder_name'] ?? null,
+                            'disbursementAccountNumber' => $disbursementDefaults['disbursement_account_number'] ?? null,
+                            'disbursementNotes' => $disbursementDefaults['disbursement_notes'] ?? null,
+                            'channelSelectId' => 'disbursementChannelId',
+                            'wrapperId' => 'loanApplicationDestinationFields',
+                            'wrapperClass' => '',
+                            'deferDestinationValidation' => true,
+                        ])
+
+                        <div class="flex justify-end pt-2">
+                            <button type="button"
+                                    id="continueBtn"
+                                    style="display: none;"
+                                    class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-700 transition">
+                                {{ (isset($flowType) && in_array($flowType, ['mou', 'character', 'government', 'sme'])) ? 'Continue to Review' : 'Continue to Collateral' }}
+                            </button>
                         </div>
                     </div>
-
-                    @include('partials.loan-purpose-select', [
-                        'loanPurposes' => $loanPurposes,
-                        'selected' => $sessionLoanData['loan_purpose_id'] ?? null,
-                        'wrapperClass' => 'md:col-span-2',
-                    ])
-
-                    @if($paymentDetailsPrefilled ?? false)
-                        <div class="md:col-span-2 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-100">
-                            Loaded this customer’s saved payment details. Review and adjust if needed before continuing.
-                        </div>
-                    @endif
-
-                    @include('partials.disbursement-destination-fields', [
-                        'channels' => $channels,
-                        'financialInstitutions' => $financialInstitutions,
-                        'selectedChannelId' => old('channel_id', $disbursementDefaults['channel_id'] ?? ''),
-                        'defaultPhone' => $customer->phone ?? '',
-                        'disbursementPhoneNumber' => $disbursementDefaults['disbursement_phone_number'] ?? null,
-                        'disbursementFinancialInstitutionId' => $disbursementDefaults['disbursement_financial_institution_id'] ?? null,
-                        'disbursementFinancialInstitutionBranchId' => $disbursementDefaults['disbursement_financial_institution_branch_id'] ?? null,
-                        'disbursementAccountHolderName' => $disbursementDefaults['disbursement_account_holder_name'] ?? null,
-                        'disbursementAccountNumber' => $disbursementDefaults['disbursement_account_number'] ?? null,
-                        'disbursementNotes' => $disbursementDefaults['disbursement_notes'] ?? null,
-                        'channelSelectId' => 'disbursementChannelId',
-                        'wrapperId' => 'loanApplicationDestinationFields',
-                        'deferDestinationValidation' => true,
-                    ])
                 </div>
 
                 <input type="hidden" id="hiddenLoanRateId" name="loan_rate_id" value="{{ $sessionLoanData['loan_rate_id'] ?? '' }}">
@@ -248,14 +203,96 @@
                        class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-base font-medium text-slate-300 hover:bg-white/10 hover:border-white/30 transition">
                         Back
                     </a>
-                    <button type="button"
-                            id="continueBtn"
-                            style="display: none;"
-                            class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-700 transition">
-                        {{ (isset($flowType) && in_array($flowType, ['mou', 'character', 'government', 'sme'])) ? 'Continue to Review' : 'Continue to Collateral' }}
-                    </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    {{-- Calculation confirmation modal --}}
+    <div id="calculationConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+            <div class="flex items-start justify-between gap-4 mb-4">
+                <div>
+                    <h3 class="text-xl font-semibold text-white">Loan calculation</h3>
+                    <p class="text-sm text-slate-400 mt-1">
+                        {{ $rateType->name }} · {{ ucfirst(str_replace('_', ' ', $rateType->accrual_period)) }} accrual
+                    </p>
+                </div>
+                <button type="button" id="closeCalculationModalBtn" class="text-slate-400 hover:text-white transition" aria-label="Close">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="calculationResults" class="space-y-5">
+                <div id="ratesForTenureList" class="space-y-2"></div>
+                <div id="appliedRateSummary" class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4 text-sm text-slate-200 hidden"></div>
+
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pt-2 border-t border-white/10">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Principal Amount</p>
+                        <p id="calcPrincipal" class="text-lg font-semibold text-white">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Processing Fee</p>
+                        <p id="calcProcessingFee" class="text-lg font-semibold text-white">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Interest</p>
+                        <p id="calcInterest" class="text-lg font-semibold text-white">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Total Amount</p>
+                        <p id="calcTotal" class="text-lg font-semibold text-emerald-400">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Amount Per Installment</p>
+                        <p id="calcInstallmentAmount" class="text-lg font-semibold text-cyan-300">-</p>
+                    </div>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Loan End Date</p>
+                        <p id="calcEndDate" class="text-sm font-medium text-white">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-cyan-400 mb-1">Duration</p>
+                        <p id="calcDays" class="text-sm font-medium text-white">-</p>
+                    </div>
+                </div>
+
+                <div id="repaymentScheduleSection" class="hidden space-y-3 pt-2 border-t border-white/10">
+                    <h4 class="text-sm font-semibold text-white">Repayment schedule</h4>
+                    <div class="overflow-x-auto rounded-xl border border-white/10">
+                        <table class="min-w-full text-sm text-slate-300">
+                            <thead class="bg-white/[0.03] text-xs uppercase tracking-[0.2em] text-slate-400">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Installment #</th>
+                                    <th class="px-4 py-3 text-left">Due Date</th>
+                                    <th class="px-4 py-3 text-left">Amount Due</th>
+                                </tr>
+                            </thead>
+                            <tbody id="repaymentScheduleBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-sm text-slate-400 mt-6">Confirm to proceed with disbursement details, or cancel to adjust the loan inputs.</p>
+
+            <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                <button type="button"
+                        id="cancelCalculationBtn"
+                        class="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-5 py-3 text-sm font-medium text-slate-300 hover:bg-white/10 transition">
+                    Cancel
+                </button>
+                <button type="button"
+                        id="confirmCalculationBtn"
+                        class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-700 transition">
+                    Confirm calculation
+                </button>
+            </div>
         </div>
     </div>
 
@@ -267,6 +304,23 @@
         const savedCalculation = @json($sessionLoanData ?? []);
         const hasSavedPaymentDetails = @json($hasSavedPaymentDetails ?? false);
         let calculationSaved = false;
+        let pendingCalculationData = null;
+
+        function showCalculationModal() {
+            document.getElementById('calculationConfirmModal')?.classList.remove('hidden');
+        }
+
+        function hideCalculationModal() {
+            document.getElementById('calculationConfirmModal')?.classList.add('hidden');
+        }
+
+        function showPostCalculationSection() {
+            document.getElementById('postCalculationSection')?.classList.remove('hidden');
+        }
+
+        function hidePostCalculationSection() {
+            document.getElementById('postCalculationSection')?.classList.add('hidden');
+        }
 
         function displayCalculationResults(data) {
             const principal = data.principal_amount ?? data.loan_amount ?? 0;
@@ -303,7 +357,7 @@
 
         function showCalculationSavedState() {
             calculationSaved = true;
-            document.getElementById('calculationResults').classList.remove('hidden');
+            showPostCalculationSection();
             document.getElementById('continueBtn').style.display = 'inline-flex';
         }
 
@@ -502,7 +556,9 @@
 
         function resetCalculationState() {
             calculationSaved = false;
-            document.getElementById('calculationResults').classList.add('hidden');
+            pendingCalculationData = null;
+            hideCalculationModal();
+            hidePostCalculationSection();
             document.getElementById('continueBtn').style.display = 'none';
             document.getElementById('repaymentScheduleSection')?.classList.add('hidden');
             document.getElementById('repaymentScheduleBody').innerHTML = '';
@@ -513,9 +569,6 @@
             document.getElementById(id)?.addEventListener('input', resetCalculationState);
             document.getElementById(id)?.addEventListener('change', resetCalculationState);
         });
-
-        document.getElementById('loanApplicationDestinationFields')?.addEventListener('change', resetCalculationState);
-        document.getElementById('loanApplicationDestinationFields')?.addEventListener('input', resetCalculationState);
 
         function canOfferSavePaymentDetails(type) {
             return !hasSavedPaymentDetails && (type === 'mobile_wallet' || type === 'bank');
@@ -583,7 +636,7 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'Complete calculation first',
-                    text: 'Enter loan amount, tenure, and start date, then click Calculate before continuing.',
+                    text: 'Calculate the loan, confirm the quote in the modal, then complete disbursement details.',
                     confirmButtonColor: '#06b6d4',
                 });
                 return;
@@ -654,7 +707,7 @@
                     document.getElementById('hiddenLoanRateId').value = selectedOption.dataset.rateId;
                 }
 
-                const sessionData = {
+                pendingCalculationData = {
                     loan_amount: loanAmount,
                     tenure_months: tenureMonths,
                     loan_start_date: loanStartDate,
@@ -663,30 +716,13 @@
                     total_amount: data.total_amount,
                     loan_end_date: data.loan_end_date,
                     days: data.days,
-                    loan_rate_id: data.loan_rate_id || selectedOption.dataset.rateId,
+                    loan_rate_id: data.loan_rate_id || selectedOption?.dataset.rateId,
                     daily_rate: data.daily_rate || '',
                     weekly_rate: data.weekly_rate || '',
                     accrual_period: data.accrual_period,
                 };
 
-                return fetch(storeCalculationUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
-                    },
-                    body: JSON.stringify(sessionData),
-                }).then((response) => parseJsonResponse(response));
-            })
-            .then((result) => {
-                if (!result) {
-                    return;
-                }
-                if (result.success) {
-                    showCalculationSavedState();
-                    document.getElementById('calculationResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
+                showCalculationModal();
             })
             .catch((error) => {
                 console.error('Calculation error:', error);
@@ -701,6 +737,61 @@
             .finally(() => {
                 btn.disabled = false;
             });
+        });
+
+        function confirmPendingCalculation() {
+            if (!pendingCalculationData) {
+                return;
+            }
+
+            const confirmBtn = document.getElementById('confirmCalculationBtn');
+            confirmBtn.disabled = true;
+
+            fetch(storeCalculationUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+                },
+                body: JSON.stringify(pendingCalculationData),
+            })
+            .then((response) => parseJsonResponse(response))
+            .then((result) => {
+                if (result?.success) {
+                    hideCalculationModal();
+                    showCalculationSavedState();
+                    document.getElementById('postCalculationSection')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            })
+            .catch((error) => {
+                console.error('Save calculation error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Save Failed',
+                    text: error.message || 'Could not save the calculation. Please try again.',
+                    confirmButtonColor: '#ef4444',
+                });
+            })
+            .finally(() => {
+                confirmBtn.disabled = false;
+            });
+        }
+
+        document.getElementById('confirmCalculationBtn')?.addEventListener('click', confirmPendingCalculation);
+        document.getElementById('cancelCalculationBtn')?.addEventListener('click', () => {
+            pendingCalculationData = null;
+            hideCalculationModal();
+        });
+        document.getElementById('closeCalculationModalBtn')?.addEventListener('click', () => {
+            pendingCalculationData = null;
+            hideCalculationModal();
+        });
+        document.getElementById('calculationConfirmModal')?.addEventListener('click', (event) => {
+            if (event.target === event.currentTarget) {
+                pendingCalculationData = null;
+                hideCalculationModal();
+            }
         });
 
         function formatCurrency(amount) {

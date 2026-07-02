@@ -48,7 +48,6 @@ class CompanyRequest extends FormRequest
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:50'],
             'address_line1' => ['nullable', 'string', 'max:255'],
-            'address_line2' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:120'],
             'state' => ['nullable', 'string', 'max:120'],
             'postal_code' => ['nullable', 'string', 'max:20'],

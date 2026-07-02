@@ -1,0 +1,36 @@
+<?php
+
+namespace App\PaymentPlatform\Services;
+
+use App\Models\PaymentGatewayAttempt;
+use App\PaymentPlatform\Enums\GatewayAttemptStatus;
+use App\PaymentPlatform\Jobs\QueryGatewayAttemptStatusJob;
+use App\PaymentPlatform\Support\PaymentQueue;
+
+class GatewayPollingService
+{
+    public function dispatchDueAttempts(): int
+    {
+        if ((string) config('queue.default') === 'sync') {
+            return 0;
+        }
+
+        $dispatched = 0;
+
+        PaymentGatewayAttempt::query()
+            ->where('status', GatewayAttemptStatus::Pending)
+            ->whereNotNull('next_query_at')
+            ->where('next_query_at', '<=', now())
+            ->orderBy('next_query_at')
+            ->limit(100)
+            ->pluck('id')
+            ->each(function (int $attemptId) use (&$dispatched) {
+                QueryGatewayAttemptStatusJob::dispatch($attemptId)
+                    ->onQueue(PaymentQueue::polling());
+
+                $dispatched++;
+            });
+
+        return $dispatched;
+    }
+}

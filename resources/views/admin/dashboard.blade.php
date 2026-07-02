@@ -204,6 +204,45 @@
             </section>
         @endif
 
+        @if (!empty($gatewayAutoDisbursementBalanceAlerts))
+            <section>
+                <article class="rounded-3xl border border-orange-300/30 bg-orange-500/10 p-6 shadow-lg space-y-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-orange-100">Gateway Disbursement Balance Notice</h2>
+                        <p class="text-sm text-orange-200/80 mt-1">
+                            Automatic gateway disbursement is enabled, but the linked account balance recorded in the system may not cover pending payouts.
+                            Disbursement requests will still be sent to the gateway; the provider may accept or reject them.
+                        </p>
+                    </div>
+
+                    <div class="space-y-3">
+                        @foreach ($gatewayAutoDisbursementBalanceAlerts as $alert)
+                            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div class="space-y-2">
+                                        <p class="font-semibold text-white">{{ $alert->routeLabel }} · {{ $alert->gatewayName }}</p>
+                                        <p class="leading-relaxed">{{ $alert->message }}</p>
+                                        <p class="text-xs text-slate-400">
+                                            {{ $alert->linkedAccountLabel }} · System balance: {{ $alert->formattedBalance() }}
+                                            @if($alert->exposureAmount > 0)
+                                                · Pending/processing exposure: {{ $alert->formattedExposure() }}
+                                            @endif
+                                        </p>
+                                    </div>
+                                    @if($alert->manageUrl)
+                                        <a href="{{ $alert->manageUrl }}"
+                                           class="inline-flex items-center gap-2 rounded-xl border border-orange-300/40 bg-orange-500/20 px-3 py-2 text-xs font-semibold text-orange-100 hover:bg-orange-500/30 transition">
+                                            View Account
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </article>
+            </section>
+        @endif
+
         {{-- Pending Disbursement Queue (only when there are approved loans awaiting disbursement) --}}
         @if ($canDisburseLoans && $pendingDisbursementCount > 0)
             <section>

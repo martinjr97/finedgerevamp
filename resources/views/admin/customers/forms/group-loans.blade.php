@@ -98,11 +98,6 @@
                 <input type="text" name="address_line1" value="{{ old('address_line1') }}" required class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
                 @error('address_line1')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
             </div>
-            <div class="md:col-span-2">
-                <label class="text-sm font-medium text-slate-300">Address Line 2</label>
-                <input type="text" name="address_line2" value="{{ old('address_line2') }}" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
-                @error('address_line2')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
-            </div>
             <div>
                 <label class="text-sm font-medium text-slate-300">City <span class="text-red-400">*</span></label>
                 <input type="text" name="city" value="{{ old('city') }}" required class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
@@ -157,11 +152,6 @@
                 <label class="text-sm font-medium text-slate-300">Business Location Address Line 1 <span class="text-red-400">*</span></label>
                 <input type="text" name="work_address_line1" value="{{ old('work_address_line1') }}" required class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
                 @error('work_address_line1')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
-            </div>
-            <div class="md:col-span-2">
-                <label class="text-sm font-medium text-slate-300">Business Location Address Line 2</label>
-                <input type="text" name="work_address_line2" value="{{ old('work_address_line2') }}" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
-                @error('work_address_line2')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="text-sm font-medium text-slate-300">Business Location City <span class="text-red-400">*</span></label>

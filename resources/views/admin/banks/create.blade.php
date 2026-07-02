@@ -7,15 +7,16 @@
         <div class="space-y-2 text-left">
             <p class="text-xs uppercase tracking-[0.4em] text-cyan-300">Financial Management</p>
             <h1 class="text-3xl font-bold">Add bank account</h1>
-            <p class="text-sm text-slate-400">Link a company treasury account for disbursements and repayments.</p>
+            <p class="text-sm text-slate-400">Link a company treasury account. You can add branch, notes, and other details when editing later.</p>
         </div>
 
-        <form action="{{ route('admin.banks.store') }}" method="POST" class="space-y-6">
+        <form action="{{ route('admin.banks.store') }}" method="POST" class="space-y-6 max-w-3xl">
             @csrf
 
             <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
                 @include('partials.admin.bank-form-fields', [
                     'financialInstitutions' => $financialInstitutions,
+                    'compact' => true,
                 ])
             </div>
 

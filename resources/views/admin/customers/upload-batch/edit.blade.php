@@ -94,11 +94,6 @@ data['phone'] ?? '' }}"
                                 <input type="text" name="address_line1" value="{{ $record->data['address line 1'] ?? $record->data['address_line1'] ?? $record->data['address'] ?? '' }}"
                                        class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition">
                             </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-slate-300 mb-2">Address Line 2</label>
-                                <input type="text" name="address_line2" value="{{ $record->data['address line 2'] ?? $record->data['address_line2'] ?? '' }}"
-                                       class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition">
-                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-300 mb-2">City</label>
                                 <input type="text" name="city" value="{{ $record->data['city'] ?? '' }}"

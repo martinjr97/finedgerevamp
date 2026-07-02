@@ -568,7 +568,6 @@ class RegistrationRequestController extends Controller
     {
         $rules = array_merge($this->commonRules(), [
             'address_line1' => ['required', 'string', 'max:255'],
-            'address_line2' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:100'],
             'province_id' => ['required', 'integer', 'exists:provinces,id'],
             'district_id' => [
@@ -603,7 +602,6 @@ class RegistrationRequestController extends Controller
 
         $collateralDetails = [
             'address_line1' => $data['address_line1'],
-            'address_line2' => $data['address_line2'] ?? null,
             'city' => $data['city'],
             'province_id' => (int) $data['province_id'],
             'district_id' => (int) $data['district_id'],
@@ -655,7 +653,6 @@ class RegistrationRequestController extends Controller
 
         $rules = array_merge($this->commonRules(), [
             'address_line1' => ['required', 'string', 'max:255'],
-            'address_line2' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:100'],
             'province_id' => ['required', 'integer', 'exists:provinces,id'],
             'district_id' => [
@@ -688,7 +685,6 @@ class RegistrationRequestController extends Controller
             'bank_account_name' => ['required', 'string', 'max:255'],
             'bank_account_number' => ['required', 'string', 'max:50'],
             'work_address_line1' => ['required', 'string', 'max:255'],
-            'work_address_line2' => ['nullable', 'string', 'max:255'],
             'work_city' => ['nullable', 'string', 'max:100'],
             'work_province_id' => ['required', 'integer', 'exists:provinces,id'],
             'work_district_id' => [
@@ -753,7 +749,6 @@ class RegistrationRequestController extends Controller
 
         $employmentDetails = [
             'address_line1' => $data['address_line1'],
-            'address_line2' => $data['address_line2'] ?? null,
             'city' => $data['city'],
             'province_id' => (int) $data['province_id'],
             'district_id' => (int) $data['district_id'],
@@ -776,7 +771,6 @@ class RegistrationRequestController extends Controller
             'bank_account_name' => $data['bank_account_name'],
             'bank_account_number' => $data['bank_account_number'],
             'work_address_line1' => $data['work_address_line1'],
-            'work_address_line2' => $data['work_address_line2'] ?? null,
             'work_city' => $data['work_city'] ?? null,
             'work_province_id' => (int) $data['work_province_id'],
             'work_district_id' => (int) $data['work_district_id'],

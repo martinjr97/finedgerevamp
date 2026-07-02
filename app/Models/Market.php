@@ -16,7 +16,6 @@ class Market extends Model
         'name',
         'code',
         'address_line1',
-        'address_line2',
         'city',
         'province_id',
         'district_id',
