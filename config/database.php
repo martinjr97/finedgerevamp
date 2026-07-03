@@ -178,6 +178,19 @@ return [
             'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
         ],
 
+        'financial' => [
+            'url' => env('REDIS_FINANCIAL_URL', env('REDIS_URL')),
+            'host' => env('REDIS_FINANCIAL_HOST', env('REDIS_HOST', '127.0.0.1')),
+            'username' => env('REDIS_FINANCIAL_USERNAME', env('REDIS_USERNAME')),
+            'password' => env('REDIS_FINANCIAL_PASSWORD', env('REDIS_PASSWORD')),
+            'port' => env('REDIS_FINANCIAL_PORT', env('REDIS_PORT', '6379')),
+            'database' => env('REDIS_FINANCIAL_DB', '2'),
+            'max_retries' => env('REDIS_MAX_RETRIES', 3),
+            'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
+            'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
+            'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
+        ],
+
     ],
 
 ];

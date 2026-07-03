@@ -53,7 +53,10 @@ class PaymentGatewayLog extends Model
             'event' => $event,
             'level' => $level,
             'message' => $message,
-            'payload' => self::redactSecrets($payload),
+            'payload' => self::redactSecrets(array_merge(
+                $payload,
+                $attempt ? ['correlation_id' => $attempt->correlationId()] : [],
+            )),
         ]);
     }
 

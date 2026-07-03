@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Admin;
 use App\Support\CommunicationLogger;
+use App\Support\Queue\ApplicationQueue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -18,6 +19,9 @@ class AdminUserInvited extends Notification implements ShouldQueue
         protected Admin $admin,
         protected string $loginUrl
     ) {
+        $this->tries = (int) config('queues.retries.notifications', 3);
+        $this->onConnection(ApplicationQueue::connection())
+            ->onQueue(ApplicationQueue::notifications());
     }
 
     public function via(object $notifiable): array

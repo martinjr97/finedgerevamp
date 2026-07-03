@@ -12,9 +12,9 @@ use App\PaymentPlatform\Enums\GatewayAttemptStatus;
 use App\PaymentPlatform\Enums\GatewayDirection;
 use App\PaymentPlatform\Jobs\DispatchGatewayCollectionJob;
 use App\PaymentPlatform\Jobs\DispatchGatewayDisbursementJob;
+use App\PaymentPlatform\Enums\FinancialJobPriority;
 use App\PaymentPlatform\Jobs\QueryGatewayAttemptStatusJob;
 use App\PaymentPlatform\Support\CGrateIssuerNameResolver;
-use App\PaymentPlatform\Support\PaymentQueue;
 use App\Services\CustomerNotificationService;
 use App\Services\Loans\LoanDisbursementService;
 use App\Services\RepaymentProcessingService;
@@ -100,8 +100,7 @@ class GatewayIntegrationService
         if ((string) config('queue.default') === 'sync') {
             DispatchGatewayCollectionJob::dispatchSync($attempt->id);
         } else {
-            DispatchGatewayCollectionJob::dispatch($attempt->id)
-                ->onQueue(PaymentQueue::high());
+            DispatchGatewayCollectionJob::dispatch($attempt->id);
         }
 
         $attempt->refresh();
@@ -189,8 +188,7 @@ class GatewayIntegrationService
         if ((string) config('queue.default') === 'sync') {
             DispatchGatewayDisbursementJob::dispatchSync($attempt->id);
         } else {
-            DispatchGatewayDisbursementJob::dispatch($attempt->id)
-                ->onQueue(PaymentQueue::high());
+            DispatchGatewayDisbursementJob::dispatch($attempt->id);
         }
 
         $attempt->refresh();
@@ -470,8 +468,7 @@ class GatewayIntegrationService
         if ((string) config('queue.default') === 'sync') {
             QueryGatewayAttemptStatusJob::dispatchSync($attempt->id);
         } else {
-            QueryGatewayAttemptStatusJob::dispatch($attempt->id)
-                ->onQueue(PaymentQueue::high());
+            QueryGatewayAttemptStatusJob::dispatchForAttempt($attempt->id, null, FinancialJobPriority::High);
         }
 
         return true;
@@ -515,8 +512,7 @@ class GatewayIntegrationService
 
         $pollInterval = (int) config('cgrate.poll_interval_seconds', 15);
 
-        QueryGatewayAttemptStatusJob::dispatch($attempt->id)
-            ->onQueue(PaymentQueue::polling())
+        QueryGatewayAttemptStatusJob::dispatchForAttempt($attempt->id)
             ->delay(now()->addSeconds(max(1, $pollInterval)));
     }
 }

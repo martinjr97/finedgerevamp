@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Support\CommunicationLogger;
+use App\Support\Queue\ApplicationQueue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -19,6 +20,9 @@ class AdminPasswordResetLink extends Notification implements ShouldQueue
         public string $resetUrl,
         public bool $isAdminInitiated = false
     ) {
+        $this->tries = (int) config('queues.retries.notifications', 3);
+        $this->onConnection(ApplicationQueue::connection())
+            ->onQueue(ApplicationQueue::notifications());
     }
 
     /**

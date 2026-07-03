@@ -5,7 +5,6 @@ namespace App\PaymentPlatform\Services;
 use App\Models\PaymentGatewayAttempt;
 use App\PaymentPlatform\Enums\GatewayAttemptStatus;
 use App\PaymentPlatform\Jobs\QueryGatewayAttemptStatusJob;
-use App\PaymentPlatform\Support\PaymentQueue;
 
 class GatewayPollingService
 {
@@ -25,8 +24,7 @@ class GatewayPollingService
             ->limit(100)
             ->pluck('id')
             ->each(function (int $attemptId) use (&$dispatched) {
-                QueryGatewayAttemptStatusJob::dispatch($attemptId)
-                    ->onQueue(PaymentQueue::polling());
+                QueryGatewayAttemptStatusJob::dispatchForAttempt($attemptId);
 
                 $dispatched++;
             });

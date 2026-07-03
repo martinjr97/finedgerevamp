@@ -204,6 +204,8 @@
             </section>
         @endif
 
+        @include('partials.admin.gateway-operations-metrics')
+
         @if (!empty($gatewayAutoDisbursementBalanceAlerts))
             <section>
                 <article class="rounded-3xl border border-orange-300/30 bg-orange-500/10 p-6 shadow-lg space-y-4">

@@ -154,6 +154,11 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::put('payment-gateway-routing/{paymentGatewayRoute}', [\App\Http\Controllers\Admin\PaymentGatewayRoutingController::class, 'update'])->name('payment-gateway-routing.update');
         Route::redirect('payment-gateways/routing', '/admin/payment-gateway-routing')->name('payment-gateways.routing');
         Route::resource('payment-gateways', \App\Http\Controllers\Admin\PaymentGatewayController::class)->only(['index', 'show', 'edit', 'update']);
+        Route::get('payment-operations', [\App\Http\Controllers\Admin\PaymentOperationsController::class, 'index'])->name('payment-operations.index');
+        Route::get('payment-operations/failed-jobs', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'index'])->name('payment-operations.failed-jobs.index');
+        Route::get('payment-operations/failed-jobs/{uuid}', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'show'])->name('payment-operations.failed-jobs.show');
+        Route::post('payment-operations/failed-jobs/{uuid}/retry', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'retry'])->name('payment-operations.failed-jobs.retry');
+        Route::delete('payment-operations/failed-jobs/{uuid}', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'discard'])->name('payment-operations.failed-jobs.discard');
         Route::resource('creditors', CreditorController::class);
 
         // Financial Transactions

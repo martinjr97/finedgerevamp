@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Support\Queue\ApplicationQueue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -17,6 +18,9 @@ class AdminPasswordResetOtp extends Notification implements ShouldQueue
     public function __construct(
         public string $otp
     ) {
+        $this->tries = (int) config('queues.retries.notifications', 3);
+        $this->onConnection(ApplicationQueue::connection())
+            ->onQueue(ApplicationQueue::notifications());
     }
 
     /**

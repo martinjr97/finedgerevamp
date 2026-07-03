@@ -12,6 +12,8 @@ use App\Models\LoanProduct;
 use App\Models\LoanPaymentSchedule;
 use App\Models\Repayment;
 use App\Services\Loans\GatewayAutoDisbursementBalanceAlertService;
+use App\PaymentPlatform\Services\GatewayOperationsMetricsService;
+use App\Support\PermissionMatrix;
 use Carbon\Carbon;
 use Illuminate\View\View;
 
@@ -245,6 +247,10 @@ class DashboardController extends Controller
         $gatewayAutoDisbursementBalanceAlerts = app(GatewayAutoDisbursementBalanceAlertService::class)
             ->alertsForAdmin($admin);
 
+        $gatewayOperationsMetrics = $admin->hasRole(PermissionMatrix::SUPER_ADMIN_ROLE)
+            ? app(GatewayOperationsMetricsService::class)->snapshot()
+            : null;
+
         return view('admin.dashboard', [
             'todayStats' => $todayStats,
             'weekStats' => $weekStats,
@@ -256,6 +262,7 @@ class DashboardController extends Controller
             'pendingDisbursementAmount' => $pendingDisbursementAmount,
             'pendingDisbursementLoans' => $pendingDisbursementLoans,
             'gatewayAutoDisbursementBalanceAlerts' => $gatewayAutoDisbursementBalanceAlerts,
+            'gatewayOperationsMetrics' => $gatewayOperationsMetrics,
             'dashboardToday' => $today,
         ]);
     }

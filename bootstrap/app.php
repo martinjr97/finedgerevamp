@@ -35,6 +35,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->call(function () {
             app(\App\PaymentPlatform\Services\GatewayPollingService::class)->dispatchDueAttempts();
         })->everyMinute()->name('gateway-poll-due-attempts')->withoutOverlapping();
+
+        $schedule->call(function () {
+            \Illuminate\Support\Facades\Cache::put('operations:scheduler:last_heartbeat', now(), now()->addMinutes(5));
+        })->everyMinute()->name('operations-scheduler-heartbeat');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Handle API exceptions with JSON responses

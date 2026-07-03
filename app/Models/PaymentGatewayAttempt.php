@@ -85,6 +85,11 @@ class PaymentGatewayAttempt extends Model
         return $this->status->isTerminal();
     }
 
+    public function correlationId(): string
+    {
+        return (string) $this->internal_reference;
+    }
+
     public function markInitiated(array $payload = []): void
     {
         $this->update([

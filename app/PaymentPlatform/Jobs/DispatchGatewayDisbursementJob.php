@@ -5,7 +5,9 @@ namespace App\PaymentPlatform\Jobs;
 use App\Models\PaymentGatewayAttempt;
 use App\PaymentPlatform\DTOs\DisburseMoneyRequest;
 use App\PaymentPlatform\Enums\GatewayAttemptStatus;
-use App\PaymentPlatform\Support\PaymentQueue;
+use App\PaymentPlatform\Jobs\Concerns\InteractsWithGatewayCorrelation;
+use App\PaymentPlatform\Services\GatewayIntegrationService;
+use App\Support\Queue\FinancialQueue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -15,23 +17,28 @@ use Illuminate\Support\Facades\DB;
 
 class DispatchGatewayDisbursementJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithGatewayCorrelation, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    public int $tries;
 
     public int $timeout = 120;
 
     public function __construct(
         public readonly int $paymentGatewayAttemptId,
     ) {
-        $this->onQueue(PaymentQueue::high());
+        $this->tries = (int) config('queues.retries.financial_initiation', 1);
+        $this->onConnection(FinancialQueue::connection())
+            ->onQueue(FinancialQueue::disbursementsHigh());
+    }
+
+    protected function horizonJobKind(): string
+    {
+        return 'disbursement';
     }
 
     public function handle(): void
     {
-        $attempt = PaymentGatewayAttempt::query()
-            ->with('paymentGateway')
-            ->find($this->paymentGatewayAttemptId);
+        $attempt = $this->applyGatewayCorrelationContext($this->paymentGatewayAttemptId);
 
         if (! $attempt || $attempt->isTerminal()) {
             return;
@@ -119,7 +126,7 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
         if ($attempt->status === GatewayAttemptStatus::Pending) {
             $this->schedulePolling($attempt->id, $pollInterval);
         } elseif ($attempt->status === GatewayAttemptStatus::Failed) {
-            app(\App\PaymentPlatform\Services\GatewayIntegrationService::class)
+            app(GatewayIntegrationService::class)
                 ->handleDisbursementFailure($attempt);
         }
     }
@@ -130,8 +137,7 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
             return;
         }
 
-        QueryGatewayAttemptStatusJob::dispatch($attemptId)
-            ->onQueue(PaymentQueue::polling())
+        QueryGatewayAttemptStatusJob::dispatchForAttempt($attemptId)
             ->delay(now()->addSeconds(max(1, $pollInterval)));
     }
 }

@@ -3,37 +3,75 @@
 namespace App\PaymentPlatform\Jobs;
 
 use App\Models\PaymentGatewayAttempt;
+use App\PaymentPlatform\DTOs\GatewayStatusResult;
 use App\PaymentPlatform\Enums\GatewayAttemptStatus;
+use App\PaymentPlatform\Enums\FinancialJobPriority;
+use App\PaymentPlatform\Enums\GatewayDirection;
+use App\PaymentPlatform\Jobs\Concerns\InteractsWithGatewayCorrelation;
 use App\PaymentPlatform\Services\GatewayIntegrationService;
-use App\PaymentPlatform\Support\PaymentQueue;
+use App\Support\Queue\FinancialQueue;
+use DateTimeInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 
 class QueryGatewayAttemptStatusJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithGatewayCorrelation, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    public int $tries;
 
     public int $timeout = 120;
 
     public function __construct(
         public readonly int $paymentGatewayAttemptId,
     ) {
-        $this->onQueue(PaymentQueue::polling());
+        $this->tries = (int) config('queues.retries.financial_status', 5);
+    }
+
+    public static function dispatchForAttempt(
+        int $attemptId,
+        ?DateTimeInterface $delay = null,
+        FinancialJobPriority $priority = FinancialJobPriority::Polling,
+    ): PendingDispatch {
+        $attempt = PaymentGatewayAttempt::query()->find($attemptId);
+        $direction = $attempt?->direction ?? GatewayDirection::Collection;
+
+        $pending = self::dispatch($attemptId)
+            ->onConnection(FinancialQueue::connection())
+            ->onQueue(FinancialQueue::queueFor($direction, $priority));
+
+        if ($delay !== null) {
+            $pending->delay($delay);
+        }
+
+        return $pending;
+    }
+
+    protected function horizonJobKind(): string
+    {
+        $attempt = PaymentGatewayAttempt::query()->find($this->paymentGatewayAttemptId);
+
+        return $attempt?->direction === GatewayDirection::Disbursement
+            ? 'disbursement'
+            : 'payment';
     }
 
     public function handle(GatewayIntegrationService $integrationService): void
     {
-        $attempt = PaymentGatewayAttempt::query()
-            ->with('paymentGateway')
-            ->find($this->paymentGatewayAttemptId);
+        $attempt = $this->applyGatewayCorrelationContext($this->paymentGatewayAttemptId);
 
-        if (! $attempt || $attempt->isTerminal()) {
+        if (! $attempt) {
+            return;
+        }
+
+        $attempt->loadMissing('paymentGateway');
+
+        if ($attempt->isTerminal()) {
             return;
         }
 
@@ -104,7 +142,7 @@ class QueryGatewayAttemptStatusJob implements ShouldQueue
 
         $attempt->refresh();
 
-        $integrationService->handleStatusResult($attempt, new \App\PaymentPlatform\DTOs\GatewayStatusResult(
+        $integrationService->handleStatusResult($attempt, new GatewayStatusResult(
             normalizedStatus: 'expired',
             responseMessage: 'Payment window expired.',
         ));
@@ -131,8 +169,6 @@ class QueryGatewayAttemptStatusJob implements ShouldQueue
             return;
         }
 
-        self::dispatch($attemptId)
-            ->onQueue(PaymentQueue::polling())
-            ->delay(now()->addSeconds(max(1, $pollInterval)));
+        self::dispatchForAttempt($attemptId, now()->addSeconds(max(1, $pollInterval)));
     }
 }
