@@ -44,6 +44,7 @@ class PaymentGatewayDisbursementTest extends TestCase
             'cgrate.enabled' => true,
             'cgrate.username' => 'test-user',
             'cgrate.password' => 'test-pass',
+            'cgrate.uat.force_disbursement_issuer_name' => false,
             'queue.default' => 'sync',
         ]);
     }
@@ -107,6 +108,30 @@ class PaymentGatewayDisbursementTest extends TestCase
             $this->assertStringContainsString('0978232334', $body);
 
             return Http::response($this->soapSuccessBody('processCashDeposit', 'DEP-MM'), 200);
+        });
+
+        app(GatewayIntegrationService::class)->initiateDisbursement($context['loan']);
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_soap_payload_uses_543_issuer_name_when_uat_force_enabled_for_disbursement(): void
+    {
+        config([
+            'cgrate.uat.force_disbursement_issuer_name' => true,
+            'cgrate.uat.disbursement_issuer_name' => '543',
+        ]);
+
+        $this->activateGatewayWallet(20000);
+        $context = $this->makeLoanContext(Channel::TYPE_MOBILE_WALLET, 'AIRTEL_MONEY');
+
+        Http::fake(function ($request) {
+            $body = $request->body();
+
+            $this->assertStringContainsString('<issuerName>543</issuerName>', $body);
+            $this->assertStringNotContainsString('<issuerName>Airtel</issuerName>', $body);
+
+            return Http::response($this->soapSuccessBody('processCashDeposit', 'DEP-MM-UAT'), 200);
         });
 
         app(GatewayIntegrationService::class)->initiateDisbursement($context['loan']);
@@ -276,6 +301,74 @@ class PaymentGatewayDisbursementTest extends TestCase
 
         $wallet->refresh();
         $this->assertSame(15000.0, (float) $wallet->current_balance);
+    }
+
+    public function test_expired_gateway_attempt_marks_loan_failed(): void
+    {
+        $this->activateGatewayWallet(20000);
+        $context = $this->makeLoanContext(Channel::TYPE_MOBILE_WALLET, 'MTN_MONEY');
+        $gateway = PaymentGateway::query()->where('code', 'cgrate')->firstOrFail();
+
+        $attempt = PaymentGatewayAttempt::create([
+            'payment_gateway_id' => $gateway->id,
+            'direction' => GatewayDirection::Disbursement,
+            'purpose' => GatewayAttemptPurpose::LoanDisbursement,
+            'attemptable_type' => Loan::class,
+            'attemptable_id' => $context['loan']->id,
+            'internal_reference' => 'FINEDGE-OUT-EXP-001',
+            'provider_reference' => 'FINEDGE-OUT-EXP-001',
+            'payment_method' => GatewayPaymentMethod::MobileMoney,
+            'amount' => 5000,
+            'currency' => 'ZMW',
+            'status' => GatewayAttemptStatus::Pending,
+            'initiated_at' => now()->subMinutes(10),
+        ]);
+
+        $context['loan']->update(['disbursement_status' => 'processing']);
+
+        app(GatewayIntegrationService::class)->handleStatusResult($attempt, new \App\PaymentPlatform\DTOs\GatewayStatusResult(
+            normalizedStatus: 'expired',
+            responseMessage: 'Payment window expired.',
+        ));
+
+        $attempt->refresh();
+        $context['loan']->refresh();
+
+        $this->assertSame(GatewayAttemptStatus::Expired, $attempt->status);
+        $this->assertSame('failed', $context['loan']->disbursement_status);
+    }
+
+    public function test_zero_treasury_balance_still_completes_gateway_confirmed_disbursement(): void
+    {
+        $wallet = $this->activateGatewayWallet(0);
+        $context = $this->makeLoanContext(Channel::TYPE_MOBILE_WALLET, 'MTN_MONEY');
+        $gateway = PaymentGateway::query()->where('code', 'cgrate')->firstOrFail();
+
+        $attempt = PaymentGatewayAttempt::create([
+            'payment_gateway_id' => $gateway->id,
+            'direction' => GatewayDirection::Disbursement,
+            'purpose' => GatewayAttemptPurpose::LoanDisbursement,
+            'attemptable_type' => Loan::class,
+            'attemptable_id' => $context['loan']->id,
+            'internal_reference' => 'FINEDGE-OUT-ZERO-001',
+            'provider_reference' => 'FINEDGE-OUT-ZERO-001',
+            'payment_method' => GatewayPaymentMethod::MobileMoney,
+            'amount' => 5000,
+            'currency' => 'ZMW',
+            'status' => GatewayAttemptStatus::Confirmed,
+            'confirmed_at' => now(),
+        ]);
+
+        $context['loan']->update(['disbursement_status' => 'processing']);
+
+        app(GatewayIntegrationService::class)->finalizeConfirmedDisbursement($attempt);
+
+        $wallet->refresh();
+        $context['loan']->refresh();
+
+        $this->assertSame('completed', $context['loan']->disbursement_status);
+        $this->assertSame(-5000.0, (float) $wallet->current_balance);
+        $this->assertTrue($context['loan']->metadata['finance_posted_below_zero_balance'] ?? false);
     }
 
     public function test_issuer_name_mobile_mapping(): void

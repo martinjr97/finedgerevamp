@@ -204,6 +204,7 @@ class AdminSidebarNavigation
                 'Banking Institutions' => ['admin.financial-institutions.*'],
                 'Payment Gateways' => ['admin.payment-gateways.*'],
                 'Payment Operations' => ['admin.payment-operations.*'],
+                'SMS Operations' => ['admin.sms-operations.*'],
                 'Gateway Routing' => ['admin.payment-gateway-routing.*'],
                 'Payment Channels' => ['admin.channels.*'],
                 'FAQs' => ['admin.faqs.*'],

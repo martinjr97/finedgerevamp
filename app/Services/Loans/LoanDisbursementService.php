@@ -194,17 +194,7 @@ class LoanDisbursementService
                 return;
             }
 
-            if ((float) $account->current_balance < $amount) {
-                $lockedLoan->update([
-                    'metadata' => array_merge($lockedLoan->metadata ?? [], [
-                        'requires_finance_reconciliation' => true,
-                        'gateway_confirmed_at' => now()->toIso8601String(),
-                        'gateway_insufficient_balance' => true,
-                    ]),
-                ]);
-
-                return;
-            }
+            $balanceBefore = (float) $account->current_balance;
 
             $this->financePostingService->debitSourceAccount($lockedLoan, $accountType, $accountId, $amount);
 
@@ -215,6 +205,8 @@ class LoanDisbursementService
                 'disbursement_reference' => $attempt->provider_reference ?? $attempt->internal_reference,
                 'disbursed_via_gateway' => $attempt->paymentGateway?->code,
                 'gateway_attempt_id' => $attempt->id,
+                'finance_balance_before_disbursement' => round($balanceBefore, 2),
+                'finance_posted_below_zero_balance' => $balanceBefore < $amount,
             ]);
             $lockedLoan->save();
         });

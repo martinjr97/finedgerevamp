@@ -64,7 +64,7 @@
                 @if(
                     ($disbursementGatewayAvailable ?? false) &&
                     $loan->status === 'approved' &&
-                    in_array($loan->disbursement_status, ['pending', 'failed'], true) &&
+                    $loan->disbursement_status === 'pending' &&
                     ($disbursementDestinationPreview ?? null)
                 )
                     @can('loans.disburse')

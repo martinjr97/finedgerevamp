@@ -149,7 +149,7 @@ class CGrateUatToolsTest extends TestCase
         Http::fake(function ($request) {
             $body = $request->body();
             $this->assertStringContainsString('processCashDeposit', $body);
-            $this->assertStringContainsString('<issuerName>Airtel</issuerName>', $body);
+            $this->assertStringContainsString('<issuerName>543</issuerName>', $body);
             $this->assertStringContainsString('FINEDGE-UAT-REF-001', $body);
 
             return Http::response($this->paymentSoapResponse(0, 'Successful', 'PAY-001'), 200);

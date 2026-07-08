@@ -39,6 +39,16 @@ class CGrateTestCashDepositCommand extends Command
             return self::FAILURE;
         }
 
+        if ((bool) config('cgrate.uat.force_disbursement_issuer_name', false)) {
+            $forcedIssuerName = (string) config('cgrate.uat.disbursement_issuer_name', '543');
+
+            if ($issuer !== $forcedIssuerName) {
+                $this->warn('UAT mode forces issuerName to '.$forcedIssuerName.' (overriding --issuer=\''.$issuer.'\').');
+            }
+
+            $issuer = $forcedIssuerName;
+        }
+
         $amount = number_format((float) $this->option('amount'), 2, '.', '');
         if ((float) $amount <= 0) {
             $this->error('--amount must be greater than zero.');

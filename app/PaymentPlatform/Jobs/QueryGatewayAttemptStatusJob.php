@@ -130,17 +130,9 @@ class QueryGatewayAttemptStatusJob implements ShouldQueue
 
     private function expireAttempt(PaymentGatewayAttempt $attempt, GatewayIntegrationService $integrationService): void
     {
-        DB::transaction(function () use ($attempt) {
-            $locked = PaymentGatewayAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
-
-            if ($locked->isTerminal()) {
-                return;
-            }
-
-            $locked->markExpired('Payment window expired.');
-        });
-
-        $attempt->refresh();
+        if ($attempt->isTerminal()) {
+            return;
+        }
 
         $integrationService->handleStatusResult($attempt, new GatewayStatusResult(
             normalizedStatus: 'expired',

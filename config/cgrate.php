@@ -1,5 +1,10 @@
 <?php
 
+$uatDefaultForceDisbursementIssuerName = str_contains(
+    (string) env('CGRATE_BASE_URL', 'https://test.543.cgrate.co.zm'),
+    'test.543'
+);
+
 return [
     'enabled' => (bool) env('CGRATE_ENABLED', false),
 
@@ -37,6 +42,11 @@ return [
     'uat' => [
         'log_enabled' => (bool) env('CGRATE_UAT_LOG_ENABLED', true),
         'log_channel' => env('CGRATE_UAT_LOG_CHANNEL', 'cgrate_uat'),
+        'force_disbursement_issuer_name' => filter_var(
+            env('CGRATE_UAT_FORCE_DISBURSEMENT_ISSUER_NAME', $uatDefaultForceDisbursementIssuerName ? '1' : '0'),
+            FILTER_VALIDATE_BOOLEAN
+        ),
+        'disbursement_issuer_name' => (string) env('CGRATE_UAT_DISBURSEMENT_ISSUER_NAME', '543'),
     ],
 
     'callback' => [

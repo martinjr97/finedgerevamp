@@ -29,8 +29,8 @@ These tools **do not** mark loans disbursed or debit FineEdge wallets (except re
 | `processCashDeposit` `responseCode=0` means **accepted**, not completed | Premature loan completion (mitigated: D1 only completes on query confirm) |
 | `queryCustomerPayment(depositorReference)` works for disbursements | Polling never confirms; loans stuck in `processing` |
 | Query codes `207` / `226` (or `0` + `paymentId`) mean payout complete | Wallet debited too early or never |
-| Mobile `issuerName` = `MTN`, `Airtel`, `Zamtel` | Silent payout failure |
-| Bank `issuerName` = exact cGrate registry name | Bank payouts fail |
+| Mobile `issuerName` = `543` (UAT) | Silent payout failure if not used |
+| Bank `issuerName` = `543` (UAT) | Silent payout failure if not used |
 | No reliable callback for cash deposits | Must rely on polling |
 | Insufficient merchant float returns a terminal error code | Ops cannot detect float issues |
 
@@ -73,7 +73,7 @@ These apply to **`processCustomerPayment` / `queryCustomerPayment`** — analogo
 |-------|---------------------|--------------|
 | `transactionAmount` | `5.00` | `5.00` |
 | `customerAccount` | `0978967132` (local format) | Bank account number |
-| `issuerName` | `Airtel` / `MTN` / `Zamtel` | Exact name from issuer discovery |
+| `issuerName` | `543` (only supported in cGrate UAT) | `543` (only supported in cGrate UAT) |
 | `depositorReference` | Unique, e.g. `FINEDGE-OUT-{loanId}-…` | Same |
 
 ### `getAvailableCashDepositIssuers`
@@ -94,8 +94,8 @@ Run on **cGrate test/sandbox** credentials first. Record every response in the c
 
 | # | Scenario | How to run | Pass criteria |
 |---|----------|------------|---------------|
-| 1 | Mobile money K5 | Admin loan show **or** `cgrate:test-cash-deposit --amount=5 --account=097… --issuer=Airtel --query` | Initiate accepted; query eventually confirms; loan completes only after confirm; wallet debited once |
-| 2 | Bank K5 | Same with bank account + issuer from discovery | Payout reaches test account; issuer name matches discovery list |
+| 1 | Mobile money K5 | Admin loan show **or** `cgrate:test-cash-deposit --amount=5 --account=097… --issuer=543 --query` | Initiate accepted; query eventually confirms; loan completes only after confirm; wallet debited once |
+| 2 | Bank K5 | Same with bank account + `--issuer=543` | Payout reaches test account; cGrate UAT accepts issuerName=543 |
 | 3 | Duplicate `depositorReference` | Repeat #1 with **same** `--reference` | Non-success or idempotent query; **no double payout** |
 | 4 | Invalid phone/account | `--account=0990000000` or fake bank account | Terminal failure; loan stays undisburse |
 | 5 | Insufficient cGrate float | Amount > merchant float | Clear error code; no loan completion |
@@ -142,12 +142,12 @@ Copy this section per test run. Also log automatically in `storage/logs/cgrate-u
 2. Export FineEdge banks: `financial_institutions.name` where active.
 3. For each bank used for disbursement, fill:
 
-| financial_institutions.id | financial_institutions.name | cGrate issuerName (from discovery) | UAT payout OK? |
+| financial_institutions.id | financial_institutions.name | Expected issuerName in payload | UAT payout OK? |
 |---------------------------|------------------------------|-------------------------------------|----------------|
 | | | | ☐ |
 
-4. Add confirmed mappings to `config/cgrate.php` → `issuer_name_map` or a dedicated bank map (future).
-5. Mobile mappings: `MTN_MONEY`→`MTN`, `AIRTEL_MONEY`→`Airtel`, `ZAMTEL_MONEY`→`Zamtel`.
+4. Disbursement payload uses `issuerName=543` in UAT (so mapping is not required unless you turn off the override).
+5. Mobile mappings are still used for other purposes, but the disbursement `issuerName` is forced to `543` when the override is enabled.
 
 ---
 
@@ -229,10 +229,10 @@ php artisan cgrate:cash-deposit-issuers
 php artisan cgrate:cash-deposit-issuers --json
 
 # Dry-run (no HTTP)
-php artisan cgrate:test-cash-deposit --amount=5 --account=0978967132 --issuer=Airtel --dry-run
+php artisan cgrate:test-cash-deposit --amount=5 --account=0978967132 --issuer=543 --dry-run
 
 # Live provider test + query (requires confirmation or --force)
-php artisan cgrate:test-cash-deposit --amount=5 --account=0978967132 --issuer=Airtel --query --force
+php artisan cgrate:test-cash-deposit --amount=5 --account=0978967132 --issuer=543 --query --force
 ```
 
 **End-to-end loan UAT:** use admin loan show → **Disburse via cGrate** after gateway is active and wallet linked. Record attempt rows in the response capture table.

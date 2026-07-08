@@ -51,10 +51,16 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
 
         $pollInterval = (int) config('cgrate.poll_interval_seconds', 15);
 
+        $issuerNameForPayload = (string) $attempt->issuer_name;
+        if ((bool) config('cgrate.uat.force_disbursement_issuer_name', false)) {
+            $issuerNameForPayload = (string) config('cgrate.uat.disbursement_issuer_name', '543');
+        }
+
         if ($attempt->status === GatewayAttemptStatus::Created) {
             $attempt->markInitiated([
                 'customer_account' => $attempt->customer_account,
                 'issuer_name' => $attempt->issuer_name,
+                'issuer_name_sent' => $issuerNameForPayload,
                 'amount' => $attempt->amount,
             ]);
         }
@@ -74,7 +80,7 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
                 amount: (float) $attempt->amount,
                 currency: (string) $attempt->currency,
                 customerAccount: (string) $attempt->customer_account,
-                issuerName: (string) $attempt->issuer_name,
+                issuerName: $issuerNameForPayload,
                 providerReference: (string) ($attempt->provider_reference ?? $attempt->internal_reference),
             ));
 
@@ -95,6 +101,7 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
                         'disburse' => [
                             'customer_account' => $locked->customer_account,
                             'issuer_name' => $locked->issuer_name,
+                            'issuer_name_sent' => $issuerNameForPayload,
                         ],
                     ]),
                     'status' => $result->success ? GatewayAttemptStatus::Pending : GatewayAttemptStatus::Failed,

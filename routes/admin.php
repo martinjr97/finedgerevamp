@@ -159,6 +159,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('payment-operations/failed-jobs/{uuid}', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'show'])->name('payment-operations.failed-jobs.show');
         Route::post('payment-operations/failed-jobs/{uuid}/retry', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'retry'])->name('payment-operations.failed-jobs.retry');
         Route::delete('payment-operations/failed-jobs/{uuid}', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'discard'])->name('payment-operations.failed-jobs.discard');
+        Route::get('sms-operations', [\App\Http\Controllers\Admin\SmsOperationsController::class, 'index'])->name('sms-operations.index');
         Route::resource('creditors', CreditorController::class);
 
         // Financial Transactions
