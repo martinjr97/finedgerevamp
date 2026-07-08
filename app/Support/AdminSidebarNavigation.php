@@ -203,6 +203,7 @@ class AdminSidebarNavigation
                 'Security Questions' => ['admin.security-questions.*'],
                 'Banking Institutions' => ['admin.financial-institutions.*'],
                 'Payment Gateways' => ['admin.payment-gateways.*'],
+                'Destination Mappings' => ['admin.payment-gateway-destination-mappings.*'],
                 'Payment Operations' => ['admin.payment-operations.*'],
                 'SMS Operations' => ['admin.sms-operations.*'],
                 'Gateway Routing' => ['admin.payment-gateway-routing.*'],

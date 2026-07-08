@@ -100,6 +100,19 @@
                     @endcan
                 @endif
 
+                @if(($canCancelLoan ?? false) && $loan->status === 'approved')
+                    @can('loans.cancel')
+                    <button type="button"
+                            onclick="showCancelLoanModal()"
+                            class="inline-flex items-center gap-2 rounded-2xl border border-rose-300/40 bg-gradient-to-r from-rose-700 to-red-700 px-4 py-3 font-semibold text-white shadow-lg shadow-rose-500/30 hover:from-rose-800 hover:to-red-800 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Cancel Loan
+                    </button>
+                    @endcan
+                @endif
+
                 @if($paymentDetailsEditable)
                     @can('loans.update-payment-details')
                     <button type="button"
@@ -340,6 +353,14 @@
                             <p class="text-slate-400 mt-1">Balance: ZMW {{ number_format((float) $activeDisbursementGateway->linkedAccountBalance(), 2) }}</p>
                         </div>
                     @endif
+
+                    @if ($disbursementDestinationMappingWarning)
+                        <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+                            <p class="font-medium">cGrate mapping warning</p>
+                            <p class="text-slate-300 mt-1">{{ $disbursementDestinationMappingWarning }}</p>
+                        </div>
+                    @endif
+
                     @if(($disbursementAttempts ?? collect())->isNotEmpty())
                         <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm space-y-2">
                             <p class="text-slate-300 font-medium">Gateway disbursement attempts</p>
@@ -1985,6 +2006,58 @@
                 if (e.key === 'Escape') {
                     closeApproveModal();
                     closeRejectModal();
+                }
+            });
+        </script>
+        @endpush
+    @endif
+
+    @if(($canCancelLoan ?? false) && $loan->status === 'approved')
+        <!-- Cancel Loan Modal -->
+        <div id="cancelLoanModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div class="rounded-3xl border border-white/10 bg-slate-900 p-6 w-full max-w-md shadow-2xl">
+                <h3 class="text-xl font-semibold text-white mb-2">Cancel Loan</h3>
+                <p class="text-sm text-slate-400 mb-4">
+                    This cancels the loan application. Use only when funds have not been disbursed manually or via payment gateway.
+                </p>
+                <form id="cancelLoanForm" method="POST" action="{{ route('admin.loans.cancel', $loan) }}">
+                    @csrf
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Cancellation Notes (optional)</label>
+                        <textarea name="notes" rows="3" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40" placeholder="Provide a reason for cancellation..."></textarea>
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeCancelLoanModal()" class="flex-1 rounded-2xl border border-white/10 px-4 py-2 text-sm text-white hover:bg-white/10 transition">
+                            Keep Loan
+                        </button>
+                        <button type="submit" class="flex-1 rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-500/30 hover:bg-rose-700 transition">
+                            Confirm Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @push('scripts')
+        <script>
+            function showCancelLoanModal() {
+                document.getElementById('cancelLoanModal').classList.remove('hidden');
+            }
+
+            function closeCancelLoanModal() {
+                document.getElementById('cancelLoanModal').classList.add('hidden');
+                document.getElementById('cancelLoanForm').reset();
+            }
+
+            document.getElementById('cancelLoanModal')?.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeCancelLoanModal();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeCancelLoanModal();
                 }
             });
         </script>

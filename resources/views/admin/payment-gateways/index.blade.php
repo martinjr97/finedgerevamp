@@ -11,6 +11,13 @@
                 auth('admin')->user()?->can('payment-gateways.view') || auth('admin')->user()?->can('payment-gateways.manage')
                     ? [
                         'action' => 'secondary',
+                        'text' => 'Destination Mappings →',
+                        'href' => route('admin.payment-gateway-destination-mappings.index'),
+                    ]
+                    : null,
+                auth('admin')->user()?->can('payment-gateways.view') || auth('admin')->user()?->can('payment-gateways.manage')
+                    ? [
+                        'action' => 'secondary',
                         'text' => 'Gateway Routing →',
                         'href' => route('admin.payment-gateway-routing.index'),
                     ]

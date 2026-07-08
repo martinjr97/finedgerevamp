@@ -11,6 +11,7 @@ use App\Models\Loan;
 use App\Models\LoanProduct;
 use App\Models\PaymentGateway;
 use App\Models\PaymentGatewayAttempt;
+use App\Models\PaymentGatewayDestinationMapping;
 use App\Models\Wallet;
 use App\PaymentPlatform\Enums\FinancialAccountType;
 use App\PaymentPlatform\Enums\GatewayAttemptPurpose;
@@ -28,11 +29,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Tests\Support\EnablesPaymentGatewayRoutes;
+use Tests\Support\ProcessesQueuedDisbursementJobs;
 use Tests\TestCase;
 
 class PaymentGatewayDisbursementTest extends TestCase
 {
     use EnablesPaymentGatewayRoutes;
+    use ProcessesQueuedDisbursementJobs;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -70,29 +73,40 @@ class PaymentGatewayDisbursementTest extends TestCase
         $this->assertSame('completed', $context['loan']->disbursement_status);
     }
 
-    public function test_gateway_initiate_without_premature_loan_completion(): void
+    public function test_gateway_initiate_completes_loan_when_cgrate_accepts_disbursement(): void
     {
         $wallet = $this->activateGatewayWallet(20000);
         $context = $this->makeLoanContext(Channel::TYPE_MOBILE_WALLET, 'MTN_MONEY');
 
-        $this->fakeCGrateSoap([
-            'processCashDeposit' => $this->soapSuccessBody('processCashDeposit', 'DEP-001'),
-        ]);
+        Http::fake(function ($request) {
+            $body = $request->body();
+            $this->assertStringContainsString('processCashDeposit', $body);
+            $this->assertStringNotContainsString('queryCustomerPayment', $body);
+
+            return Http::response($this->soapSuccessBody('processCashDeposit', 'DEP-001'), 200);
+        });
 
         $result = app(GatewayIntegrationService::class)->initiateDisbursement($context['loan']);
 
         $this->assertTrue($result['success']);
+        $this->assertTrue($result['metadata']['queued'] ?? false);
+        $this->assertSame('processing', $context['loan']->fresh()->disbursement_status);
+
+        $this->runQueuedDisbursementJob($context['loan']);
+
         $wallet->refresh();
         $context['loan']->refresh();
 
-        $this->assertSame('processing', $context['loan']->disbursement_status);
-        $this->assertSame('approved', $context['loan']->status);
-        $this->assertSame(20000.0, (float) $wallet->current_balance);
+        $this->assertSame('completed', $context['loan']->disbursement_status);
+        $this->assertSame('active', $context['loan']->status);
+        $this->assertSame(15000.0, (float) $wallet->current_balance);
         $this->assertDatabaseHas('payment_gateway_attempts', [
             'attemptable_id' => $context['loan']->id,
             'direction' => GatewayDirection::Disbursement->value,
-            'purpose' => GatewayAttemptPurpose::LoanDisbursement->value,
+            'status' => GatewayAttemptStatus::Confirmed->value,
         ]);
+
+        Http::assertSentCount(1);
     }
 
     public function test_soap_payload_correctness_for_mobile_money(): void
@@ -111,39 +125,78 @@ class PaymentGatewayDisbursementTest extends TestCase
         });
 
         app(GatewayIntegrationService::class)->initiateDisbursement($context['loan']);
+        $this->runQueuedDisbursementJob($context['loan']);
 
         Http::assertSentCount(1);
     }
 
     public function test_soap_payload_uses_543_issuer_name_when_uat_force_enabled_for_disbursement(): void
     {
-        config([
-            'cgrate.uat.force_disbursement_issuer_name' => true,
-            'cgrate.uat.disbursement_issuer_name' => '543',
-        ]);
+        config(['cgrate.uat.force_disbursement_issuer_name' => true]);
 
         $this->activateGatewayWallet(20000);
-        $context = $this->makeLoanContext(Channel::TYPE_MOBILE_WALLET, 'AIRTEL_MONEY');
+        $context = $this->makeLoanContext(Channel::TYPE_MOBILE_WALLET, 'ZAMTEL_MONEY');
 
         Http::fake(function ($request) {
             $body = $request->body();
-
             $this->assertStringContainsString('<issuerName>543</issuerName>', $body);
-            $this->assertStringNotContainsString('<issuerName>Airtel</issuerName>', $body);
+            $this->assertStringNotContainsString('<issuerName>Zamtel</issuerName>', $body);
 
             return Http::response($this->soapSuccessBody('processCashDeposit', 'DEP-MM-UAT'), 200);
         });
 
         app(GatewayIntegrationService::class)->initiateDisbursement($context['loan']);
+        $this->runQueuedDisbursementJob($context['loan']);
+
+        $this->assertDatabaseHas('payment_gateway_attempts', [
+            'attemptable_id' => $context['loan']->id,
+            'issuer_name' => '543',
+        ]);
 
         Http::assertSentCount(1);
+    }
+
+    public function test_uat_force_allows_bank_disbursement_without_destination_mapping(): void
+    {
+        config(['cgrate.uat.force_disbursement_issuer_name' => true]);
+
+        $this->activateGatewayWallet(20000);
+        $institution = FinancialInstitution::create([
+            'name' => 'Zambia National Commercial Bank',
+            'code' => 'ZANACO',
+            'is_active' => true,
+        ]);
+
+        $context = $this->makeLoanContext(Channel::TYPE_BANK, 'BANK_CH');
+        $context['loan']->update([
+            'status' => 'approved',
+            'disbursement_channel_type' => Channel::TYPE_BANK,
+            'disbursement_financial_institution_id' => $institution->id,
+            'disbursement_account_number' => '1234567890',
+            'disbursement_account_holder_name' => 'Test Holder',
+        ]);
+
+        Http::fake(function ($request) {
+            $body = $request->body();
+            $this->assertStringContainsString('<issuerName>543</issuerName>', $body);
+
+            return Http::response($this->soapSuccessBody('processCashDeposit', 'DEP-BANK-UAT'), 200);
+        });
+
+        $result = app(GatewayIntegrationService::class)->initiateDisbursement($context['loan']);
+
+        $this->assertTrue($result['success']);
+        $this->assertDatabaseHas('payment_gateway_attempts', [
+            'attemptable_id' => $context['loan']->id,
+            'issuer_name' => '543',
+        ]);
     }
 
     public function test_soap_payload_correctness_for_bank(): void
     {
         $this->activateGatewayWallet(20000);
         $institution = FinancialInstitution::create([
-            'name' => 'Zanaco',
+            'name' => 'Zambia National Commercial Bank',
             'code' => 'ZANACO',
             'is_active' => true,
         ]);
@@ -156,16 +209,30 @@ class PaymentGatewayDisbursementTest extends TestCase
             'disbursement_account_holder_name' => 'Test Holder',
         ]);
 
+        $gateway = PaymentGateway::query()->where('code', 'cgrate')->firstOrFail();
+        PaymentGatewayDestinationMapping::create([
+            'payment_gateway_id' => $gateway->id,
+            'destination_type' => 'bank',
+            'financial_institution_id' => $institution->id,
+            'channel_id' => null,
+            'gateway_key' => 'issuerName',
+            'gateway_value' => 'ZANACO',
+            'environment' => null,
+            'status' => 'active',
+        ]);
+
         Http::fake(function ($request) {
             $body = $request->body();
             $this->assertStringContainsString('processCashDeposit', $body);
             $this->assertStringContainsString('<customerAccount>1234567890</customerAccount>', $body);
-            $this->assertStringContainsString('<issuerName>Zanaco</issuerName>', $body);
+            $this->assertStringContainsString('<issuerName>ZANACO</issuerName>', $body);
+            $this->assertStringNotContainsString('Zambia National Commercial Bank', $body);
 
             return Http::response($this->soapSuccessBody('processCashDeposit', 'DEP-BANK'), 200);
         });
 
         app(GatewayIntegrationService::class)->initiateDisbursement($context['loan']);
+        $this->runQueuedDisbursementJob($context['loan']);
 
         Http::assertSentCount(1);
     }
@@ -560,9 +627,11 @@ class PaymentGatewayDisbursementTest extends TestCase
             .'<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">'
             .'<soapenv:Body>'
             .'<'.$operation.'Response>'
+            .'<return>'
             .'<responseCode>0</responseCode>'
             .'<responseMessage>OK</responseMessage>'
-            .'<paymentId>'.$paymentId.'</paymentId>'
+            .'<paymentID>'.$paymentId.'</paymentID>'
+            .'</return>'
             .'</'.$operation.'Response>'
             .'</soapenv:Body>'
             .'</soapenv:Envelope>';

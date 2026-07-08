@@ -100,4 +100,16 @@ Implemented via `AutomaticLoanDisbursementService` — triggered after loan appr
 - If route is off or auto is off → loan approved, `disbursement_status` stays `pending`, manual disbursement required
 - If auto is on and route ready → `payment_gateway_attempt` created, `disbursement_status=processing`, `DispatchGatewayDisbursementJob` queued
 - If auto is on but gateway not ready (inactive, missing linked account, insufficient balance, invalid destination) → loan still approved, warning shown, manual fallback remains
+- For **cGrate bank** disbursements, FineEdge requires an active `payment_gateway_destination_mappings` entry (gateway_key=`issuerName`). If missing (or `verification_required`), auto-disbursement is skipped and the loan remains `pending`.
+
+### Configure destination mappings (Operations)
+
+Admin route: `/admin/payment-gateway-destination-mappings`
+
+1. **Sync cGrate Issuers** — calls `getAvailableCashDepositIssuers()` and caches the latest issuer list for reference (no SOAP duplication in the UI layer).
+2. **Bank Mapping Coverage** — shows which FineEdge banks still need a mapping for the selected gateway/environment.
+3. **Create mapping** — map FineEdge Bank → cGrate issuer value (e.g. `543` in UAT). The UI labels this as **cGrate issuerName** / **Gateway Value**; the database stores `gateway_key=issuerName`, `gateway_value=543`.
+4. **UAT vs Production** — prefer environment-specific rows (`uat`, `production`) over Global when values differ between environments.
+
+![Destination mappings administration](./images/payment-gateway-destination-mappings-admin.png)
 - Wallet debited only after confirmed payout — not at approval or SOAP accept

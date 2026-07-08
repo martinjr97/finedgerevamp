@@ -11,6 +11,7 @@ use App\Models\Loan;
 use App\Models\LoanProduct;
 use App\Models\PaymentGateway;
 use App\Models\PaymentGatewayAttempt;
+use App\Models\PaymentGatewayDestinationMapping;
 use App\Models\Wallet;
 use App\PaymentPlatform\Enums\FinancialAccountType;
 use App\PaymentPlatform\Enums\GatewayAttemptPurpose;
@@ -19,20 +20,20 @@ use App\PaymentPlatform\Enums\GatewayDirection;
 use App\PaymentPlatform\Enums\GatewayPaymentMethod;
 use App\PaymentPlatform\Enums\GatewayRouteKey;
 use App\PaymentPlatform\Enums\PaymentGatewayStatus;
-use App\PaymentPlatform\Jobs\DispatchGatewayDisbursementJob;
 use App\PaymentPlatform\Services\GatewayIntegrationService;
 use Database\Seeders\CGratePaymentGatewaySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Tests\Support\EnablesPaymentGatewayRoutes;
+use Tests\Support\ProcessesQueuedDisbursementJobs;
 use Tests\TestCase;
 
 class AdminLoanApprovalGatewayAutoDisbursementTest extends TestCase
 {
     use EnablesPaymentGatewayRoutes;
+    use ProcessesQueuedDisbursementJobs;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -82,7 +83,6 @@ class AdminLoanApprovalGatewayAutoDisbursementTest extends TestCase
 
     public function test_approval_with_wallet_auto_process_initiates_gateway_disbursement(): void
     {
-        Queue::fake();
         $wallet = $this->activateGatewayWallet(20000, autoProcess: true, routeKey: GatewayRouteKey::WalletDisbursement);
         $context = $this->makePendingLoanContext(Channel::TYPE_MOBILE_WALLET, 'MTN_MONEY');
         $admin = $this->makeAdmin(['loans.approve']);
@@ -94,27 +94,40 @@ class AdminLoanApprovalGatewayAutoDisbursementTest extends TestCase
         $this->approveLoan($admin, $context['loan'])
             ->assertSessionHas('status', 'Loan approved successfully. Gateway disbursement has been initiated.');
 
+        $this->runQueuedDisbursementJob($context['loan']);
+
         $context['loan']->refresh();
-        $this->assertSame('approved', $context['loan']->status);
-        $this->assertSame('processing', $context['loan']->disbursement_status);
+        $this->assertSame('active', $context['loan']->status);
+        $this->assertSame('completed', $context['loan']->disbursement_status);
         $this->assertDatabaseHas('payment_gateway_attempts', [
             'attemptable_id' => $context['loan']->id,
             'direction' => GatewayDirection::Disbursement->value,
             'purpose' => GatewayAttemptPurpose::LoanDisbursement->value,
+            'status' => GatewayAttemptStatus::Confirmed->value,
         ]);
-        $this->assertSame(20000.0, (float) $wallet->fresh()->current_balance);
-        Queue::assertPushed(DispatchGatewayDisbursementJob::class);
+        $this->assertSame(15000.0, (float) $wallet->fresh()->current_balance);
     }
 
     public function test_approval_with_bank_auto_process_initiates_gateway_disbursement(): void
     {
-        Queue::fake();
-        $this->activateGatewayWallet(20000, autoProcess: true, routeKey: GatewayRouteKey::BankDisbursement);
+        $wallet = $this->activateGatewayWallet(20000, autoProcess: true, routeKey: GatewayRouteKey::BankDisbursement);
 
         $institution = FinancialInstitution::create([
             'name' => 'Zanaco',
             'code' => 'ZANACO',
             'is_active' => true,
+        ]);
+
+        $gateway = PaymentGateway::query()->where('code', 'cgrate')->firstOrFail();
+        PaymentGatewayDestinationMapping::create([
+            'payment_gateway_id' => $gateway->id,
+            'destination_type' => 'bank',
+            'financial_institution_id' => $institution->id,
+            'channel_id' => null,
+            'gateway_key' => 'issuerName',
+            'gateway_value' => 'ZANACO',
+            'environment' => null,
+            'status' => 'active',
         ]);
 
         $context = $this->makePendingLoanContext(Channel::TYPE_BANK, 'BANK_CH');
@@ -134,14 +147,17 @@ class AdminLoanApprovalGatewayAutoDisbursementTest extends TestCase
         $this->approveLoan($admin, $context['loan'])
             ->assertSessionHas('status', 'Loan approved successfully. Gateway disbursement has been initiated.');
 
+        $this->runQueuedDisbursementJob($context['loan']);
+
         $context['loan']->refresh();
-        $this->assertSame('processing', $context['loan']->disbursement_status);
+        $this->assertSame('completed', $context['loan']->disbursement_status);
         $this->assertDatabaseHas('payment_gateway_attempts', [
             'attemptable_id' => $context['loan']->id,
             'direction' => GatewayDirection::Disbursement->value,
             'purpose' => GatewayAttemptPurpose::LoanDisbursement->value,
+            'status' => GatewayAttemptStatus::Confirmed->value,
         ]);
-        Queue::assertPushed(DispatchGatewayDisbursementJob::class);
+        $this->assertSame(15000.0, (float) $wallet->fresh()->current_balance);
     }
 
     public function test_approval_with_auto_route_but_inactive_gateway_skips_with_warning(): void
@@ -179,10 +195,9 @@ class AdminLoanApprovalGatewayAutoDisbursementTest extends TestCase
         $this->assertDatabaseCount('payment_gateway_attempts', 0);
     }
 
-    public function test_approval_with_auto_route_but_insufficient_balance_still_initiates_gateway(): void
+    public function test_approval_with_auto_route_but_insufficient_balance_still_completes_gateway_disbursement(): void
     {
-        Queue::fake();
-        $this->activateGatewayWallet(1000, autoProcess: true, routeKey: GatewayRouteKey::WalletDisbursement);
+        $wallet = $this->activateGatewayWallet(1000, autoProcess: true, routeKey: GatewayRouteKey::WalletDisbursement);
 
         $context = $this->makePendingLoanContext(Channel::TYPE_MOBILE_WALLET, 'MTN_MONEY');
         $admin = $this->makeAdmin(['loans.approve']);
@@ -194,11 +209,13 @@ class AdminLoanApprovalGatewayAutoDisbursementTest extends TestCase
         $this->approveLoan($admin, $context['loan'])
             ->assertSessionHas('status', 'Loan approved successfully. Gateway disbursement has been initiated.');
 
+        $this->runQueuedDisbursementJob($context['loan']);
+
         $context['loan']->refresh();
-        $this->assertSame('approved', $context['loan']->status);
-        $this->assertSame('processing', $context['loan']->disbursement_status);
+        $this->assertSame('active', $context['loan']->status);
+        $this->assertSame('completed', $context['loan']->disbursement_status);
         $this->assertDatabaseCount('payment_gateway_attempts', 1);
-        Queue::assertPushed(DispatchGatewayDisbursementJob::class);
+        $this->assertSame(-4000.0, (float) $wallet->fresh()->current_balance);
     }
 
     public function test_approval_with_cash_destination_skips_auto_disbursement(): void
@@ -440,9 +457,11 @@ class AdminLoanApprovalGatewayAutoDisbursementTest extends TestCase
             .'<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">'
             .'<soapenv:Body>'
             .'<'.$operation.'Response>'
+            .'<return>'
             .'<responseCode>0</responseCode>'
             .'<responseMessage>OK</responseMessage>'
-            .'<paymentId>'.$paymentId.'</paymentId>'
+            .'<paymentID>'.$paymentId.'</paymentID>'
+            .'</return>'
             .'</'.$operation.'Response>'
             .'</soapenv:Body>'
             .'</soapenv:Envelope>';

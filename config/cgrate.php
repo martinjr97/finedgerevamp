@@ -13,6 +13,7 @@ return [
     'password' => env('CGRATE_PASSWORD', ''),
 
     'timeout' => (int) env('CGRATE_TIMEOUT', 30),
+    'disbursement_timeout' => (int) env('CGRATE_DISBURSEMENT_TIMEOUT', 120),
     'connect_timeout' => (int) env('CGRATE_CONNECT_TIMEOUT', 10),
     'verify_ssl' => (bool) env('CGRATE_VERIFY_SSL', true),
 

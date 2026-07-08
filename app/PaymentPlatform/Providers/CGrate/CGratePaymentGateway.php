@@ -88,8 +88,8 @@ final class CGratePaymentGateway implements PaymentGatewayInterface, Disbursemen
             depositorReference: $depositorReference,
         );
 
-        $success = $resp->isSuccessfulRequest();
-        $normalizedStatus = $success ? 'pending' : 'failed';
+        $normalizedStatus = $resp->normalizeDisbursementInitiateStatus();
+        $success = in_array($normalizedStatus, ['confirmed', 'pending'], true);
 
         return new GatewayResult(
             success: $success,
@@ -108,10 +108,14 @@ final class CGratePaymentGateway implements PaymentGatewayInterface, Disbursemen
             throw new CGrateException('cGrate payments are disabled.');
         }
 
+        if ($attempt->direction === GatewayDirection::Disbursement) {
+            throw new CGrateException('Disbursement status is not queried; use the processCashDeposit response.');
+        }
+
         $reference = (string) ($attempt->provider_reference ?? $attempt->internal_reference);
         $resp = $this->client->queryCustomerPayment($reference);
 
-        $normalized = $this->normalizeQueryStatus($resp);
+        $normalized = $this->normalizeCollectionQueryStatus($resp);
 
         return new GatewayStatusResult(
             normalizedStatus: $normalized,
@@ -150,7 +154,7 @@ final class CGratePaymentGateway implements PaymentGatewayInterface, Disbursemen
         };
     }
 
-    private function normalizeQueryStatus(CGratePaymentResponse $resp): string
+    private function normalizeCollectionQueryStatus(CGratePaymentResponse $resp): string
     {
         if ($resp->isApproved()) {
             return 'confirmed';

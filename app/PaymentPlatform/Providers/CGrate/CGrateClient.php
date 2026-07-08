@@ -51,7 +51,7 @@ final class CGrateClient
             'customerAccount' => $customerAccount,
             'issuerName' => $issuerName,
             'depositorReference' => $depositorReference,
-        ]);
+        ], timeoutSeconds: (int) config('cgrate.disbursement_timeout', 120));
     }
 
     /**
@@ -105,9 +105,9 @@ final class CGrateClient
     /**
      * @param  array<string, mixed>  $safeRequest
      */
-    private function send(string $operation, string $requestXml, array $safeRequest): CGratePaymentResponse
+    private function send(string $operation, string $requestXml, array $safeRequest, ?int $timeoutSeconds = null): CGratePaymentResponse
     {
-        $body = $this->postSoap($operation, $requestXml, $safeRequest);
+        $body = $this->postSoap($operation, $requestXml, $safeRequest, $timeoutSeconds);
         $parsed = $this->parseXmlResponse($body);
 
         return new CGratePaymentResponse(
@@ -130,13 +130,13 @@ final class CGrateClient
     /**
      * @param  array<string, mixed>  $safeRequest
      */
-    private function postSoap(string $operation, string $requestXml, array $safeRequest): string
+    private function postSoap(string $operation, string $requestXml, array $safeRequest, ?int $timeoutSeconds = null): string
     {
         $baseUrl = rtrim((string) config('cgrate.base_url'), '/');
         $path = (string) config('cgrate.soap.endpoint_path', '/Konik/KonikWs');
         $url = $baseUrl.$path;
 
-        $timeout = (int) config('cgrate.timeout', 30);
+        $timeout = $timeoutSeconds ?? (int) config('cgrate.timeout', 30);
         $connectTimeout = (int) config('cgrate.connect_timeout', 10);
         $verifySsl = (bool) config('cgrate.verify_ssl', true);
         $contentType = (string) config('cgrate.soap.content_type', 'application/soap+xml; charset=utf-8');
@@ -292,7 +292,8 @@ final class CGrateClient
                     if ($issuerNodes !== false) {
                         foreach ($issuerNodes as $issuerNode) {
                             $name = trim((string) $issuerNode->textContent);
-                            if ($name !== '' && ! is_numeric($name)) {
+                            // cGrate issuer identifiers can be numeric (e.g. "543").
+                            if ($name !== '') {
                                 $issuers[] = $name;
                             }
                         }

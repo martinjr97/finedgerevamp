@@ -71,7 +71,8 @@ class GatewayQueueAssignmentTest extends TestCase
         Queue::assertPushed(DispatchGatewayDisbursementJob::class, function (DispatchGatewayDisbursementJob $job) {
             return $job->queue === FinancialQueue::disbursementsHigh()
                 && $job->connection === FinancialQueue::connection()
-                && $job->tries === 1;
+                && $job->tries === 1
+                && $job->timeout === (int) config('cgrate.disbursement_timeout', 120);
         });
     }
 
@@ -103,32 +104,23 @@ class GatewayQueueAssignmentTest extends TestCase
         });
     }
 
-    public function test_disbursement_polling_job_uses_disbursements_queue(): void
+    public function test_disbursement_attempts_are_not_polled(): void
     {
-        Queue::fake();
-
         $attempt = $this->createAttempt(GatewayDirection::Disbursement);
+
+        $this->expectException(\InvalidArgumentException::class);
 
         QueryGatewayAttemptStatusJob::dispatchForAttempt($attempt->id);
-
-        Queue::assertPushed(QueryGatewayAttemptStatusJob::class, function (QueryGatewayAttemptStatusJob $job) {
-            return $job->queue === FinancialQueue::disbursements()
-                && $job->connection === FinancialQueue::connection()
-                && $job->tries === 5;
-        });
     }
 
-    public function test_disbursement_callback_job_uses_disbursements_high_queue(): void
+    public function test_disbursement_status_job_handle_is_no_op(): void
     {
-        Queue::fake();
-
         $attempt = $this->createAttempt(GatewayDirection::Disbursement);
 
-        QueryGatewayAttemptStatusJob::dispatchForAttempt($attempt->id, null, FinancialJobPriority::High);
+        $job = new QueryGatewayAttemptStatusJob($attempt->id);
+        $job->handle(app(\App\PaymentPlatform\Services\GatewayIntegrationService::class));
 
-        Queue::assertPushed(QueryGatewayAttemptStatusJob::class, function (QueryGatewayAttemptStatusJob $job) {
-            return $job->queue === FinancialQueue::disbursementsHigh();
-        });
+        $this->assertSame(0, $attempt->fresh()->query_attempts);
     }
 
     public function test_collection_job_horizon_tags_include_payment_and_correlation(): void

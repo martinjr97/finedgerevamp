@@ -11,6 +11,7 @@ enum AutomaticLoanDisbursementStatus: string
     case SkippedGatewayNotReady = 'skipped_gateway_not_ready';
     case SkippedExistingAttempt = 'skipped_existing_attempt';
     case Initiated = 'initiated';
+    case Completed = 'completed';
     case Failed = 'failed';
 
     public function isManualFallback(): bool

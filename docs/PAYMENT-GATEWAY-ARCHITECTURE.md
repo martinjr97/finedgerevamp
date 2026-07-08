@@ -231,6 +231,45 @@ Technical record per provider interaction — **not** a replacement for `repayme
 `repayments.external_reference` / `external_transaction_id` continue to hold provider refs for business visibility. Gateway attempts hold the full technical audit trail.
 
 ---
+### 5.4 Provider destination mappings (gateway-specific identifiers)
+
+Some gateway payload identifiers are not equivalent to FineEdge business concepts. For example, cGrate `processCashDeposit` requires `issuerName`, which can be numeric (e.g. `"543"`) or gateway-specific bank issuer strings.
+
+FineEdge stores those translations in a generic `payment_gateway_destination_mappings` table:
+
+`(payment_gateway_id, destination_type, financial_institution_id or channel_id, environment, gateway_key) → gateway_value`
+
+For cGrate bank disbursements, FineEdge validates an **active** mapping exists before creating a `payment_gateway_attempt`. Missing (or `verification_required`) mappings cause fail-fast and skip/disable gateway disbursement.
+
+#### Operations administration UI
+
+Route: `/admin/payment-gateway-destination-mappings` (Configuration → Destination Mappings)
+
+| Capability | Permission |
+|------------|------------|
+| View mappings, coverage, discovered issuers | `payment-gateways.view` |
+| Create / edit / delete mappings, sync issuers | `payment-gateways.manage` |
+
+The UI presents business-friendly labels (FineEdge Bank, Gateway Value, cGrate issuerName) while persisting generic `gateway_key` / `gateway_value` fields underneath.
+
+**UAT configuration**
+
+1. Open **Destination Mappings** and filter Gateway = cGrate, Environment = UAT (or Global).
+2. Click **Sync cGrate Issuers** to fetch the latest issuer list (numeric values such as `543` are preserved).
+3. For each FineEdge bank in **Bank Mapping Coverage**, create or configure a mapping with Gateway Value = the issuer code supplied by cGrate UAT.
+4. Set Status = **Active** once verified.
+
+**Production configuration**
+
+1. Repeat sync against production cGrate credentials (issuer values may differ from UAT).
+2. Create environment-specific mappings (Environment = Production) rather than relying on Global fallbacks where possible.
+3. Mark mappings **Verification Required** until operations confirm the issuer value with cGrate.
+
+**Automatic disbursement impact**
+
+When Gateway Routing has **Automatic Processing** enabled for bank disbursements, approval triggers `GatewayIntegrationService::initiateDisbursement()`. That path resolves the mapping for the loan's disbursement bank and sends `issuerName` from `gateway_value` in the SOAP payload. Missing or unverified mappings skip auto-disbursement; the loan stays `pending` and operations see warnings on the loan screen.
+
+![Destination mappings administration](./images/payment-gateway-destination-mappings-admin.png)
 
 ## 6. Payment methods vs gateways
 

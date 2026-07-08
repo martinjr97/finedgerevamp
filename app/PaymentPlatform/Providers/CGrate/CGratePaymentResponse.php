@@ -55,7 +55,7 @@ final class CGratePaymentResponse
 
     public function isFailed(): bool
     {
-        return in_array($this->responseCode, [7, 210, 214], true);
+        return in_array($this->responseCode, [6, 7, 210, 214], true);
     }
 
     public function isUnknown(): bool
@@ -66,6 +66,37 @@ final class CGratePaymentResponse
     public function isConfigOrAuthError(): bool
     {
         return in_array($this->responseCode, [11, 23, 24, 25, 26, 301, 302, 303], true);
+    }
+
+    /**
+     * Cash deposits are confirmed from the processCashDeposit response (no collection query).
+     */
+    public function isDisbursementConfirmed(): bool
+    {
+        if (in_array($this->responseCode, [207, 226], true)) {
+            return true;
+        }
+
+        $operation = (string) ($this->raw['operation'] ?? '');
+
+        return $operation === 'processCashDeposit' && $this->responseCode === 0;
+    }
+
+    public function normalizeDisbursementInitiateStatus(): string
+    {
+        if ($this->isDisbursementConfirmed()) {
+            return 'confirmed';
+        }
+
+        if ($this->isRejected()) {
+            return 'rejected';
+        }
+
+        if ($this->isFailed() || $this->isConfigOrAuthError()) {
+            return 'failed';
+        }
+
+        return 'failed';
     }
 
     /**

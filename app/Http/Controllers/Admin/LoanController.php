@@ -24,6 +24,7 @@ use App\Services\SharedPaymentDetailsDetectionService;
 use App\Services\LoanRepaymentRefundService;
 use App\Services\Loans\AutomaticLoanDisbursementService;
 use App\Services\Loans\DTOs\ManualDisbursementDTO;
+use App\Services\Loans\LoanCancellationService;
 use App\Services\Loans\LoanDisbursementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,6 +46,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\PaymentPlatform\Services\GatewayIntegrationService;
 use App\PaymentPlatform\Support\CGrateIssuerNameResolver;
+use App\PaymentPlatform\Services\PaymentGatewayDestinationMappingResolver;
 use App\Models\PaymentGateway;
 use App\Models\PaymentGatewayAttempt;
 use App\PaymentPlatform\Enums\GatewayDirection;
@@ -123,8 +125,8 @@ class LoanController extends Controller
         $loans = $query->latest('loan_start_date')->paginate(20);
 
         // Get filter options (also filtered by company if needed)
-        $loanProductsQuery = LoanProduct::where('is_active', true);
-        $customerGroupsQuery = CustomerGroup::where('is_active', true)->with('loanProduct');
+        $loanProductsQuery = LoanProduct::where('is_active', '=', true, 'and');
+        $customerGroupsQuery = CustomerGroup::where('is_active', '=', true, 'and')->with('loanProduct');
         $customersQuery = Customer::query();
         
         if ($companyFilterId !== null) {
@@ -135,9 +137,9 @@ class LoanController extends Controller
             $customersQuery->where('company_id', $companyFilterId);
         }
         
-        $loanProducts = $loanProductsQuery->orderBy('name')->get();
-        $customerGroups = $customerGroupsQuery->orderBy('name')->get();
-        $customers = $customersQuery->orderBy('first_name')->orderBy('last_name')->get();
+        $loanProducts = $loanProductsQuery->orderBy('name', 'asc')->get();
+        $customerGroups = $customerGroupsQuery->orderBy('name', 'asc')->get();
+        $customers = $customersQuery->orderBy('first_name', 'asc')->orderBy('last_name', 'asc')->get();
 
         return view('admin.loans.index', compact('loans', 'loanProducts', 'customerGroups', 'customers'));
     }
@@ -493,8 +495,8 @@ class LoanController extends Controller
 
         // For manual disbursement flow, load available banks & wallets
         $disbursementType = config('app.disbursement_type', 'manual');
-        $banks = Bank::where('is_active', true)->orderBy('name')->get();
-        $wallets = Wallet::where('is_active', true)->orderBy('name')->get();
+        $banks = Bank::where('is_active', '=', true, 'and')->orderBy('name', 'asc')->get();
+        $wallets = Wallet::where('is_active', '=', true, 'and')->orderBy('name', 'asc')->get();
         $paymentChannels = Channel::query()
             ->where('is_active', true)
             ->where('can_disburse', true)
@@ -544,9 +546,54 @@ class LoanController extends Controller
             && $activeDisbursementGateway->hasLinkedFinancialAccount();
 
         $disbursementDestinationPreview = null;
+        $disbursementDestinationMappingWarning = null;
         if ($disbursementGatewayAvailable) {
             try {
                 $disbursementDestinationPreview = app(CGrateIssuerNameResolver::class)->resolveForLoan($loan);
+
+                $destinationPaymentMethod = $disbursementDestinationPreview['payment_method'] ?? null;
+                if ($destinationPaymentMethod === 'bank') {
+                    $mapping = app(PaymentGatewayDestinationMappingResolver::class)->resolve(
+                        $activeDisbursementGateway,
+                        'bank',
+                        (int) $loan->disbursement_financial_institution_id,
+                        null,
+                        'issuerName'
+                    )['mapping'];
+
+                    $loan->loadMissing(['disbursementFinancialInstitution']);
+                    $bankName = (string) ($loan->disbursementFinancialInstitution?->name ?? 'selected bank');
+
+                    if (! $mapping) {
+                        $disbursementDestinationPreview = null;
+                        $disbursementDestinationMappingWarning = 'No cGrate issuerName mapping has been configured for '.$bankName.'. Configure the bank mapping before using cGrate disbursement.';
+                    } elseif ($mapping->isVerificationRequired()) {
+                        $disbursementDestinationPreview = null;
+                        $disbursementDestinationMappingWarning = 'The cGrate issuerName mapping for '.$bankName.' requires verification before use.';
+                    } else {
+                        $disbursementDestinationPreview['issuer_name'] = (string) $mapping->gateway_value;
+                    }
+                }
+
+                if ($destinationPaymentMethod === 'mobile_money') {
+                    $channelId = (int) ($loan->channel_id ?? 0);
+                    $mapping = app(PaymentGatewayDestinationMappingResolver::class)->resolve(
+                        $activeDisbursementGateway,
+                        'mobile_money',
+                        null,
+                        $channelId,
+                        'issuerName'
+                    )['mapping'];
+
+                    if ($mapping) {
+                        if ($mapping->isVerificationRequired()) {
+                            $disbursementDestinationPreview = null;
+                            $disbursementDestinationMappingWarning = 'The cGrate issuerName mapping requires verification before use.';
+                        } else {
+                            $disbursementDestinationPreview['issuer_name'] = (string) $mapping->gateway_value;
+                        }
+                    }
+                }
             } catch (\Throwable) {
                 $disbursementDestinationPreview = null;
             }
@@ -564,6 +611,8 @@ class LoanController extends Controller
             ? app(AutomaticLoanDisbursementService::class)->previewForApproval($loan)
             : null;
 
+        $canCancelLoan = app(LoanCancellationService::class)->canCancel($loan);
+
         return view('admin.loans.show', compact(
             'loan',
             'disbursementType',
@@ -578,12 +627,41 @@ class LoanController extends Controller
             'activeDisbursementGateway',
             'disbursementGatewayAvailable',
             'disbursementDestinationPreview',
+            'disbursementDestinationMappingWarning',
             'disbursementAttempts',
             'canRefundRepayments',
             'loanLedger',
             'sharedPaymentDetails',
             'approvalAutoDisbursementPreview',
+            'canCancelLoan',
         ));
+    }
+
+    public function cancel(Request $request, Loan $loan): RedirectResponse
+    {
+        $admin = auth('admin')->user();
+        abort_unless($admin?->can('loans.cancel'), 403);
+
+        $validated = $request->validate([
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            app(LoanCancellationService::class)->cancel(
+                $loan,
+                $admin,
+                $validated['notes'] ?? null
+            );
+        } catch (ValidationException $e) {
+            return redirect()
+                ->route('admin.loans.show', $loan)
+                ->withErrors($e->errors())
+                ->with('error', collect($e->errors())->flatten()->first() ?? 'Unable to cancel this loan.');
+        }
+
+        return redirect()
+            ->route('admin.loans.show', $loan)
+            ->with('status', 'Loan cancelled successfully.');
     }
 
     public function updatePaymentDetails(Request $request, Loan $loan): RedirectResponse
@@ -753,7 +831,7 @@ class LoanController extends Controller
         }
 
         $repaymentSchedule = $loan->getRepaymentSchedule();
-        $company = $loan->customer->company ?? \App\Models\Company::where('is_primary', true)->first();
+        $company = $loan->customer->company ?? \App\Models\Company::where('is_primary', '=', true, 'and')->first();
         
         $pdf = Pdf::loadView('admin.loans.schedule-pdf', [
             'loan' => $loan,
@@ -811,7 +889,7 @@ class LoanController extends Controller
             if ($loan->channel && $loan->channel->can_repay) {
                 $channel = $loan->channel;
             } else {
-                $channel = Channel::where('is_active', true)->where('can_repay', true)->first();
+            $channel = Channel::where('is_active', '=', true, 'and')->where('can_repay', '=', true, 'and')->first();
             }
             
             if (!$channel) {

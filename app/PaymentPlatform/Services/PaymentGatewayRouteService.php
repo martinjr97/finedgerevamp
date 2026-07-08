@@ -9,6 +9,7 @@ use App\Models\PaymentGatewayRoute;
 use App\PaymentPlatform\DTOs\GatewayRouteResolution;
 use App\PaymentPlatform\Enums\GatewayRouteKey;
 use App\PaymentPlatform\Support\CGrateIssuerNameResolver;
+use App\PaymentPlatform\Support\CGrateUatDisbursementIssuer;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
@@ -16,6 +17,7 @@ class PaymentGatewayRouteService
 {
     public function __construct(
         private readonly CGrateIssuerNameResolver $issuerNameResolver,
+        private readonly PaymentGatewayDestinationMappingResolver $destinationMappingResolver,
     ) {}
 
     public function resolveRoute(GatewayRouteKey $routeKey, ?float $amount = null, ?Loan $loan = null): GatewayRouteResolution
@@ -99,6 +101,44 @@ class PaymentGatewayRouteService
 
                 return GatewayRouteResolution::unavailable($routeKey, $message, $fallback, $route);
             }
+
+            // Fail-fast mapping validation for cGrate bank disbursements (skipped in UAT force-543 mode).
+            if (
+                $routeKey === GatewayRouteKey::BankDisbursement
+                && $gateway->code === 'cgrate'
+                && ! CGrateUatDisbursementIssuer::isForced()
+            ) {
+                $loan->loadMissing(['disbursementFinancialInstitution']);
+
+                $bankName = (string) ($loan->disbursementFinancialInstitution?->name ?? 'selected bank');
+                $bankId = (int) $loan->disbursement_financial_institution_id;
+
+                $mapping = $this->destinationMappingResolver->resolve(
+                    $gateway,
+                    'bank',
+                    $bankId,
+                    null,
+                    'issuerName'
+                )['mapping'];
+
+                if (! $mapping) {
+                    return GatewayRouteResolution::unavailable(
+                        $routeKey,
+                        'No cGrate issuerName mapping has been configured for '.$bankName.'. Configure the bank mapping before using cGrate disbursement.',
+                        $fallback,
+                        $route,
+                    );
+                }
+
+                if ($mapping->isVerificationRequired()) {
+                    return GatewayRouteResolution::unavailable(
+                        $routeKey,
+                        'The cGrate issuerName mapping for '.$bankName.' requires verification before use.',
+                        $fallback,
+                        $route,
+                    );
+                }
+            }
         }
 
         $balanceWarning = null;
@@ -158,8 +198,8 @@ class PaymentGatewayRouteService
     public function eligibleGateways(GatewayRouteKey $routeKey): Collection
     {
         return PaymentGateway::query()
-            ->orderBy('priority')
-            ->orderBy('name')
+            ->orderBy('priority', 'asc')
+            ->orderBy('name', 'asc')
             ->get()
             ->filter(fn (PaymentGateway $gateway) => $this->gatewayEligibleForRoute($routeKey, $gateway))
             ->values();

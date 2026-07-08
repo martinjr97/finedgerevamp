@@ -15,6 +15,7 @@ use App\PaymentPlatform\Jobs\DispatchGatewayDisbursementJob;
 use App\PaymentPlatform\Enums\FinancialJobPriority;
 use App\PaymentPlatform\Jobs\QueryGatewayAttemptStatusJob;
 use App\PaymentPlatform\Support\CGrateIssuerNameResolver;
+use App\PaymentPlatform\Support\CGrateUatDisbursementIssuer;
 use App\Services\CustomerNotificationService;
 use App\Services\Loans\LoanDisbursementService;
 use App\Services\RepaymentProcessingService;
@@ -31,6 +32,7 @@ class GatewayIntegrationService
         private readonly RepaymentFinancePostingService $financePostingService,
         private readonly LoanDisbursementService $loanDisbursementService,
         private readonly CGrateIssuerNameResolver $issuerNameResolver,
+        private readonly PaymentGatewayDestinationMappingResolver $destinationMappingResolver,
         private readonly CustomerNotificationService $customerNotificationService,
     ) {}
 
@@ -137,15 +139,79 @@ class GatewayIntegrationService
         $gateway = $this->selectionService->selectForDisbursement($loan, requireLinkedAccount: true);
 
         if (! $gateway) {
+            $resolution = app(PaymentGatewayRouteService::class)->resolveRouteForDisbursement($loan);
+            $failureReason = $resolution->failureReason;
+
             return [
                 'success' => false,
-                'message' => 'No disbursement gateway is available. Ensure cGrate is active with a linked wallet, or use manual disbursement.',
+                'message' => $failureReason
+                    ?? 'No disbursement gateway is available. Ensure cGrate is active with a linked wallet, or use manual disbursement.',
             ];
         }
 
         $paymentMethod = $resolved['payment_method'];
+        $issuerNameForAttempt = (string) $resolved['issuer_name'];
 
-        $attempt = DB::transaction(function () use ($loan, $gateway, $resolved, $paymentMethod) {
+        // Fail-fast validation for gateway-specific destination identifiers.
+        if ($gateway->code === 'cgrate' && ! CGrateUatDisbursementIssuer::isForced()) {
+            if ($paymentMethod === 'bank') {
+                $loan->loadMissing(['disbursementFinancialInstitution']);
+                $bankName = (string) ($loan->disbursementFinancialInstitution?->name ?? 'selected bank');
+                $bankId = (int) $loan->disbursement_financial_institution_id;
+
+                $mapping = $this->destinationMappingResolver->resolve(
+                    $gateway,
+                    'bank',
+                    $bankId,
+                    null,
+                    'issuerName'
+                )['mapping'];
+
+                if (! $mapping) {
+                    return [
+                        'success' => false,
+                        'message' => 'No cGrate issuerName mapping has been configured for '.$bankName.'. Configure the bank mapping before using cGrate disbursement.',
+                    ];
+                }
+
+                if ($mapping->isVerificationRequired()) {
+                    return [
+                        'success' => false,
+                        'message' => 'The cGrate issuerName mapping for '.$bankName.' requires verification before use.',
+                    ];
+                }
+
+                $issuerNameForAttempt = (string) $mapping->gateway_value;
+            } elseif ($paymentMethod === 'mobile_money') {
+                $channelId = (int) ($loan->channel_id ?? 0);
+
+                $mapping = $this->destinationMappingResolver->resolve(
+                    $gateway,
+                    'mobile_money',
+                    null,
+                    $channelId,
+                    'issuerName'
+                )['mapping'];
+
+                if ($mapping) {
+                    if ($mapping->isVerificationRequired()) {
+                        return [
+                            'success' => false,
+                            'message' => 'The cGrate issuerName mapping requires verification before use.',
+                        ];
+                    }
+
+                    $issuerNameForAttempt = (string) $mapping->gateway_value;
+                }
+            }
+        }
+
+        $issuerNameForAttempt = CGrateUatDisbursementIssuer::applyToIssuerName(
+            $issuerNameForAttempt,
+            (string) $gateway->code
+        );
+
+        $attempt = DB::transaction(function () use ($loan, $gateway, $resolved, $paymentMethod, $issuerNameForAttempt) {
             $this->loanDisbursementService->assertNoActiveDisbursementAttempt($loan->fresh());
 
             $attempt = PaymentGatewayAttempt::create([
@@ -161,7 +227,7 @@ class GatewayIntegrationService
                 'customer_phone' => $loan->disbursement_phone_number,
                 'customer_account' => $resolved['customer_account'],
                 'destination_account' => $resolved['customer_account'],
-                'issuer_name' => $resolved['issuer_name'],
+                'issuer_name' => (string) $issuerNameForAttempt,
                 'source_account' => $gateway->linkedAccountLabel(),
                 'status' => GatewayAttemptStatus::Created,
             ]);
@@ -185,25 +251,22 @@ class GatewayIntegrationService
             return $attempt;
         });
 
-        if ((string) config('queue.default') === 'sync') {
-            DispatchGatewayDisbursementJob::dispatchSync($attempt->id);
-        } else {
-            DispatchGatewayDisbursementJob::dispatch($attempt->id);
-        }
+        DispatchGatewayDisbursementJob::dispatch($attempt->id);
 
-        $attempt->refresh();
+        $reference = $attempt->provider_reference ?? $attempt->internal_reference;
 
         return [
             'success' => true,
-            'reference' => $attempt->provider_reference ?? $attempt->internal_reference,
+            'reference' => $reference,
             'transaction_id' => $attempt->provider_transaction_id,
-            'message' => 'Disbursement request submitted to cGrate. The loan will be marked disbursed once payout is confirmed.',
+            'message' => 'Disbursement request submitted to cGrate. The loan will update once cGrate responds.',
             'metadata' => [
                 'gateway_code' => $gateway->code,
                 'gateway_attempt_id' => $attempt->id,
                 'issuer_name' => $attempt->issuer_name,
                 'customer_account' => $attempt->customer_account,
                 'gateway_initiated_at' => now()->toIso8601String(),
+                'queued' => true,
             ],
         ];
     }
@@ -216,13 +279,20 @@ class GatewayIntegrationService
             return;
         }
 
-        $unknownFailAfter = (int) config('cgrate.unknown_fail_after_attempts', 20);
         $normalized = $result->normalizedStatus;
 
-        if ($normalized === 'unknown' && $attempt->query_attempts < $unknownFailAfter) {
-            $normalized = 'pending';
-        } elseif ($normalized === 'unknown') {
-            $normalized = 'expired';
+        if ($attempt->direction === GatewayDirection::Disbursement) {
+            if (in_array($normalized, ['pending', 'unknown'], true)) {
+                $normalized = 'failed';
+            }
+        } else {
+            $unknownFailAfter = (int) config('cgrate.unknown_fail_after_attempts', 20);
+
+            if ($normalized === 'unknown' && $attempt->query_attempts < $unknownFailAfter) {
+                $normalized = 'pending';
+            } elseif ($normalized === 'unknown') {
+                $normalized = 'expired';
+            }
         }
 
         DB::transaction(function () use ($attempt, $result, $normalized) {
@@ -258,7 +328,9 @@ class GatewayIntegrationService
                 $this->finalizeConfirmedAttempt($attempt);
             }
         } elseif ($attempt->status === GatewayAttemptStatus::Pending) {
-            $this->scheduleQuery($attempt);
+            if ($attempt->direction !== GatewayDirection::Disbursement) {
+                $this->scheduleQuery($attempt);
+            }
         } elseif (in_array($attempt->status, [GatewayAttemptStatus::Failed, GatewayAttemptStatus::Rejected, GatewayAttemptStatus::Expired], true)) {
             if ($attempt->direction === GatewayDirection::Disbursement) {
                 $this->handleDisbursementFailure($attempt);
@@ -465,10 +537,12 @@ class GatewayIntegrationService
             payload: $payload,
         );
 
-        if ((string) config('queue.default') === 'sync') {
-            QueryGatewayAttemptStatusJob::dispatchSync($attempt->id);
-        } else {
-            QueryGatewayAttemptStatusJob::dispatchForAttempt($attempt->id, null, FinancialJobPriority::High);
+        if ($attempt->direction !== GatewayDirection::Disbursement) {
+            if ((string) config('queue.default') === 'sync') {
+                QueryGatewayAttemptStatusJob::dispatchSync($attempt->id);
+            } else {
+                QueryGatewayAttemptStatusJob::dispatchForAttempt($attempt->id, null, FinancialJobPriority::High);
+            }
         }
 
         return true;

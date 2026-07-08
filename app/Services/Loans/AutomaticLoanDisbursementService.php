@@ -179,12 +179,30 @@ class AutomaticLoanDisbursementService
             ? PaymentGatewayAttempt::query()->find($attemptId)
             : null;
 
-        return AutomaticLoanDisbursementResult::initiated(
-            $attempt ?? PaymentGatewayAttempt::query()
-                ->where('attemptable_type', Loan::class)
-                ->where('attemptable_id', $loan->id)
-                ->latest('id')
-                ->firstOrFail(),
+        $attempt ??= PaymentGatewayAttempt::query()
+            ->where('attemptable_type', Loan::class)
+            ->where('attemptable_id', $loan->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        if ($loan->fresh()->disbursement_status === 'completed') {
+            return AutomaticLoanDisbursementResult::completed(
+                $attempt,
+                $route,
+                $routeKey,
+            );
+        }
+
+        if ($result['metadata']['queued'] ?? false) {
+            return AutomaticLoanDisbursementResult::initiated(
+                $attempt,
+                $route,
+                $routeKey,
+            );
+        }
+
+        return AutomaticLoanDisbursementResult::failed(
+            $result['message'] ?? 'Gateway did not confirm disbursement.',
             $route,
             $routeKey,
         );

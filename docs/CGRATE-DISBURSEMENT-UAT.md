@@ -26,11 +26,10 @@ These tools **do not** mark loans disbursed or debit FineEdge wallets (except re
 
 | Assumption | Risk if wrong |
 |------------|---------------|
-| `processCashDeposit` `responseCode=0` means **accepted**, not completed | Premature loan completion (mitigated: D1 only completes on query confirm) |
-| `queryCustomerPayment(depositorReference)` works for disbursements | Polling never confirms; loans stuck in `processing` |
+| `processCashDeposit` `responseCode=0` means **payout complete** for disbursements | Loan completes from initiate response; no collection query |
+| ~~`queryCustomerPayment(depositorReference)` works for disbursements~~ | **Not used** — collection query does not apply to cash deposits |
 | Query codes `207` / `226` (or `0` + `paymentId`) mean payout complete | Wallet debited too early or never |
-| Mobile `issuerName` = `543` (UAT) | Silent payout failure if not used |
-| Bank `issuerName` = `543` (UAT) | Silent payout failure if not used |
+| cGrate UAT requires `issuerName=543` | Silent payout failure if FineEdge sends the wrong issuerName |
 | No reliable callback for cash deposits | Must rely on polling |
 | Insufficient merchant float returns a terminal error code | Ops cannot detect float issues |
 
@@ -78,7 +77,7 @@ These apply to **`processCustomerPayment` / `queryCustomerPayment`** — analogo
 
 ### `getAvailableCashDepositIssuers`
 
-No body fields. Used to map FineEdge `financial_institutions.name` → cGrate `issuerName`.
+No body fields. Used to discover cGrate `issuerName` values for building destination mappings.
 
 ### `queryCustomerPayment` (UAT)
 
@@ -146,8 +145,8 @@ Copy this section per test run. Also log automatically in `storage/logs/cgrate-u
 |---------------------------|------------------------------|-------------------------------------|----------------|
 | | | | ☐ |
 
-4. Disbursement payload uses `issuerName=543` in UAT (so mapping is not required unless you turn off the override).
-5. Mobile mappings are still used for other purposes, but the disbursement `issuerName` is forced to `543` when the override is enabled.
+UAT disbursement payloads use `issuerName` from `payment_gateway_destination_mappings` when configured. When `CGRATE_UAT_FORCE_DISBURSEMENT_ISSUER_NAME` is enabled (auto on `test.543` base URL), all cGrate disbursements send `CGRATE_UAT_DISBURSEMENT_ISSUER_NAME` (default `543`) without per-bank/channel GUI setup.
+5. FineEdge blocks cGrate bank disbursement when an active mapping is missing or marked `verification_required`. Mobile overrides are optional (defaults still come from existing mappings/resolution).
 
 ---
 

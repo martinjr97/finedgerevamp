@@ -124,6 +124,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('loans/{loan}/disburse', [\App\Http\Controllers\Admin\LoanController::class, 'disburse'])->name('loans.disburse');
         Route::post('loans/{loan}/disburse/gateway', [\App\Http\Controllers\Admin\LoanController::class, 'disburseGateway'])->name('loans.disburse.gateway');
         Route::post('loans/{loan}/disburse/gateway/retry', [\App\Http\Controllers\Admin\LoanController::class, 'retryDisburseGateway'])->name('loans.disburse.gateway.retry');
+        Route::post('loans/{loan}/cancel', [\App\Http\Controllers\Admin\LoanController::class, 'cancel'])->name('loans.cancel');
         Route::post('loans/{loan}/extend/preview', [\App\Http\Controllers\Admin\LoanController::class, 'previewExtension'])->name('loans.extend.preview');
         Route::post('loans/{loan}/extend', [\App\Http\Controllers\Admin\LoanController::class, 'extend'])->name('loans.extend');
         Route::get('loans/{loan}/settlement/quote', [\App\Http\Controllers\Admin\LoanSettlementController::class, 'quote'])->name('loans.settlement.quote');
@@ -153,7 +154,14 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('payment-gateway-routing', [\App\Http\Controllers\Admin\PaymentGatewayRoutingController::class, 'index'])->name('payment-gateway-routing.index');
         Route::put('payment-gateway-routing/{paymentGatewayRoute}', [\App\Http\Controllers\Admin\PaymentGatewayRoutingController::class, 'update'])->name('payment-gateway-routing.update');
         Route::redirect('payment-gateways/routing', '/admin/payment-gateway-routing')->name('payment-gateways.routing');
+        Route::get('payment-gateway-destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'index'])->name('payment-gateway-destination-mappings.index');
+        Route::post('payment-gateway-destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'store'])->name('payment-gateway-destination-mappings.store');
+        Route::put('payment-gateway-destination-mappings/{paymentGatewayDestinationMapping}', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'update'])->name('payment-gateway-destination-mappings.update');
+        Route::delete('payment-gateway-destination-mappings/{paymentGatewayDestinationMapping}', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'destroy'])->name('payment-gateway-destination-mappings.destroy');
+        Route::post('payment-gateway-destination-mappings/sync-cgrate-issuers', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'syncCgrateIssuers'])->name('payment-gateway-destination-mappings.sync-cgrate-issuers');
         Route::resource('payment-gateways', \App\Http\Controllers\Admin\PaymentGatewayController::class)->only(['index', 'show', 'edit', 'update']);
+        Route::get('payment-gateways/{paymentGateway}/destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'legacyIndex'])->name('payment-gateways.destination-mappings.index');
+        Route::post('payment-gateways/{paymentGateway}/destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'legacyStore'])->name('payment-gateways.destination-mappings.store');
         Route::get('payment-operations', [\App\Http\Controllers\Admin\PaymentOperationsController::class, 'index'])->name('payment-operations.index');
         Route::get('payment-operations/failed-jobs', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'index'])->name('payment-operations.failed-jobs.index');
         Route::get('payment-operations/failed-jobs/{uuid}', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'show'])->name('payment-operations.failed-jobs.show');

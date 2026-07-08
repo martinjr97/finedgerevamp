@@ -4,6 +4,7 @@ namespace App\PaymentPlatform\Services;
 
 use App\Models\PaymentGatewayAttempt;
 use App\PaymentPlatform\Enums\GatewayAttemptStatus;
+use App\PaymentPlatform\Enums\GatewayDirection;
 use App\PaymentPlatform\Jobs\QueryGatewayAttemptStatusJob;
 
 class GatewayPollingService
@@ -18,6 +19,7 @@ class GatewayPollingService
 
         PaymentGatewayAttempt::query()
             ->where('status', GatewayAttemptStatus::Pending)
+            ->where('direction', GatewayDirection::Collection)
             ->whereNotNull('next_query_at')
             ->where('next_query_at', '<=', now())
             ->orderBy('next_query_at')

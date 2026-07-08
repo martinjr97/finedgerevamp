@@ -39,6 +39,11 @@ class QueryGatewayAttemptStatusJob implements ShouldQueue
         FinancialJobPriority $priority = FinancialJobPriority::Polling,
     ): PendingDispatch {
         $attempt = PaymentGatewayAttempt::query()->find($attemptId);
+
+        if ($attempt?->direction === GatewayDirection::Disbursement) {
+            throw new \InvalidArgumentException('Disbursement attempts are not polled; status is determined from the processCashDeposit response.');
+        }
+
         $direction = $attempt?->direction ?? GatewayDirection::Collection;
 
         $pending = self::dispatch($attemptId)
@@ -72,6 +77,10 @@ class QueryGatewayAttemptStatusJob implements ShouldQueue
         $attempt->loadMissing('paymentGateway');
 
         if ($attempt->isTerminal()) {
+            return;
+        }
+
+        if ($attempt->direction === GatewayDirection::Disbursement) {
             return;
         }
 

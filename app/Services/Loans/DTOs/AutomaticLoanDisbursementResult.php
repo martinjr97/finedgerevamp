@@ -31,6 +31,20 @@ readonly class AutomaticLoanDisbursementResult
         );
     }
 
+    public static function completed(
+        PaymentGatewayAttempt $attempt,
+        ?PaymentGatewayRoute $route = null,
+        ?GatewayRouteKey $routeKey = null,
+    ): self {
+        return new self(
+            status: AutomaticLoanDisbursementStatus::Completed,
+            message: 'Loan disbursed via cGrate.',
+            attempt: $attempt,
+            route: $route,
+            routeKey: $routeKey,
+        );
+    }
+
     public static function initiated(
         PaymentGatewayAttempt $attempt,
         ?PaymentGatewayRoute $route = null,
@@ -57,7 +71,15 @@ readonly class AutomaticLoanDisbursementResult
 
     public function wasInitiated(): bool
     {
-        return $this->status === AutomaticLoanDisbursementStatus::Initiated;
+        return in_array($this->status, [
+            AutomaticLoanDisbursementStatus::Initiated,
+            AutomaticLoanDisbursementStatus::Completed,
+        ], true);
+    }
+
+    public function wasCompleted(): bool
+    {
+        return $this->status === AutomaticLoanDisbursementStatus::Completed;
     }
 
     public function requiresManualDisbursement(): bool
@@ -67,6 +89,10 @@ readonly class AutomaticLoanDisbursementResult
 
     public function userFlashMessage(): string
     {
+        if ($this->status === AutomaticLoanDisbursementStatus::Completed) {
+            return 'Loan approved and disbursed via cGrate.';
+        }
+
         if ($this->status === AutomaticLoanDisbursementStatus::Initiated) {
             return 'Loan approved successfully. Gateway disbursement has been initiated.';
         }

@@ -4,6 +4,7 @@ namespace App\PaymentPlatform\Jobs;
 
 use App\Models\PaymentGatewayAttempt;
 use App\PaymentPlatform\DTOs\DisburseMoneyRequest;
+use App\PaymentPlatform\DTOs\GatewayStatusResult;
 use App\PaymentPlatform\Enums\GatewayAttemptStatus;
 use App\PaymentPlatform\Jobs\Concerns\InteractsWithGatewayCorrelation;
 use App\PaymentPlatform\Services\GatewayIntegrationService;
@@ -21,12 +22,13 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
 
     public int $tries;
 
-    public int $timeout = 120;
+    public int $timeout;
 
     public function __construct(
         public readonly int $paymentGatewayAttemptId,
     ) {
         $this->tries = (int) config('queues.retries.financial_initiation', 1);
+        $this->timeout = (int) config('cgrate.disbursement_timeout', 120);
         $this->onConnection(FinancialQueue::connection())
             ->onQueue(FinancialQueue::disbursementsHigh());
     }
@@ -36,7 +38,7 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
         return 'disbursement';
     }
 
-    public function handle(): void
+    public function handle(GatewayIntegrationService $integrationService): void
     {
         $attempt = $this->applyGatewayCorrelationContext($this->paymentGatewayAttemptId);
 
@@ -49,12 +51,7 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
             return;
         }
 
-        $pollInterval = (int) config('cgrate.poll_interval_seconds', 15);
-
         $issuerNameForPayload = (string) $attempt->issuer_name;
-        if ((bool) config('cgrate.uat.force_disbursement_issuer_name', false)) {
-            $issuerNameForPayload = (string) config('cgrate.uat.disbursement_issuer_name', '543');
-        }
 
         if ($attempt->status === GatewayAttemptStatus::Created) {
             $attempt->markInitiated([
@@ -66,8 +63,6 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
         }
 
         if ($attempt->status !== GatewayAttemptStatus::Initiated) {
-            $this->schedulePolling($attempt->id, $pollInterval);
-
             return;
         }
 
@@ -84,7 +79,7 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
                 providerReference: (string) ($attempt->provider_reference ?? $attempt->internal_reference),
             ));
 
-            DB::transaction(function () use ($attempt, $result) {
+            DB::transaction(function () use ($attempt, $result, $issuerNameForPayload) {
                 $locked = PaymentGatewayAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
 
                 if ($locked->isTerminal()) {
@@ -104,11 +99,19 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
                             'issuer_name_sent' => $issuerNameForPayload,
                         ],
                     ]),
-                    'status' => $result->success ? GatewayAttemptStatus::Pending : GatewayAttemptStatus::Failed,
-                    'failed_at' => $result->success ? null : now(),
-                    'next_query_at' => $result->success ? now() : null,
+                    'next_query_at' => null,
                 ]);
             });
+
+            $attempt->refresh();
+
+            $integrationService->handleStatusResult($attempt, new GatewayStatusResult(
+                normalizedStatus: $result->normalizedStatus,
+                providerTransactionId: $result->providerTransactionId,
+                responseCode: $result->responseCode,
+                responseMessage: $result->responseMessage,
+                rawPayload: $result->rawPayload,
+            ));
         } catch (\Throwable $e) {
             DB::transaction(function () use ($attempt, $e) {
                 $locked = PaymentGatewayAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
@@ -118,33 +121,18 @@ class DispatchGatewayDisbursementJob implements ShouldQueue
                 }
 
                 $locked->update([
-                    'status' => GatewayAttemptStatus::Pending,
-                    'response_message' => 'Could not confirm disbursement initiation response (will retry).',
+                    'status' => GatewayAttemptStatus::Failed,
+                    'response_message' => 'Could not complete cGrate disbursement: '.$e->getMessage(),
                     'response_payload' => array_merge((array) ($locked->response_payload ?? []), [
                         'initiation_error' => $e->getMessage(),
                     ]),
-                    'next_query_at' => now(),
+                    'failed_at' => now(),
+                    'next_query_at' => null,
                 ]);
             });
+
+            $attempt->refresh();
+            $integrationService->handleDisbursementFailure($attempt);
         }
-
-        $attempt->refresh();
-
-        if ($attempt->status === GatewayAttemptStatus::Pending) {
-            $this->schedulePolling($attempt->id, $pollInterval);
-        } elseif ($attempt->status === GatewayAttemptStatus::Failed) {
-            app(GatewayIntegrationService::class)
-                ->handleDisbursementFailure($attempt);
-        }
-    }
-
-    private function schedulePolling(int $attemptId, int $pollInterval): void
-    {
-        if ((string) config('queue.default') === 'sync') {
-            return;
-        }
-
-        QueryGatewayAttemptStatusJob::dispatchForAttempt($attemptId)
-            ->delay(now()->addSeconds(max(1, $pollInterval)));
     }
 }
