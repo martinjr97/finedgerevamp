@@ -59,7 +59,7 @@ class RepaymentShowGatewayCollectionTest extends TestCase
         $response->assertSee('Gateway collection in progress', false);
         $response->assertSee('Recheck Gateway Status', false);
         $response->assertSee($context['attempt']->internal_reference, false);
-        $response->assertSee('Manual Reconciliation', false);
+        $response->assertSee('Override Provider Status', false);
         $response->assertDontSee('Processing Confirmation', false);
     }
 
@@ -437,7 +437,8 @@ class RepaymentShowGatewayCollectionTest extends TestCase
             ->get(route('admin.repayments.show', $context['repayment']))
             ->assertOk()
             ->assertSee('Gateway collection failed or expired', false)
-            ->assertSee('Retry Collection', false);
+            ->assertSee('Retry Collection', false)
+            ->assertDontSee('Override Provider Status', false);
     }
 
     /**

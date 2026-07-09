@@ -16,7 +16,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             // Example values: 'bank', 'mobile_money'
-            $table->string('destination_type');
+            $table->string('destination_type', 32);
 
             $table->foreignId('financial_institution_id')
                 ->nullable()
@@ -29,14 +29,14 @@ return new class extends Migration
                 ->nullOnDelete();
 
             // Example values for cGrate: 'issuerName'
-            $table->string('gateway_key');
+            $table->string('gateway_key', 50);
             $table->string('gateway_value');
 
             // Example values: 'local', 'uat', 'production'. Null means "global default".
-            $table->string('environment')->nullable();
+            $table->string('environment', 20)->nullable();
 
             // Example values: 'active', 'inactive', 'verification_required'
-            $table->string('status')->default('active');
+            $table->string('status', 30)->default('active');
 
             $table->timestamp('last_verified_at')->nullable();
             $table->json('metadata')->nullable();

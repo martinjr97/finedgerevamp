@@ -10,6 +10,7 @@
         $canRecheckGateway = auth('admin')->user()?->can('repayments.view') || auth('admin')->user()?->can('repayments.process');
         $canApplyGatewaySync = auth('admin')->user()?->can('repayments.process');
         $canReconcile = $canProcessRepayment || $canApproveRepayment;
+        $showManualReconciliation = $repayment->status === 'processing' && $canReconcile;
         $isPendingRepayment = $repayment->status === 'pending';
         $gatewayAttempt = $gatewayShowState->gatewayAttempt;
         $openApproveModal = $isPendingRepayment && $canApproveRepayment && $errors->hasAny([
@@ -22,7 +23,7 @@
             'notes',
         ]);
         $openRejectModal = $isPendingRepayment && $canRejectRepayment && $errors->has('reason');
-        $openManualReconciliationModal = $repayment->status === 'processing' && $canProcessRepayment && $errors->hasAny([
+        $openManualReconciliationModal = $showManualReconciliation && $errors->hasAny([
             'provider_status',
             'provider_message',
             'external_reference',
@@ -61,11 +62,21 @@
                 <p class="text-xs uppercase tracking-[0.4em] text-cyan-300">Repayment Management</p>
                 <h1 class="text-3xl font-bold">{{ $repayment->repayment_number }}</h1>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center justify-end gap-3">
                 @if($repayment->customer && auth('admin')->user()?->can('repayments.create'))
                     <a href="{{ route('admin.customers.repayments.create', $repayment->customer) }}" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 px-4 py-3 text-sm text-emerald-200 hover:bg-emerald-500/30 transition">
                         Initiate Repayment
                     </a>
+                @endif
+                @if($showManualReconciliation)
+                    <button
+                        type="button"
+                        @click="manualReconciliationModalOpen = true"
+                        class="inline-flex items-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200 hover:bg-amber-500/20 transition"
+                        title="Manually set provider success or failure after independent verification"
+                    >
+                        Override Provider Status
+                    </button>
                 @endif
                 <a href="{{ route('admin.repayments.index') }}" class="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm text-white hover:bg-white/10 transition">
                     Back to List
@@ -216,16 +227,6 @@
                                 Retry Collection
                             </button>
                         </form>
-                    @endif
-
-                    @if($gatewayShowState->showManualReconciliationAction && $canReconcile)
-                        <button
-                            type="button"
-                            @click="manualReconciliationModalOpen = true"
-                            class="inline-flex items-center gap-2 rounded-2xl border border-white/20 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/10 transition"
-                        >
-                            Manual Reconciliation
-                        </button>
                     @endif
                 </div>
             </div>
@@ -642,7 +643,7 @@
             </div>
         @endif
 
-        @if($repayment->status === 'processing' && $canReconcile)
+        @if($showManualReconciliation)
             <div
                 x-show="manualReconciliationModalOpen"
                 x-cloak
@@ -650,7 +651,7 @@
             >
                 <div class="w-full max-w-3xl rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl max-h-[90vh] overflow-y-auto" @click.away="manualReconciliationModalOpen = false">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-semibold text-white">Manual Provider Confirmation</h2>
+                        <h2 class="text-xl font-semibold text-white">Override Provider Status</h2>
                         <button type="button" @click="manualReconciliationModalOpen = false" class="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-slate-300 hover:bg-white/10 transition">Close</button>
                     </div>
 
