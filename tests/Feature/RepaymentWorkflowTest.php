@@ -13,6 +13,9 @@ use App\Models\LoanProduct;
 use App\Models\LoanRepayment;
 use App\Models\PaymentGateway;
 use App\Models\Repayment;
+use App\Models\Wallet;
+use App\PaymentPlatform\Enums\FinancialAccountType;
+use App\PaymentPlatform\Enums\GatewayRouteKey;
 use App\PaymentPlatform\Enums\PaymentGatewayStatus;
 use App\Support\RepaymentRecoveryMethod;
 use App\Services\CashRegisterService;
@@ -22,10 +25,12 @@ use Database\Seeders\CGratePaymentGatewaySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
+use Tests\Support\EnablesPaymentGatewayRoutes;
 use Tests\TestCase;
 
 class RepaymentWorkflowTest extends TestCase
 {
+    use EnablesPaymentGatewayRoutes;
     use RefreshDatabase;
 
     private function makeCompany(string $suffix): Company
@@ -295,10 +300,26 @@ class RepaymentWorkflowTest extends TestCase
         ]);
 
         $this->seed(CGratePaymentGatewaySeeder::class);
+        $this->seedPaymentGatewayRoutes();
         config(['cgrate.enabled' => true]);
-        PaymentGateway::query()->where('code', 'cgrate')->update([
-            'status' => PaymentGatewayStatus::Active,
+
+        $wallet = Wallet::create([
+            'name' => 'cGrate Wallet '.$suffix,
+            'wallet_number' => '260955'.random_int(100000, 999999),
+            'provider' => 'other',
+            'currency' => 'ZMW',
+            'opening_balance' => 0,
+            'current_balance' => 0,
+            'is_active' => true,
         ]);
+
+        $gateway = PaymentGateway::query()->where('code', 'cgrate')->firstOrFail();
+        $gateway->update([
+            'status' => PaymentGatewayStatus::Active,
+            'financial_account_type' => FinancialAccountType::Wallet,
+            'financial_account_id' => $wallet->id,
+        ]);
+        $this->enablePaymentGatewayRoute(GatewayRouteKey::WalletCollection, $gateway->id);
 
         $customer = $this->makeCustomer($company, $loanProduct, $suffix);
         $nearestDueLoan = $this->makeLoan($customer, $loanProduct, $channel, 2000, now()->addDays(5)->toDateString());

@@ -14,7 +14,13 @@ use App\Services\CashRegisterService;
 use App\Services\CustomerNotificationService;
 use App\Services\LoanRepaymentLedgerService;
 use App\Services\RepaymentProcessingService;
+use App\Services\Repayments\AdminRepaymentGatewayCollectionService;
+use App\Services\Repayments\DTOs\RepaymentGatewayCollectionPreview;
+use App\Services\Repayments\Enums\RepaymentGatewayCollectionStatus;
 use App\Services\Repayments\RepaymentFinancePostingService;
+use App\Services\Repayments\RepaymentGatewayRecheckService;
+use App\Services\Repayments\RepaymentGatewayShowStateService;
+use App\Services\Repayments\RepaymentGatewayTimelineBuilder;
 use App\Support\RepaymentRecoveryMethod;
 use App\Support\ZambianPhoneRules;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RepaymentController extends Controller
@@ -41,6 +48,10 @@ class RepaymentController extends Controller
         private readonly LoanRepaymentLedgerService $ledgerService,
         private readonly CashRegisterService $cashRegisterService,
         private readonly RepaymentFinancePostingService $financePostingService,
+        private readonly AdminRepaymentGatewayCollectionService $gatewayCollectionService,
+        private readonly RepaymentGatewayShowStateService $gatewayShowStateService,
+        private readonly RepaymentGatewayRecheckService $gatewayRecheckService,
+        private readonly RepaymentGatewayTimelineBuilder $gatewayTimelineBuilder,
     ) {}
 
     public function index(Request $request): View
@@ -222,10 +233,30 @@ class RepaymentController extends Controller
         $repayment->load([
             'customer',
             'channel',
+            'gatewayAttempt.paymentGateway',
             'loanRepayments.loan.loanProduct',
             'loanRepayments.loan.customerGroup',
             'loanRepayments.loan.customer',
         ]);
+
+        $gatewayShowState = $this->gatewayShowStateService->forRepayment($repayment);
+        $gatewayRecheckResult = session('gateway_recheck_result');
+        $gatewayTimeline = $this->gatewayTimelineBuilder->build(
+            $repayment,
+            $gatewayShowState->gatewayAttempt,
+        );
+        $linkedFinancialAccount = $gatewayShowState->gatewayAttempt?->paymentGateway?->linkedFinancialAccount();
+        $linkedFinancialAccountLabel = $linkedFinancialAccount
+            ? ($linkedFinancialAccount->display_name ?? $linkedFinancialAccount->name ?? 'Linked account #'.$linkedFinancialAccount->id)
+            : null;
+        $pollIntervalSeconds = (int) config('cgrate.poll_interval_seconds', 15);
+        $paymentExpiryMinutes = (int) config('cgrate.payment_expiry_minutes', 5);
+        $queuePollingActive = $gatewayShowState->queuePollingActive;
+        $pollingStale = $gatewayShowState->gatewayAttempt
+            && ! $gatewayShowState->gatewayAttempt->isTerminal()
+            && $gatewayShowState->gatewayAttempt->next_query_at
+            && $gatewayShowState->gatewayAttempt->next_query_at->lt(now()->subMinutes(2))
+            && $queuePollingActive;
 
         $banks = Bank::query()->where('is_active', true)->orderBy('name')->get();
         $wallets = Wallet::query()->where('is_active', true)->orderBy('name')->get();
@@ -237,7 +268,110 @@ class RepaymentController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.repayments.show', compact('repayment', 'banks', 'wallets', 'cashRegisters', 'channels'));
+        return view('admin.repayments.show', compact(
+            'repayment',
+            'banks',
+            'wallets',
+            'cashRegisters',
+            'channels',
+            'gatewayShowState',
+            'gatewayRecheckResult',
+            'gatewayTimeline',
+            'linkedFinancialAccountLabel',
+            'pollIntervalSeconds',
+            'paymentExpiryMinutes',
+            'queuePollingActive',
+            'pollingStale',
+        ));
+    }
+
+    public function gatewayRecheck(Repayment $repayment): RedirectResponse
+    {
+        abort_unless(
+            auth('admin')->user()?->can('repayments.view') || auth('admin')->user()?->can('repayments.process'),
+            403
+        );
+
+        $result = $this->gatewayRecheckService->recheck($repayment);
+
+        $redirect = redirect()->route('admin.repayments.show', $repayment);
+
+        if (! $result['success']) {
+            return $redirect->with($result['flash_key'], $result['message']);
+        }
+
+        return $redirect
+            ->with($result['flash_key'], $result['message'])
+            ->with('gateway_recheck_result', $result['result'] ?? null);
+    }
+
+    public function applyGatewaySynchronization(Request $request, Repayment $repayment): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('repayments.process'), 403);
+
+        $validated = $request->validate([
+            'note' => 'required|string|max:1000',
+        ]);
+
+        try {
+            $result = $this->gatewayRecheckService->applySynchronization($repayment, $validated['note']);
+        } catch (ValidationException $e) {
+            return redirect()
+                ->route('admin.repayments.show', $repayment)
+                ->withErrors($e->errors())
+                ->with('gateway_recheck_result', session('gateway_recheck_result'));
+        }
+
+        return redirect()
+            ->route('admin.repayments.show', $repayment)
+            ->with($result['flash_key'], $result['message']);
+    }
+
+    public function markGatewayFailed(Request $request, Repayment $repayment): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('repayments.process'), 403);
+
+        $validated = $request->validate([
+            'note' => 'required|string|max:1000',
+        ]);
+
+        try {
+            $result = $this->gatewayRecheckService->markGatewayFailed($repayment, $validated['note']);
+        } catch (ValidationException $e) {
+            return redirect()
+                ->route('admin.repayments.show', $repayment)
+                ->withErrors($e->errors())
+                ->with('gateway_recheck_result', session('gateway_recheck_result'));
+        }
+
+        return redirect()
+            ->route('admin.repayments.show', $repayment)
+            ->with($result['flash_key'], $result['message']);
+    }
+
+    public function applyGatewayConfirmation(Repayment $repayment): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('repayments.process'), 403);
+
+        $result = $this->gatewayRecheckService->applySynchronization(
+            $repayment,
+            'Gateway confirmation applied from legacy action.',
+        );
+
+        return redirect()
+            ->route('admin.repayments.show', $repayment)
+            ->with($result['flash_key'], $result['message']);
+    }
+
+    public function retryGatewayCollection(Repayment $repayment): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('repayments.process') || auth('admin')->user()?->can('repayments.approve'), 403);
+
+        $result = $this->gatewayRecheckService->retryCollection($repayment);
+
+        return redirect()
+            ->route('admin.repayments.show', $repayment)
+            ->with($result['flash_key'], $result['message']);
     }
 
     public function createForCustomer(Request $request, Customer $customer): View|RedirectResponse
@@ -311,6 +445,11 @@ class RepaymentController extends Controller
             'loanLedgerById' => $loanLedgerById,
             'overpaymentReasons' => self::OVERPAYMENT_REASONS,
             'recoveryMethods' => RepaymentRecoveryMethod::labels(),
+            'channelPreviews' => $this->gatewayCollectionService->previewsForChannels(
+                $channels,
+                amount: null,
+                phone: old('phone_number', $customer->phone),
+            ),
         ]);
     }
 
@@ -324,7 +463,6 @@ class RepaymentController extends Controller
             'amount' => 'nullable|required_if:repayment_type,partial|numeric|min:0.01',
             'channel_id' => 'required|exists:channels,id',
             'phone_number' => ZambianPhoneRules::nullable(),
-            'submission_mode' => 'required|in:auto,manual',
             'manual_source' => 'nullable|in:bank,wallet,cash',
             'bank_id' => 'nullable|required_if:manual_source,bank|exists:banks,id',
             'wallet_id' => 'nullable|required_if:manual_source,wallet|exists:wallets,id',
@@ -393,8 +531,24 @@ class RepaymentController extends Controller
             ->where('can_repay', true)
             ->firstOrFail();
 
-        $isManualFlow = ($validated['submission_mode'] === 'manual') || ! ((bool) $channel->is_repayment_integrated);
-        $manualSource = $isManualFlow ? ($validated['manual_source'] ?? null) : null;
+        $phoneNumber = filled($validated['phone_number'] ?? null)
+            ? $validated['phone_number']
+            : $customer->phone;
+        $collectionPreview = $this->gatewayCollectionService->previewForChannel(
+            $channel,
+            $repaymentAmount,
+            $phoneNumber,
+        );
+
+        if ($collectionPreview->applicable && ! $collectionPreview->ready && ! $collectionPreview->fallbackToManual) {
+            return back()->withInput()->withErrors([
+                'channel_id' => $collectionPreview->reason ?? 'Gateway collection is not available for this channel.',
+            ]);
+        }
+
+        $manualSource = $collectionPreview->showsManualSourceFields()
+            ? ($validated['manual_source'] ?? null)
+            : null;
         [$receivedViaType, $receivedViaId] = $this->resolveReceivedVia(
             $manualSource,
             isset($validated['bank_id']) ? (int) $validated['bank_id'] : null,
@@ -405,12 +559,13 @@ class RepaymentController extends Controller
         $metadata = [
             'repayment_type' => $validated['repayment_type'],
             'loan_id' => $selectedLoan?->id,
-            'submission_mode' => $isManualFlow ? 'manual' : 'auto',
+            'submission_mode' => $collectionPreview->ready ? 'gateway_collection' : 'manual',
             'submitted_from' => 'admin_portal',
             'submitted_by_admin_id' => auth('admin')->id(),
             'submitted_at' => now()->toIso8601String(),
             'manual_source' => $manualSource,
             'notes' => $validated['notes'] ?? null,
+            'gateway_collection_preview' => $collectionPreview->toArray(),
         ];
 
         if ($isOverpayment && $selectedLoan) {
@@ -442,45 +597,75 @@ class RepaymentController extends Controller
         try {
             DB::beginTransaction();
 
-            $repayment = Repayment::create([
-                'customer_id' => $customer->id,
-                'channel_id' => $channel->id,
-                'repayment_number' => Repayment::generateRepaymentNumber(),
-                'total_amount' => $repaymentAmount,
-                'recovery_method' => $validated['recovery_method'],
-                'phone_number' => $validated['phone_number'] ?? $customer->phone,
-                'external_reference' => $validated['external_reference'] ?? null,
-                'external_transaction_id' => $validated['external_transaction_id'] ?? null,
-                'status' => $isManualFlow ? 'pending' : 'processing',
-                'status_message' => $isManualFlow
-                    ? 'Repayment submitted and awaiting approval.'
-                    : 'Repayment submitted for automated processing.',
-                'received_via_type' => $receivedViaType,
-                'received_via_id' => $receivedViaId,
-                'metadata' => $metadata,
-            ]);
+            if ($collectionPreview->ready) {
+                $repayment = Repayment::create([
+                    'customer_id' => $customer->id,
+                    'channel_id' => $channel->id,
+                    'repayment_number' => Repayment::generateRepaymentNumber(),
+                    'total_amount' => $repaymentAmount,
+                    'recovery_method' => $validated['recovery_method'],
+                    'phone_number' => $phoneNumber,
+                    'external_reference' => $validated['external_reference'] ?? null,
+                    'external_transaction_id' => $validated['external_transaction_id'] ?? null,
+                    'status' => 'processing',
+                    'status_message' => 'Repayment submitted for gateway collection.',
+                    'received_via_type' => null,
+                    'received_via_id' => null,
+                    'metadata' => $metadata,
+                ]);
 
-            if ($isManualFlow) {
-                DB::commit();
+                $collectionResult = $this->gatewayCollectionService->initiateForRepayment(
+                    $repayment,
+                    $channel,
+                    $phoneNumber,
+                );
 
-                return redirect()
-                    ->route('admin.repayments.show', $repayment)
-                    ->with('status', 'Repayment submitted successfully and is pending approval.');
-            }
+                if ($collectionResult->status === RepaymentGatewayCollectionStatus::Initiated) {
+                    $repayment->update([
+                        'external_reference' => $collectionResult->reference ?? $repayment->external_reference,
+                        'external_transaction_id' => $collectionResult->transactionId ?? $repayment->external_transaction_id,
+                        'status' => 'processing',
+                        'status_message' => $collectionResult->message,
+                        'metadata' => array_merge($metadata, $collectionResult->gatewayMetadata, [
+                            'gateway_reference' => $collectionResult->reference,
+                            'gateway_transaction_id' => $collectionResult->transactionId,
+                            'gateway_initiated_by_admin_id' => auth('admin')->id(),
+                            'gateway_initiated_at' => now()->toIso8601String(),
+                        ]),
+                    ]);
 
-            $paymentResult = $this->repaymentProcessingService->processPayment(
-                $repaymentAmount,
-                $channel,
-                $validated['phone_number'] ?? $customer->phone,
-                $repayment
-            );
+                    DB::commit();
 
-            if (! $paymentResult['success']) {
+                    return redirect()
+                        ->route('admin.repayments.show', $repayment)
+                        ->with('status', $collectionResult->message);
+                }
+
+                if ($collectionResult->status === RepaymentGatewayCollectionStatus::FallbackManual) {
+                    $repayment->update([
+                        'status' => 'pending',
+                        'status_message' => 'Repayment awaiting manual processing after gateway collection could not be initiated.',
+                        'received_via_type' => $receivedViaType,
+                        'received_via_id' => $receivedViaId,
+                        'metadata' => array_merge($metadata, [
+                            'gateway_collection_fallback' => true,
+                            'gateway_collection_failure' => $collectionResult->message,
+                            'gateway_fallback_at' => now()->toIso8601String(),
+                        ]),
+                    ]);
+
+                    DB::commit();
+
+                    return redirect()
+                        ->route('admin.repayments.show', $repayment)
+                        ->with('warning', $collectionResult->message);
+                }
+
                 $repayment->update([
                     'status' => 'failed',
-                    'status_message' => $paymentResult['message'] ?? 'Payment processing failed.',
+                    'status_message' => $collectionResult->message,
                     'metadata' => array_merge($metadata, [
-                        'gateway_response' => $paymentResult,
+                        'gateway_response' => ['message' => $collectionResult->message],
                         'failed_at' => now()->toIso8601String(),
                     ]),
                 ]);
@@ -489,37 +674,39 @@ class RepaymentController extends Controller
 
                 return redirect()
                     ->route('admin.repayments.show', $repayment)
-                    ->with('error', $paymentResult['message'] ?? 'Repayment submission failed at gateway stage.');
+                    ->with('error', $collectionResult->message);
             }
 
-            $gatewayMetadata = [];
-            if (isset($paymentResult['metadata']) && is_array($paymentResult['metadata'])) {
-                $gatewayMetadata = $paymentResult['metadata'];
-            }
-
-            $externalReference = $paymentResult['reference'] ?? $repayment->external_reference;
-            $externalTransactionId = $paymentResult['transaction_id'] ?? $repayment->external_transaction_id;
-            $statusMessage = $paymentResult['message'] ?? 'Payment prompt sent and awaiting provider confirmation.';
-            $updatedMetadata = array_merge($metadata, $gatewayMetadata, [
-                'gateway_reference' => $paymentResult['reference'] ?? null,
-                'gateway_transaction_id' => $paymentResult['transaction_id'] ?? null,
-                'gateway_initiated_by_admin_id' => auth('admin')->id(),
-                'gateway_initiated_at' => now()->toIso8601String(),
-            ]);
-
-            $repayment->update([
-                'external_reference' => $externalReference,
-                'external_transaction_id' => $externalTransactionId,
-                'status' => 'processing',
-                'status_message' => $statusMessage,
-                'metadata' => $updatedMetadata,
+            $repayment = Repayment::create([
+                'customer_id' => $customer->id,
+                'channel_id' => $channel->id,
+                'repayment_number' => Repayment::generateRepaymentNumber(),
+                'total_amount' => $repaymentAmount,
+                'recovery_method' => $validated['recovery_method'],
+                'phone_number' => $phoneNumber,
+                'external_reference' => $validated['external_reference'] ?? null,
+                'external_transaction_id' => $validated['external_transaction_id'] ?? null,
+                'status' => 'pending',
+                'status_message' => 'Repayment submitted and awaiting approval.',
+                'received_via_type' => $receivedViaType,
+                'received_via_id' => $receivedViaId,
+                'metadata' => $metadata,
             ]);
 
             DB::commit();
 
+            if ($collectionPreview->applicable && ! $collectionPreview->ready && $collectionPreview->reason) {
+                return redirect()
+                    ->route('admin.repayments.show', $repayment)
+                    ->with(
+                        'warning',
+                        'Gateway collection could not be initiated: '.$collectionPreview->reason.' The repayment has been created and is awaiting manual processing.'
+                    );
+            }
+
             return redirect()
                 ->route('admin.repayments.show', $repayment)
-                ->with('status', 'Repayment submitted to provider and is now processing.');
+                ->with('status', 'Repayment recorded and is awaiting manual approval.');
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Admin repayment submission failed', [

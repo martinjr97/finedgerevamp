@@ -19,6 +19,7 @@ use App\PaymentPlatform\Support\CGrateUatDisbursementIssuer;
 use App\Services\CustomerNotificationService;
 use App\Services\Loans\LoanDisbursementService;
 use App\Services\RepaymentProcessingService;
+use App\Services\Repayments\AdminRepaymentGatewayCollectionService;
 use App\Services\Repayments\RepaymentFinancePostingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -56,6 +57,13 @@ class GatewayIntegrationService
             return [
                 'success' => false,
                 'message' => 'This repayment channel does not support automated payment processing.',
+            ];
+        }
+
+        if (app(AdminRepaymentGatewayCollectionService::class)->hasActiveCollectionAttempt($repayment)) {
+            return [
+                'success' => false,
+                'message' => 'An active gateway collection attempt already exists for this repayment.',
             ];
         }
 

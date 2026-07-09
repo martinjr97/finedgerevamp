@@ -1,0 +1,47 @@
+---
+description: CRITICAL — Never delete or wipe user database data without explicit approval
+alwaysApply: true
+---
+
+# CRITICAL: Never delete user data
+
+**All agents working in this repo must treat user data as sacred.**
+
+Do **not** delete, wipe, truncate, reset, or bulk-remove records — even for "cleanup", "fixing tests", or "starting fresh" — unless the user has **explicitly requested that exact destructive action in writing**.
+
+## Protected databases
+
+- `finedgerevamp` (application DB from `.env`)
+- `finedge` (legacy — read-only unless user says otherwise)
+- Any non-`*_testing` database on this machine
+
+PHPUnit / tinker experiments → **`finedgerevamp_testing` only**.
+
+## Never run (on protected DBs) without explicit user approval
+
+| Category | Examples |
+|----------|----------|
+| Schema reset | `migrate:fresh`, `migrate:refresh`, `migrate:reset`, `db:wipe` |
+| SQL destruction | `DELETE FROM`, `TRUNCATE`, `DROP TABLE/DATABASE` |
+| Eloquent bulk delete | `Model::truncate()`, `::query()->delete()`, mass `destroy()` |
+| Risky scripts | Tinker one-liners with `migrate:fresh` or deletes on default connection |
+| Config changes | Repointing `DB_DATABASE` in `.env` |
+| Forced generators | `sample-data:generate --force` |
+
+## Safe defaults
+
+- Use **additive** operations: `updateOrCreate`, `firstOrCreate`, targeted seeders.
+- Restore dev repayment fixtures: `php artisan dev:resume-repayment-testing`
+- Restore admin login: `php artisan db:seed --class=SuperAdminSeeder`
+- Run tests only when `DB_DATABASE=finedgerevamp_testing` (see `tests/TestCase.php` guards).
+
+## Before any destructive command
+
+1. **Stop** — do not run it.
+2. Tell the user the exact command and database.
+3. Offer a non-destructive alternative.
+4. Wait for explicit approval.
+
+## Debugging rule
+
+Never bootstrap the app on `finedgerevamp` and then run `migrate:fresh` — even with `--env=testing` — if subsequent model writes use the default connection. That has caused real data loss.

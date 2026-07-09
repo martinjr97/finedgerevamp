@@ -94,8 +94,16 @@
                     <label class="block text-sm font-medium text-slate-200">Repayment Channel</label>
                     <select name="channel_id" id="channel_id" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40" required>
                         @foreach($channels as $channel)
-                            <option value="{{ $channel->id }}" data-integrated="{{ $channel->is_repayment_integrated ? '1' : '0' }}" @selected((string) old('channel_id') === (string) $channel->id)>
-                                {{ $channel->name }} ({{ $channel->is_repayment_integrated ? 'Integrated' : 'Manual' }})
+                            @php
+                                $preview = $channelPreviews[$channel->id] ?? null;
+                            @endphp
+                            <option
+                                value="{{ $channel->id }}"
+                                data-status-type="{{ $preview?->statusType ?? 'manual' }}"
+                                data-requires-phone="{{ ($preview?->requiresPhoneField() ?? false) ? '1' : '0' }}"
+                                @selected((string) old('channel_id') === (string) $channel->id)
+                            >
+                                {{ $channel->name }} ({{ $preview?->channelDropdownLabel() ?? 'Manual only' }})
                             </option>
                         @endforeach
                     </select>
@@ -179,22 +187,27 @@
                     @enderror
                 </div>
 
+                <div id="collection_processing_panel" class="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
+                    <div>
+                        <p class="text-sm font-semibold text-white">Collection processing</p>
+                        <p id="collection_processing_intro" class="mt-1 text-sm text-slate-300"></p>
+                    </div>
+                    <dl id="collection_processing_details" class="hidden grid gap-2 sm:grid-cols-2 text-sm">
+                        <div class="flex justify-between gap-3 border-b border-white/10 pb-2"><dt class="text-slate-400">Gateway</dt><dd id="collection_gateway_name" class="font-medium text-white text-right">—</dd></div>
+                        <div class="flex justify-between gap-3 border-b border-white/10 pb-2"><dt class="text-slate-400">Route</dt><dd id="collection_route_label" class="font-medium text-white text-right">—</dd></div>
+                        <div class="flex justify-between gap-3 border-b border-white/10 pb-2"><dt class="text-slate-400">Linked account</dt><dd id="collection_linked_account" class="font-medium text-white text-right">—</dd></div>
+                        <div class="flex justify-between gap-3 border-b border-white/10 pb-2"><dt class="text-slate-400">Customer phone</dt><dd id="collection_customer_phone" class="font-medium text-white text-right">—</dd></div>
+                        <div class="flex justify-between gap-3 border-b border-white/10 pb-2"><dt class="text-slate-400">Amount</dt><dd id="collection_amount" class="font-medium text-white text-right">—</dd></div>
+                        <div class="flex justify-between gap-3 border-b border-white/10 pb-2"><dt class="text-slate-400">Status</dt><dd id="collection_status_label" class="font-semibold text-right">—</dd></div>
+                    </dl>
+                    <p id="collection_processing_note" class="text-xs text-slate-400"></p>
+                </div>
+
                 <div id="phone_number_group" class="hidden">
                     <label for="phone_number" class="block text-sm font-medium text-slate-200">Mobile money number <span class="text-slate-500 font-normal">(for payment prompt)</span></label>
                     <input type="text" name="phone_number" id="phone_number" value="{{ old('phone_number', $customer->phone) }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260978232334">
                     <p class="mt-1 text-xs text-slate-400">Number that will receive the integrated channel payment request (USSD/app prompt). Defaults to the customer profile number.</p>
                     @error('phone_number')
-                        <p class="mt-1 text-xs text-rose-300">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-slate-200">Submission Mode</label>
-                    <select name="submission_mode" id="submission_mode" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40" required>
-                        <option value="auto" @selected(old('submission_mode', 'auto') === 'auto')>Auto (Send to Gateway)</option>
-                        <option value="manual" @selected(old('submission_mode') === 'manual')>Manual (Pending Approval)</option>
-                    </select>
-                    @error('submission_mode')
                         <p class="mt-1 text-xs text-rose-300">{{ $message }}</p>
                     @enderror
                 </div>
@@ -351,20 +364,32 @@
         const totalOverdue = {{ json_encode((float) $totals['overdue']) }};
         const activeLoanCount = {{ $activeLoans->count() }};
 
+        const channelPreviews = @json(collect($channelPreviews)->mapWithKeys(fn ($preview, $id) => [(string) $id => $preview->toArray()]));
+
         const channelSelect = document.getElementById('channel_id');
         const phoneNumberGroup = document.getElementById('phone_number_group');
+        const collectionProcessingIntro = document.getElementById('collection_processing_intro');
+        const collectionProcessingDetails = document.getElementById('collection_processing_details');
+        const collectionProcessingNote = document.getElementById('collection_processing_note');
+        const collectionGatewayName = document.getElementById('collection_gateway_name');
+        const collectionRouteLabel = document.getElementById('collection_route_label');
+        const collectionLinkedAccount = document.getElementById('collection_linked_account');
+        const collectionCustomerPhone = document.getElementById('collection_customer_phone');
+        const collectionAmount = document.getElementById('collection_amount');
+        const collectionStatusLabel = document.getElementById('collection_status_label');
+        const paymentReferencesSection = document.getElementById('payment_references_section');
         const referencesSectionIntro = document.getElementById('references_section_intro');
         const externalReferenceInput = document.getElementById('external_reference');
         const externalTransactionIdInput = document.getElementById('external_transaction_id');
         const externalReferenceHint = document.getElementById('external_reference_hint');
         const externalTransactionIdHint = document.getElementById('external_transaction_id_hint');
         const referencesTipText = document.getElementById('references_tip_text');
-        const submissionMode = document.getElementById('submission_mode');
         const manualSourceGroup = document.getElementById('manual_source_group');
         const manualSource = document.getElementById('manual_source');
         const bankGroup = document.getElementById('bank_group');
         const walletGroup = document.getElementById('wallet_group');
         const cashRegisterGroup = document.getElementById('cash_register_group');
+        const phoneNumberInput = document.getElementById('phone_number');
 
         function formatZmw(amount) {
             const value = Number(amount);
@@ -510,77 +535,125 @@
             updateAmountHint();
         }
 
-        function channelIsIntegrated() {
-            const selected = channelSelect?.options[channelSelect.selectedIndex];
-            return selected?.dataset?.integrated === '1';
+        function selectedChannelPreview() {
+            const channelId = channelSelect?.value;
+            return channelId ? (channelPreviews[channelId] || null) : null;
         }
 
-        function toggleChannelDependentFields() {
-            const isIntegrated = channelIsIntegrated();
+        function estimatedRepaymentAmount() {
+            if (repaymentType.value === 'partial') {
+                const amount = parseFloat(amountInput?.value || '0');
+                return Number.isNaN(amount) ? 0 : amount;
+            }
+            if (repaymentType.value === 'overdue') {
+                return totalOverdue;
+            }
+            return totalOutstanding;
+        }
+
+        function updateCollectionProcessingPanel() {
+            const preview = selectedChannelPreview();
+            const amount = estimatedRepaymentAmount();
+            const phone = phoneNumberInput?.value?.trim() || '';
+
+            if (!preview) {
+                return;
+            }
+
+            const isReady = preview.status_type === 'ready';
+            const isNotReady = preview.status_type === 'not_ready';
+            const isManual = preview.status_type === 'manual' || preview.status_type === 'unsupported';
+
+            if (isReady) {
+                collectionProcessingIntro.textContent = 'Gateway collection is available for this channel. Submitting will send a collection request through ' + (preview.gateway_name || 'the configured gateway') + '.';
+                collectionProcessingIntro.className = 'mt-1 text-sm text-emerald-200';
+            } else if (isNotReady) {
+                collectionProcessingIntro.textContent = 'Gateway collection is not available: ' + (preview.reason || 'Route is not ready') + '. This repayment will be created for manual processing.';
+                collectionProcessingIntro.className = 'mt-1 text-sm text-amber-200';
+            } else {
+                collectionProcessingIntro.textContent = 'Manual repayment will be recorded and will require approval.';
+                collectionProcessingIntro.className = 'mt-1 text-sm text-slate-300';
+            }
+
+            collectionProcessingDetails.classList.toggle('hidden', isManual);
+            collectionGatewayName.textContent = preview.gateway_name || '—';
+            collectionRouteLabel.textContent = preview.route_label || '—';
+            collectionLinkedAccount.textContent = preview.linked_account_label || '—';
+            collectionCustomerPhone.textContent = phone || preview.customer_phone || '—';
+            collectionAmount.textContent = amount > 0 ? formatZmw(amount) : 'Calculated on submit';
+            collectionStatusLabel.textContent = preview.status_label || '—';
+            collectionStatusLabel.className = 'font-semibold text-right ' + (isReady ? 'text-emerald-300' : (isNotReady ? 'text-amber-300' : 'text-slate-300'));
+
+            collectionProcessingNote.textContent = isReady
+                ? 'Loan balance and linked accounts update only after the gateway confirms payment. Payment references will be recorded automatically from the gateway response.'
+                : (isNotReady ? 'You can still record the repayment for manual approval.' : '');
 
             if (phoneNumberGroup) {
-                phoneNumberGroup.classList.toggle('hidden', !isIntegrated);
+                phoneNumberGroup.classList.toggle('hidden', !preview.requires_phone_field);
+            }
+
+            manualSourceGroup?.classList.toggle('hidden', isReady);
+            if (!isReady) {
+                toggleManualFields();
+            } else {
+                bankGroup?.classList.add('hidden');
+                walletGroup?.classList.add('hidden');
+                cashRegisterGroup?.classList.add('hidden');
+            }
+
+            togglePaymentReferencesSection(isReady);
+        }
+
+        function togglePaymentReferencesSection(isGatewayCollectionReady) {
+            const showReferences = !isGatewayCollectionReady;
+
+            paymentReferencesSection?.classList.toggle('hidden', !showReferences);
+
+            [externalReferenceInput, externalTransactionIdInput].forEach((input) => {
+                if (!input) {
+                    return;
+                }
+                input.disabled = !showReferences;
+                if (!showReferences) {
+                    input.value = '';
+                }
+            });
+
+            if (!showReferences) {
+                return;
             }
 
             if (referencesSectionIntro) {
-                referencesSectionIntro.textContent = isIntegrated
-                    ? 'For integrated channels, references are usually returned by the payment provider after the customer approves the prompt. You can still enter them now if you already have proof of payment.'
-                    : 'For manual collections (cash, bank deposit, etc.), enter the references from the proof of payment you received — not from Havencrest.';
+                referencesSectionIntro.textContent = 'Enter the references from the proof of payment you received — bank slip, teller receipt, mobile-money SMS, or your branch collection reference.';
             }
 
             if (externalReferenceHint) {
-                externalReferenceHint.textContent = isIntegrated
-                    ? 'Your receipt or internal collection reference, if known before the gateway responds. Often auto-filled after a successful prompt.'
-                    : 'From the proof you hold: bank deposit slip number, teller receipt no., mobile-money SMS reference, or your branch collection reference.';
+                externalReferenceHint.textContent = 'From the proof you hold: bank deposit slip number, teller receipt no., mobile-money SMS reference, or your branch collection reference.';
             }
 
             if (externalTransactionIdHint) {
-                externalTransactionIdHint.textContent = isIntegrated
-                    ? 'Unique ID from the payment gateway (e.g. MTN/Airtel transaction ID). Usually populated automatically when the provider confirms payment.'
-                    : 'The bank or wallet’s own transaction ID — only if it is different from the receipt/deposit reference above.';
+                externalTransactionIdHint.textContent = 'The bank or wallet’s own transaction ID — only if it is different from the receipt/deposit reference above.';
             }
 
             if (externalReferenceInput) {
-                externalReferenceInput.placeholder = isIntegrated
-                    ? 'e.g. RCP-2026-00123 or leave blank'
-                    : 'e.g. DEP-SLIP-88421 or TELLER-RCPT-55';
+                externalReferenceInput.placeholder = 'e.g. DEP-SLIP-88421 or TELLER-RCPT-55';
             }
 
             if (externalTransactionIdInput) {
-                externalTransactionIdInput.placeholder = isIntegrated
-                    ? 'Filled by gateway after approval'
-                    : 'e.g. FT260524ABC123 (bank) or MM-998877';
+                externalTransactionIdInput.placeholder = 'e.g. FT260524ABC123 (bank) or MM-998877';
             }
 
             if (referencesTipText) {
-                referencesTipText.textContent = isIntegrated
-                    ? 'Receipt reference = your or provider’s collection reference. Transaction ID = the gateway’s unique payment ID after the customer pays.'
-                    : 'Receipt reference = slip or receipt number you filed the payment under. Transaction ID = separate bank/wallet ID on the transfer advice, if any.';
+                referencesTipText.textContent = 'Receipt reference = slip or receipt number you filed the payment under. Transaction ID = separate bank/wallet ID on the transfer advice, if any.';
             }
-        }
-
-        function syncSubmissionModeWithChannel() {
-            const isIntegrated = channelIsIntegrated();
-
-            if (!isIntegrated) {
-                submissionMode.value = 'manual';
-            }
-
-            const autoOption = Array.from(submissionMode.options).find((option) => option.value === 'auto');
-            if (autoOption) {
-                autoOption.disabled = !isIntegrated;
-                autoOption.text = isIntegrated ? 'Auto (Send to Gateway)' : 'Auto (Unavailable for this channel)';
-            }
-
-            toggleChannelDependentFields();
-            toggleManualFields();
         }
 
         function toggleManualFields() {
-            const isManual = submissionMode.value === 'manual';
-            manualSourceGroup.classList.toggle('hidden', !isManual);
+            const preview = selectedChannelPreview();
+            const showManual = preview ? preview.shows_manual_source_fields : true;
+            manualSourceGroup.classList.toggle('hidden', !showManual);
 
-            if (!isManual) {
+            if (!showManual) {
                 bankGroup?.classList.add('hidden');
                 walletGroup?.classList.add('hidden');
                 cashRegisterGroup?.classList.add('hidden');
@@ -615,9 +688,21 @@
         if (overpaymentReason) {
             overpaymentReason.addEventListener('change', updateOverpaymentUi);
         }
-        channelSelect.addEventListener('change', syncSubmissionModeWithChannel);
-        submissionMode.addEventListener('change', toggleManualFields);
+        channelSelect.addEventListener('change', updateCollectionProcessingPanel);
         manualSource.addEventListener('change', toggleManualFields);
+        if (phoneNumberInput) {
+            phoneNumberInput.addEventListener('input', updateCollectionProcessingPanel);
+        }
+        repaymentType.addEventListener('change', function () {
+            togglePartialFields();
+            updateCollectionProcessingPanel();
+        });
+        if (amountInput) {
+            amountInput.addEventListener('input', function () {
+                updateAmountHint();
+                updateCollectionProcessingPanel();
+            });
+        }
         overpaymentModalCancel?.addEventListener('click', hideOverpaymentModal);
         overpaymentModalConfirm?.addEventListener('click', function () {
             if (overpaymentConfirmed) {
@@ -669,9 +754,8 @@
         }
 
         togglePartialFields();
-        syncSubmissionModeWithChannel();
+        updateCollectionProcessingPanel();
         toggleManualFields();
-        toggleChannelDependentFields();
     })();
 </script>
 @endpush

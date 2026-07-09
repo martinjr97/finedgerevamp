@@ -240,6 +240,11 @@ Route::middleware('auth:admin')->group(function (): void {
         });
         Route::get('repayments/export', [RepaymentController::class, 'export'])->name('repayments.export');
         Route::post('repayments/{repayment}/processing-status', [RepaymentController::class, 'updateProcessingStatus'])->name('repayments.processing-status');
+        Route::post('repayments/{repayment}/gateway-recheck', [RepaymentController::class, 'gatewayRecheck'])->name('repayments.gateway-recheck');
+        Route::post('repayments/{repayment}/gateway-recheck/apply', [RepaymentController::class, 'applyGatewaySynchronization'])->name('repayments.gateway-recheck.apply');
+        Route::post('repayments/{repayment}/gateway-recheck/mark-failed', [RepaymentController::class, 'markGatewayFailed'])->name('repayments.gateway-recheck.mark-failed');
+        Route::post('repayments/{repayment}/apply-gateway-confirmation', [RepaymentController::class, 'applyGatewayConfirmation'])->name('repayments.apply-gateway-confirmation');
+        Route::post('repayments/{repayment}/retry-gateway-collection', [RepaymentController::class, 'retryGatewayCollection'])->name('repayments.retry-gateway-collection');
         Route::post('repayments/{repayment}/approve', [RepaymentController::class, 'approve'])->name('repayments.approve');
         Route::post('repayments/{repayment}/reject', [RepaymentController::class, 'reject'])->name('repayments.reject');
         Route::resource('repayments', RepaymentController::class)->only(['index', 'show']);

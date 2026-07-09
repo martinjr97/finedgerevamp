@@ -493,6 +493,7 @@ There must **never** be two different accounting implementations.
 |----------|-----------|
 | All gateways `disabled` | Manual repayment approve + manual disburse work as today |
 | `channel.is_repayment_integrated = false` | Customer submission → pending → admin approve |
+| Admin repayment create | Gateway Routing readiness (not `is_repayment_integrated`) |
 | `DISBURSEMENT_TYPE=manual` | No automated payout |
 | Gateway initiation fails | Fall back to manual path or retry — never block loan management |
 
@@ -656,3 +657,166 @@ Configure via **Admin → Configuration → Gateway Routing**.
 | Payout confirmed later | active | completed | wallet debited once via existing confirm path |
 
 **Wallet/bank is debited only after confirmed payout** — same rule as manual gateway disbursement.
+
+---
+
+## 23. Admin Repayment Gateway Collection
+
+Admin repayment creation at `/admin/customers/{customer}/repayments/create` uses **Gateway Routing** as the runtime source of truth for whether to initiate automated collection.
+
+### Channels vs routing
+
+| Concept | Role |
+|---------|------|
+| **Repayment channel** | Describes how the customer pays (Airtel Money, MTN Money, bank deposit, cash, etc.) |
+| **Gateway route** | Decides whether an integrated collection can run (`wallet_collection`, `bank_collection`) |
+| **`Channel.is_repayment_integrated`** | **Not used** on the admin create flow — routing readiness replaces it |
+
+### Admin UX
+
+- Admins choose repayment type, channel, amount, loan (if partial), and references/notes.
+- **Submission mode (Auto/Manual) was removed** — the system decides processing mode.
+- A **Collection processing** panel shows route-aware preview: gateway, route label, linked account, customer phone, amount, and readiness status.
+- Channel dropdown labels are route-aware: *Gateway ready*, *Gateway unavailable*, *Manual only*, *Unsupported*.
+
+### Decision flow
+
+| Case | Route / channel | Repayment status | Gateway attempt | Loan / finance |
+|------|-----------------|------------------|-----------------|----------------|
+| **A — Route ready** | Wallet/bank collection route enabled, gateway active, credentials on, linked account, valid phone (wallet) | `processing` | Created; `DispatchGatewayCollectionJob` on `payments-high` | **No** loan or account update until gateway confirms |
+| **B — Route not ready, fallback allowed** | Disabled route, inactive gateway, missing linked account, missing phone, etc. | `pending` | None | Manual approval path; warning flash |
+| **C — Manual / cash / unsupported** | Cash or no collection route | `pending` | None | Manual approval path |
+
+On gateway confirmation, existing `finalizeIntegratedRepayment()` credits the linked gateway account and updates loan balance/schedule — unchanged from customer-integrated repayments.
+
+### Services
+
+- `AdminRepaymentGatewayCollectionService` — preview, readiness, initiation orchestration
+- `GatewayIntegrationService::initiateCollection()` — attempt creation and job dispatch (duplicate active-attempt guard included)
+- `PaymentGatewayRouteService::resolveRouteForCollection()` — readiness checks
+
+### Customer portal
+
+The **customer repayment flow is unchanged** in this phase — it still uses `Channel.is_repayment_integrated` and the existing customer confirmation/process steps.
+
+---
+
+## 24. Repayment Gateway Recheck and Manual Reconciliation
+
+The admin repayment detail page (`/admin/repayments/{repayment}`) separates **gateway-driven collections** from **manual repayments** so admins are not prompted to manually confirm provider status while background polling is still running.
+
+### Normal gateway flow (unchanged)
+
+Gateway repayments still **auto-finalize** through background polling and callbacks:
+
+```
+Gateway confirms → QueryGatewayAttemptStatusJob / callback
+  → GatewayIntegrationService::handleStatusResult
+  → finalizeConfirmedAttempt / finalizeIntegratedRepayment
+  → loan balance updated + linked wallet/bank credited once
+```
+
+Admin recheck is **diagnostic and recovery only** — it does not replace automatic processing.
+
+### Status panels
+
+`RepaymentGatewayShowStateService` maps `repayment.status`, `gatewayAttempt.status`, and `metadata.requires_finance_reconciliation` into a single panel. When a `payment_gateway_attempt` exists, the **Gateway Processing** panel shows gateway name, attempt status, local vs provider references, customer phone, amount, polling schedule, expiry, linked finance account, and a state-aware timeline.
+
+| Panel | When | Primary actions |
+|-------|------|-----------------|
+| Gateway collection in progress | `processing` + non-terminal attempt | Recheck Gateway Status, View Gateway Logs, Manual Reconciliation |
+| Gateway confirmed — finance reconciliation required | `processing` + confirmed attempt + `requires_finance_reconciliation` | Apply Gateway Synchronization, Recheck, Manual Reconciliation |
+| Gateway failed/expired | `failed` + terminal attempt | Retry Collection, Recheck, Manual Reconciliation |
+| Manual Repayment Approval | `pending` + no gateway attempt | Approve Manual Repayment / Reject (modal) |
+| Completed | `completed` | Synchronized — recheck available read-only |
+
+Manual repayments **never** show gateway controls. Gateway repayments **never** show the inline manual approval form.
+
+### Recheck Gateway Status (query-only)
+
+`POST /admin/repayments/{repayment}/gateway-recheck`
+
+**Permission:** `repayments.view` or `repayments.process`
+
+1. Resolves the latest collection attempt.
+2. Queries the provider directly via `PaymentGateway::resolveProvider()->queryStatus($attempt)` using the same reference as `processCustomerPayment` (`provider_reference ?? internal_reference`).
+3. **Does not mutate** repayment, loan balances, or finance accounts.
+4. Flashes `gateway_recheck_result` and opens a comparison modal showing local status, gateway status, response code/message, provider transaction ID, `status_changed`, and recommended action.
+
+| Outcome | Meaning | Admin action |
+|---------|---------|--------------|
+| `pending` | Gateway still pending | None — wait for polling or recheck later |
+| `confirmed_synchronized` | Gateway confirmed and FineEdge already completed | None |
+| `confirmed_needs_sync` | Gateway confirmed but FineEdge not synchronized | **Apply Gateway Synchronization** (separate POST) |
+| `failed` | Gateway failed/rejected/expired | **Mark as Failed** (separate POST) |
+| `unknown` | No terminal gateway response | Retry later or wait for polling |
+
+### Apply Gateway Synchronization (explicit recovery)
+
+`POST /admin/repayments/{repayment}/gateway-recheck/apply`
+
+**Permission:** `repayments.process`  
+**Requires:** admin `note` (mandatory)
+
+1. Performs a fresh gateway query.
+2. Proceeds only when the latest query is `confirmed`.
+3. Calls `handleStatusResult` (if attempt not yet confirmed) then `finalizeConfirmedAttempt` — the same idempotent path used by polling/callbacks.
+4. Updates repayment status, loan balances, and linked finance account **once**.
+5. Records `PaymentGatewayLog` event `repayment.gateway_sync_applied`.
+
+Legacy alias: `POST /admin/repayments/{repayment}/apply-gateway-confirmation` (no note — deprecated).
+
+### Mark as Failed (from recheck)
+
+`POST /admin/repayments/{repayment}/gateway-recheck/mark-failed`
+
+**Permission:** `repayments.process`  
+**Requires:** admin `note`
+
+Only when a fresh query reports `failed`, `rejected`, or `expired`. Calls `handleStatusResult` to mark attempt/repayment failed. **Does not** update loan balances.
+
+### Retry collection
+
+`POST /admin/repayments/{repayment}/retry-gateway-collection`
+
+**Permission:** `repayments.process` or `repayments.approve`
+
+Starts a new collection attempt when no active attempt exists.
+
+### Manual Repayment Approval
+
+Repayments **without** a gateway attempt show the **Manual Repayment Approval** panel. The former inline **Processing Confirmation** form is now a modal (**Manual Provider Confirmation / Approve Manual Repayment**) with a warning that the action may update loan and finance balances after independent verification.
+
+**Permission:** `repayments.approve` (and `repayments.reject` for rejection).
+
+### Manual reconciliation (gateway repayments)
+
+Secondary path for exceptional cases via modal. Calls existing `updateProcessingStatus()`. Prefer **Apply Gateway Synchronization** when the gateway has already confirmed payment.
+
+### Polling and expiry (env-driven)
+
+| Setting | Default | Recommended production | Role |
+|---------|---------|------------------------|------|
+| `CGRATE_POLL_INTERVAL_SECONDS` | `15` | `30` | Reschedule interval for `QueryGatewayAttemptStatusJob` |
+| `CGRATE_PAYMENT_EXPIRY_MINUTES` | `5` | `10` | Expire attempt when no terminal response within window |
+| `CGRATE_MAX_QUERY_ATTEMPTS` | `20` | `20` | Secondary expiry guard |
+
+Scheduled dispatch: `GatewayPollingService::dispatchDueAttempts()` every minute plus per-attempt `next_query_at` after each query. The show page surfaces poll interval, next check, expiry deadline, and a stale-polling warning when `next_query_at` is overdue.
+
+### Permissions summary
+
+| Action | Permission |
+|--------|------------|
+| Recheck Gateway Status | `repayments.view` or `repayments.process` |
+| Apply Gateway Synchronization | `repayments.process` |
+| Mark as Failed | `repayments.process` |
+| Manual Approval | `repayments.approve` |
+| Manual Reconciliation | `repayments.reconcile` or `repayments.approve` |
+| Retry Collection | `repayments.process` or `repayments.approve` |
+
+### Services
+
+- `RepaymentGatewayShowStateService` / `RepaymentGatewayShowState` — panel mapping and expiry math
+- `RepaymentGatewayRecheckService` — query-only recheck, apply synchronization, mark failed, retry collection
+- `RepaymentGatewayRecheckResult` — comparison DTO (local vs gateway, outcomes, recommended actions)
+- `RepaymentGatewayTimelineBuilder` — state-aware processing timeline for the show page
