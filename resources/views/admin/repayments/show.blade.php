@@ -13,6 +13,9 @@
         $showManualReconciliation = $repayment->status === 'processing' && $canReconcile;
         $isPendingRepayment = $repayment->status === 'pending';
         $gatewayAttempt = $gatewayShowState->gatewayAttempt;
+        $gatewayPanelOpen = $gatewayAttempt !== null
+            && $repayment->status === 'processing'
+            && ! $gatewayAttempt->isTerminal();
         $openApproveModal = $isPendingRepayment && $canApproveRepayment && $errors->hasAny([
             'channel_id',
             'manual_source',
@@ -85,19 +88,29 @@
         </div>
 
         @if($gatewayAttempt)
-            <div class="rounded-3xl border {{ $panelStyle['border'] }} {{ $panelStyle['bg'] }} p-6 shadow-lg space-y-5">
-                <div>
-                    <h2 class="text-lg font-semibold {{ $panelStyle['title'] }}">Gateway Processing</h2>
-                    <p class="text-sm {{ $panelStyle['text'] }} mt-1">{{ $gatewayShowState->title }} — {{ $gatewayShowState->message }}</p>
+            <details class="group rounded-3xl border {{ $panelStyle['border'] }} {{ $panelStyle['bg'] }} shadow-lg" @if($gatewayPanelOpen) open @endif>
+                <summary class="flex cursor-pointer list-none items-start justify-between gap-4 p-6 [&::-webkit-details-marker]:hidden">
+                    <div class="min-w-0 flex-1">
+                        <h2 class="text-lg font-semibold {{ $panelStyle['title'] }}">Gateway Processing</h2>
+                        <p class="text-sm {{ $panelStyle['text'] }} mt-1">{{ $gatewayShowState->title }} — {{ $gatewayShowState->message }}</p>
+                        <p class="mt-1 text-xs text-slate-400">Expand for timeline, gateway details, and actions</p>
+                    </div>
+                    <span class="shrink-0 {{ $panelStyle['text'] }} transition group-open:rotate-180" aria-hidden="true">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </span>
+                </summary>
+
+                <div class="space-y-5 border-t border-white/10 px-6 pb-6 pt-4">
                     @if($queuePollingActive)
-                        <p class="text-xs text-slate-300 mt-2">Background polling is active every {{ $pollIntervalSeconds }} seconds. Payment window expires after {{ $paymentExpiryMinutes }} minutes.</p>
+                        <p class="text-xs text-slate-300">Background polling is active every {{ $pollIntervalSeconds }} seconds. Payment window expires after {{ $paymentExpiryMinutes }} minutes.</p>
                     @elseif((string) config('queue.default') === 'sync')
-                        <p class="text-xs text-amber-200/90 mt-2">Queue is running in sync mode. Automatic background polling is disabled — use Recheck Gateway Status or configure Redis/Horizon workers.</p>
+                        <p class="text-xs text-amber-200/90">Queue is running in sync mode. Automatic background polling is disabled — use Recheck Gateway Status or configure Redis/Horizon workers.</p>
                     @endif
                     @if($pollingStale)
-                        <p class="text-xs text-amber-200/90 mt-2">Polling appears stale. The next scheduled check is overdue — verify queue workers and scheduler are running.</p>
+                        <p class="text-xs text-amber-200/90">Polling appears stale. The next scheduled check is overdue — verify queue workers and scheduler are running.</p>
                     @endif
-                </div>
 
                 @if(! empty($gatewayTimeline))
                     <ol class="space-y-2">
@@ -229,7 +242,8 @@
                         </form>
                     @endif
                 </div>
-            </div>
+                </div>
+            </details>
         @endif
 
         @if($gatewayShowState->panelType === 'manual_pending')

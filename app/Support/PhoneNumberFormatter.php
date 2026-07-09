@@ -12,7 +12,7 @@ class PhoneNumberFormatter
 
     public const HELP_TEXT = 'Enter 12 digits starting with 260 (e.g. 260900000000).';
 
-    public const EXAMPLE_CONVERSION = '0978232334 → 260978232334';
+    public const EXAMPLE_CONVERSION = '';
 
     public static function isValid(?string $value): bool
     {

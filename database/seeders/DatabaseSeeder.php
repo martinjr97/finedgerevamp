@@ -31,7 +31,6 @@ class DatabaseSeeder extends Seeder
 	                WalletProviderSeeder::class,
 	                SecurityQuestionSeeder::class,
 	                RateTableSeeder::class,
-	                GovernmentSampleCustomerSeeder::class,
 					CGratePaymentGatewaySeeder::class,
 					PaymentGatewayRouteSeeder::class,
 	            ]);
