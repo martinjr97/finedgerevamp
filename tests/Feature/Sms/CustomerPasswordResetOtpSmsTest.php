@@ -19,7 +19,7 @@ class CustomerPasswordResetOtpSmsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_password_reset_otp_queues_sms_without_plaintext_logging(): void
+    public function test_password_reset_otp_skips_when_sms_disabled(): void
     {
         config(['sms.enabled' => false, 'sms.provider' => 'log']);
         Queue::fake();

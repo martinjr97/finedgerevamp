@@ -40,6 +40,7 @@ class SendSmsJob implements ShouldQueue
             return;
         }
 
+        // SMS_ENABLED=false → skip entirely (no live send, no log provider write).
         if (! (bool) config('sms.enabled', false)) {
             $this->markSkipped($record, 'disabled');
 

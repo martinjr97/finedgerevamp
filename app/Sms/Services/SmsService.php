@@ -29,7 +29,20 @@ class SmsService
     {
         $dto = $message instanceof SmsMessage ? $message : SmsMessage::fromArray($message);
 
-        return $this->processQueue($dto);
+        return $this->processQueue($dto, sync: false);
+    }
+
+    /**
+     * Create an sms_messages audit row and deliver immediately (no async queue).
+     * Use for admin UI flows where the operator needs Zamtel success/failure right away.
+     *
+     * @param  array<string, mixed>|SmsMessage  $message
+     */
+    public function sendRecorded(array|SmsMessage $message): ?SmsMessageModel
+    {
+        $dto = $message instanceof SmsMessage ? $message : SmsMessage::fromArray($message);
+
+        return $this->processQueue($dto, sync: true);
     }
 
     /**
@@ -38,7 +51,7 @@ class SmsService
     public function sendNow(array|SmsMessage $message, ?string $provider = null): SmsResult
     {
         $dto = $message instanceof SmsMessage ? $message : SmsMessage::fromArray($message);
-        $resolvedProvider = $provider ?? (string) config('sms.provider', 'log');
+        $resolvedProvider = $this->resolveProvider($dto, $provider);
 
         if (! $this->isSendingAllowed($dto)) {
             return SmsResult::skippedResult($resolvedProvider, 'SMS sending is disabled.');
@@ -94,9 +107,21 @@ class SmsService
         }
     }
 
-    private function processQueue(SmsMessage $dto): ?SmsMessageModel
+    /**
+     * Resolve the configured provider (used only when SMS is enabled / forceSend).
+     */
+    public function resolveProvider(SmsMessage $dto, ?string $override = null): string
     {
-        $provider = (string) config('sms.provider', 'log');
+        if (is_string($override) && $override !== '') {
+            return $override;
+        }
+
+        return (string) config('sms.provider', 'log');
+    }
+
+    private function processQueue(SmsMessage $dto, bool $sync = false): ?SmsMessageModel
+    {
+        $provider = $this->resolveProvider($dto);
         $phone = trim($dto->phone);
 
         if ($phone === '') {
@@ -115,6 +140,7 @@ class SmsService
             return $this->markSkipped($record, 'too_long');
         }
 
+        // SMS_ENABLED=false → do not send and do not write via the log provider.
         if (! $this->isSendingAllowed($dto)) {
             return $this->markSkipped($record, 'disabled');
         }
@@ -132,7 +158,11 @@ class SmsService
         }
 
         try {
-            SendSmsJob::dispatch($record->id, $dto->body);
+            if ($sync) {
+                SendSmsJob::dispatchSync($record->id, $dto->body);
+            } else {
+                SendSmsJob::dispatch($record->id, $dto->body);
+            }
 
             return $record->fresh();
         } catch (\Throwable $e) {

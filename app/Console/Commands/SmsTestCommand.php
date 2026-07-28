@@ -39,7 +39,7 @@ class SmsTestCommand extends Command
         $force = (bool) $this->option('force');
 
         if (! config('sms.enabled', false) && ! $force) {
-            $this->warn('SMS_ENABLED=false — use --force to send anyway.');
+            $this->warn('SMS_ENABLED=false — use --force to send/log anyway.');
             $this->line('Provider: '.$provider);
             $this->line('To: '.$phoneNormalizer->mask($to));
             $this->line('Status: SKIPPED (disabled)');

@@ -2,11 +2,13 @@
 
 namespace App\Notifications;
 
+use App\Support\Queue\ApplicationQueue;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class CustomerRegistrationRequestRevertedNotification extends Notification
+class CustomerRegistrationRequestRevertedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -17,6 +19,9 @@ class CustomerRegistrationRequestRevertedNotification extends Notification
         public string $reason,
         public string $editUrl
     ) {
+        $this->tries = (int) config('queues.retries.notifications', 3);
+        $this->onConnection(ApplicationQueue::connection())
+            ->onQueue(ApplicationQueue::notifications());
     }
 
     /**
@@ -40,4 +45,3 @@ class CustomerRegistrationRequestRevertedNotification extends Notification
             ->salutation('Regards, ' . config('app.name'));
     }
 }
-

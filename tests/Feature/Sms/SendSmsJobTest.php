@@ -62,4 +62,29 @@ class SendSmsJobTest extends TestCase
         $this->assertSame('sent', $record->status);
         $this->assertNotNull($record->sent_at);
     }
+
+    public function test_job_skips_when_sms_disabled(): void
+    {
+        config(['sms.enabled' => false, 'sms.provider' => 'zamtel']);
+        Http::fake();
+
+        $record = SmsMessage::create([
+            'phone_number' => '260977000001',
+            'normalized_phone' => '[260977000001]',
+            'message_category' => SmsCategory::General,
+            'message_type' => 'test',
+            'message_body' => 'Hello',
+            'message_preview' => 'Hello',
+            'message_length' => 5,
+            'provider' => 'zamtel',
+            'status' => 'queued',
+        ]);
+
+        SendSmsJob::dispatchSync($record->id, 'Hello');
+
+        $record->refresh();
+        $this->assertSame('skipped', $record->status);
+        $this->assertSame('disabled', $record->skip_reason);
+        Http::assertNothingSent();
+    }
 }

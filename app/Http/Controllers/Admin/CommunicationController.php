@@ -7,6 +7,8 @@ use App\Models\Communication;
 use App\Models\Customer;
 use App\Models\LoanProduct;
 use App\Models\Province;
+use App\Models\SmsMessage;
+use App\Sms\Services\SmsService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
+use RuntimeException;
 
 class CommunicationController extends Controller
 {
@@ -96,8 +99,9 @@ class CommunicationController extends Controller
             }
 
             // Create communication record
+            $subject = $this->resolveSubject($validated['type'], $validated['subject'] ?? null);
             $communication = Communication::create([
-                'subject' => $validated['subject'] ?? null,
+                'subject' => $subject,
                 'message' => $validated['message'],
                 'type' => $validated['type'],
                 'filters' => $validated['filters'] ?? [],
@@ -110,12 +114,13 @@ class CommunicationController extends Controller
             $sentCount = 0;
             $failedCount = 0;
             $errors = [];
+            $smsMessageIds = [];
 
             foreach ($customers as $customer) {
                 try {
                     if (in_array($validated['type'], ['email', 'both'])) {
                         if ($customer->email) {
-                            $this->sendEmail($customer, $validated['subject'] ?? 'Notification', $validated['message']);
+                            $this->sendEmail($customer, $subject, $validated['message']);
                             $sentCount++;
                         } else {
                             $failedCount++;
@@ -125,8 +130,9 @@ class CommunicationController extends Controller
 
                     if (in_array($validated['type'], ['sms', 'both'])) {
                         if ($customer->phone) {
-                            $this->sendSms($customer, $validated['message']);
-                            if (!in_array($validated['type'], ['email', 'both']) || !$customer->email) {
+                            $sms = $this->sendSms($customer, $validated['message'], $communication->id);
+                            $smsMessageIds[] = $sms->id;
+                            if ($validated['type'] === 'sms') {
                                 $sentCount++;
                             }
                         } else {
@@ -152,6 +158,9 @@ class CommunicationController extends Controller
                 'status' => $failedCount > 0 && $sentCount === 0 ? 'failed' : 'completed',
                 'sent_at' => now(),
                 'error_message' => !empty($errors) ? implode('; ', array_slice($errors, 0, 10)) : null,
+                'metadata' => array_filter([
+                    'sms_message_ids' => $smsMessageIds ?: null,
+                ]),
             ]);
 
             DB::commit();
@@ -232,7 +241,16 @@ class CommunicationController extends Controller
         }
         // If filters is null/empty and not system-generated, recipients stays empty
 
-        return view('admin.communications.show', compact('communication', 'recipients'));
+        $smsMessages = collect();
+        $smsMessageIds = data_get($communication->metadata, 'sms_message_ids', []);
+        if (is_array($smsMessageIds) && $smsMessageIds !== []) {
+            $smsMessages = SmsMessage::query()
+                ->whereIn('id', $smsMessageIds)
+                ->orderBy('id')
+                ->get();
+        }
+
+        return view('admin.communications.show', compact('communication', 'recipients', 'smsMessages'));
     }
 
     /**
@@ -317,21 +335,57 @@ class CommunicationController extends Controller
     }
 
     /**
-     * Send SMS to customer.
+     * Deliver SMS immediately via the configured provider and return the audit record.
+     * Status reflects the real provider outcome (e.g. Zamtel accepted/rejected).
      */
-    private function sendSms(Customer $customer, string $message): void
+    private function sendSms(Customer $customer, string $message, ?int $communicationId = null): SmsMessage
     {
-        // TODO: Integrate your SMS service here
-        // For now, we'll log it. Replace this with your SMS sending code
-        Log::info('SMS Sent', [
-            'customer_id' => $customer->id,
+        $record = app(SmsService::class)->sendRecorded([
             'phone' => $customer->phone,
-            'message' => $message,
+            'body' => $message,
+            'category' => 'general',
+            'message_type' => 'admin_communication',
+            'recipient' => $customer,
+            'customer_id' => $customer->id,
+            'metadata' => array_filter([
+                'source' => 'admin_communication',
+                'communication_id' => $communicationId,
+            ]),
         ]);
 
-        // Example integration (uncomment and configure when SMS service is ready):
-        // $smsService = app(SmsService::class);
-        // $smsService->send($customer->phone, $message);
+        if ($record === null) {
+            throw new RuntimeException('SMS could not be sent (missing phone).');
+        }
+
+        if ($record->status === 'sent') {
+            return $record;
+        }
+
+        $providerMessage = data_get($record->provider_response, 'message');
+        $reason = $record->skip_reason
+            ?: (is_string($providerMessage) ? $providerMessage : null)
+            ?: $record->status;
+
+        throw new RuntimeException('SMS was not delivered: '.$reason);
+    }
+
+    /**
+     * Build a list-friendly subject when the operator did not supply one (SMS).
+     */
+    private function resolveSubject(string $type, ?string $subject, ?Customer $customer = null): string
+    {
+        $trimmed = trim((string) $subject);
+        if ($trimmed !== '') {
+            return $trimmed;
+        }
+
+        $name = $customer?->full_name;
+
+        return match ($type) {
+            'sms' => $name ? "SMS to {$name}" : 'SMS notification',
+            'both' => $name ? "Message to {$name}" : 'Customer notification',
+            default => 'Email notification',
+        };
     }
 
     /**
@@ -388,9 +442,11 @@ class CommunicationController extends Controller
         try {
             DB::beginTransaction();
 
+            $subject = $this->resolveSubject($validated['type'], $validated['subject'] ?? null, $customer);
+
             // Create communication record
             $communication = Communication::create([
-                'subject' => $validated['subject'] ?? null,
+                'subject' => $subject,
                 'message' => $validated['message'],
                 'type' => $validated['type'],
                 'filters' => ['customer_id' => $customer->id], // Store single customer ID in filters
@@ -403,11 +459,12 @@ class CommunicationController extends Controller
             $sentCount = 0;
             $failedCount = 0;
             $errors = [];
+            $smsMessageIds = [];
 
             try {
                 if (in_array($validated['type'], ['email', 'both'])) {
                     if ($customer->email) {
-                        $this->sendEmail($customer, $validated['subject'] ?? 'Notification', $validated['message']);
+                        $this->sendEmail($customer, $subject, $validated['message']);
                         $sentCount++;
                     } else {
                         $failedCount++;
@@ -417,8 +474,9 @@ class CommunicationController extends Controller
 
                 if (in_array($validated['type'], ['sms', 'both'])) {
                     if ($customer->phone) {
-                        $this->sendSms($customer, $validated['message']);
-                        if (!in_array($validated['type'], ['email', 'both']) || !$customer->email) {
+                        $sms = $this->sendSms($customer, $validated['message'], $communication->id);
+                        $smsMessageIds[] = $sms->id;
+                        if ($validated['type'] === 'sms') {
                             $sentCount++;
                         }
                     } else {
@@ -436,23 +494,39 @@ class CommunicationController extends Controller
                 ]);
             }
 
-            // Update communication status
+            // Update communication status from real delivery outcome
             $communication->update([
                 'sent_count' => $sentCount,
                 'failed_count' => $failedCount,
                 'status' => $failedCount > 0 && $sentCount === 0 ? 'failed' : 'completed',
                 'sent_at' => now(),
                 'error_message' => !empty($errors) ? implode('; ', $errors) : null,
+                'metadata' => array_filter([
+                    'sms_message_ids' => $smsMessageIds ?: null,
+                ]),
             ]);
 
             DB::commit();
 
-            $message = $sentCount > 0 
-                ? "Message sent successfully to {$customer->full_name}!" 
-                : "Failed to send message. " . ($errors[0] ?? 'Unknown error');
+            if ($sentCount > 0) {
+                $channelLabel = match ($validated['type']) {
+                    'sms' => 'SMS',
+                    'email' => 'Email',
+                    default => 'Message',
+                };
+
+                $message = $validated['type'] === 'sms'
+                    ? "{$channelLabel} was accepted by the provider for {$customer->full_name}."
+                    : "{$channelLabel} has been sent to {$customer->full_name}.";
+
+                return redirect()->route('admin.customers.show', $customer)
+                    ->with('success', $message)
+                    ->with('message_queued', false);
+            }
 
             return redirect()->route('admin.customers.show', $customer)
-                ->with($sentCount > 0 ? 'success' : 'error', $message);
+                ->with('error', 'Failed to send message. '.($errors[0] ?? 'Unknown error'));
+
 
         } catch (\Exception $e) {
             DB::rollBack();

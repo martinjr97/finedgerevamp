@@ -29,7 +29,7 @@ class SmsTestCommandTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_sms_test_does_not_send_when_disabled_unless_force(): void
+    public function test_sms_test_does_not_send_or_log_when_disabled_unless_force(): void
     {
         config([
             'sms.enabled' => false,

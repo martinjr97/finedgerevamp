@@ -1,11 +1,17 @@
 <?php
 
 return [
+    /*
+    | SMS_ENABLED=false              → do not send and do not log SMS
+    | SMS_ENABLED=true + provider=log → write SMS to the application log
+    | SMS_ENABLED=true + provider=zamtel → send via Zamtel
+    */
     'enabled' => (bool) env('SMS_ENABLED', false),
 
     'provider' => env('SMS_PROVIDER', 'log'),
 
-    'from' => env('SMS_FROM', env('ZAMTEL_SMS_SENDER_ID', 'FineEdge')),
+    // Display/from label only — not used as the Zamtel API senderId.
+    'from' => env('SMS_FROM', env('ZAMTEL_SMS_SENDER_ID', '')),
 
     'max_length' => (int) env('SMS_MAX_LENGTH', 159),
 
@@ -26,7 +32,8 @@ return [
     'zamtel' => [
         'base_url' => env('ZAMTEL_SMS_BASE_URL', 'https://bulksms.zamtel.co.zm'),
         'api_key' => env('ZAMTEL_SMS_API_KEY', ''),
-        'sender_id' => env('ZAMTEL_SMS_SENDER_ID', env('SMS_FROM', 'FineEdge')),
+        // Exact ZAMTEL_SMS_SENDER_ID from .env (case-sensitive). No FineEdge / SMS_FROM fallback.
+        'sender_id' => (string) env('ZAMTEL_SMS_SENDER_ID', ''),
         'timeout' => (int) env('ZAMTEL_SMS_TIMEOUT', 30),
         'connect_timeout' => (int) env('ZAMTEL_SMS_CONNECT_TIMEOUT', 10),
         'verify_ssl' => (bool) env('ZAMTEL_SMS_VERIFY_SSL', true),

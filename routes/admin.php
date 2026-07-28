@@ -168,6 +168,9 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('payment-operations/failed-jobs/{uuid}/retry', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'retry'])->name('payment-operations.failed-jobs.retry');
         Route::delete('payment-operations/failed-jobs/{uuid}', [\App\Http\Controllers\Admin\FailedFinancialJobController::class, 'discard'])->name('payment-operations.failed-jobs.discard');
         Route::get('sms-operations', [\App\Http\Controllers\Admin\SmsOperationsController::class, 'index'])->name('sms-operations.index');
+        Route::get('sms-templates', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'index'])->name('sms-templates.index');
+        Route::get('sms-templates/{smsTemplate}/edit', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'edit'])->name('sms-templates.edit');
+        Route::put('sms-templates/{smsTemplate}', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'update'])->name('sms-templates.update');
         Route::resource('creditors', CreditorController::class);
 
         // Financial Transactions

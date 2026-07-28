@@ -104,6 +104,32 @@ php artisan sms:test --to=260977000001 --message="Test" --provider=zamtel --forc
 
 Requires `sms-operations.view` or `sms-operations.manage`.
 
+**SMS Templates** (`/admin/sms-templates`) — list and edit transactional templates (character counter, placeholder help). Edit requires `sms-operations.manage`. System template keys cannot be deleted; deactivate instead.
+
+## Transactional SMS templates
+
+Templates live in `sms_templates` (seeded by `SmsTemplateSeeder`). Rendering is handled by `SmsTemplateService`, which substitutes `{PLACEHOLDER}` tokens and enforces per-template `max_length` (default 159 GSM characters).
+
+| Event | Template key | Category |
+|-------|--------------|----------|
+| Customer approved (admin) | `customer_approved` | security (redacted in audit) |
+| Admin PIN reset | `pin_reset_admin` | security (redacted) |
+| Repayment success (settled) | `repayment_success_full` | payment |
+| Repayment success (partial) | `repayment_success_partial` | payment |
+| Repayment failed / rejected | `repayment_failed` | payment |
+| Loan disbursed | `loan_disbursed` | loan |
+| Reminder 1 week before | `reminder_1_week_before` | loan |
+| Reminder 2 days before | `reminder_2_days_before` | loan |
+| Reminder 1 day before | `reminder_1_day_before` | loan |
+| Missed payment (1st) | `reminder_missed_1` | loan |
+| Missed payment (final) | `reminder_missed_2` | loan |
+
+**Placeholders:** `{NAME}`, `{PHONE}`, `{PIN}`, `{AMOUNT}`, `{BALANCE}`, `{LOAN_NUMBER}`, `{REPAYMENT_NUMBER}`, `{DUE_DATE}`, `{REFERENCE}`, `{DAYS_OVERDUE}`, `{APP_NAME}`.
+
+Customer password-reset OTP uses a dedicated flow (not template-driven). Email notifications for the same events remain unchanged; SMS is additive.
+
+If a rendered message exceeds `max_length`, delivery is skipped with `skip_reason: template_too_long` — templates are never silently truncated.
+
 ## UAT steps
 
 1. `php artisan migrate`
@@ -113,6 +139,9 @@ Requires `sms-operations.view` or `sms-operations.manage`.
 5. Configure Zamtel credentials in `.env` (not committed)
 6. `php artisan sms:test --provider=zamtel --force --to=... --message="UAT"`
 7. Test customer password reset OTP flow (web)
+8. Seed templates: `php artisan db:seed --class=SmsTemplateSeeder`
+9. Approve a customer or reset PIN — verify `sms_messages` rows (security bodies redacted)
+10. Run `php artisan repayments:send-reminders` when reminder settings are enabled
 
 ## Production checklist
 
@@ -121,7 +150,8 @@ Requires `sms-operations.view` or `sms-operations.manage`.
 - [ ] `SMS_ENABLED=true`, `SMS_PROVIDER=zamtel`
 - [ ] Zamtel API key and sender ID configured via env/secrets manager
 - [ ] `ZAMTEL_SMS_VERIFY_SSL=true` in production
-- [ ] OTP flows verified — no plaintext in logs
+- [ ] Transactional templates seeded and reviewed in admin SMS Templates UI
+- [ ] Customer approval / PIN reset SMS verified (audit shows redacted security bodies)
 - [ ] `php artisan sms:health` returns PASS
 
 ## Troubleshooting
@@ -133,12 +163,13 @@ Requires `sms-operations.view` or `sms-operations.manage`.
 | Connection errors (retryable) | Network, SSL, Zamtel host reachability |
 | `missing_credentials` | `ZAMTEL_SMS_API_KEY` or sender ID empty |
 | Jobs not processing | Horizon supervisors, `notifications` queue |
-| API key in logs | Should never happen — report immediately |
+| Template too long | Shorten template in admin UI; check character counter vs max length |
 
-## Deferred (out of scope)
+## Out of scope (future)
 
 - SMPP provider
 - SMS balance ledger and low-balance email alerts
-- Bulk marketing SMS
-- Loan/repayment/disbursement SMS (via `CustomerNotificationService`)
+- Bulk marketing SMS (`CommunicationController::sendSms`)
+- Loan disbursement **failure** SMS
+- Customer self-registration onboarding OTP (legacy `onboarding_message` flow)
 - WhatsApp / push notifications

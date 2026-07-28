@@ -11,15 +11,19 @@ class CommunicationLogger
 {
     /**
      * Log a system-generated communication (password reset, OTP, etc.)
-     * 
-     * @param string $subject Email subject
-     * @param string $message Message content
-     * @param string $type 'email', 'sms', or 'both'
-     * @param bool $isSensitive Whether the message contains sensitive information
-     * @param Admin|Customer|null $recipient The recipient (Admin or Customer)
-     * @param Admin|null $createdBy The admin who initiated this (null for system)
-     * @param array $metadata Additional metadata
-     * @return Communication
+     *
+     * Email bodies are only persisted when MAIL_MAILER=log. When using a real
+     * mailer (e.g. smtp), email content is not written to the communications
+     * table. SMS logging is unaffected. For type "both", only the SMS portion
+     * is recorded when a phone recipient is available.
+     *
+     * @param  string  $subject  Email subject
+     * @param  string  $message  Message content
+     * @param  string  $type  'email', 'sms', or 'both'
+     * @param  bool  $isSensitive  Whether the message contains sensitive information
+     * @param  Admin|Customer|null  $recipient  The recipient (Admin or Customer)
+     * @param  Admin|null  $createdBy  The admin who initiated this (null for system)
+     * @param  array  $metadata  Additional metadata
      */
     public static function log(
         string $subject,
@@ -29,7 +33,13 @@ class CommunicationLogger
         Admin|Customer|null $recipient = null,
         ?Admin $createdBy = null,
         array $metadata = []
-    ): Communication {
+    ): ?Communication {
+        $type = self::resolveTypeForMailer($type, $recipient);
+
+        if ($type === null) {
+            return null;
+        }
+
         // Store original message - the Communication model's accessor will mask it for display
         // We store the original so it can be masked dynamically when viewed
         $storedMessage = $message;
@@ -39,7 +49,7 @@ class CommunicationLogger
         $recipientEmail = null;
         $recipientPhone = null;
         $recipientName = null;
-        
+
         if ($recipient instanceof Admin) {
             $recipientEmail = $recipient->email;
             $recipientPhone = $recipient->phone;
@@ -80,6 +90,30 @@ class CommunicationLogger
     }
 
     /**
+     * When the default mailer is not "log", skip persisting email bodies.
+     * For "both", keep SMS-only audit if a phone number is available.
+     */
+    private static function resolveTypeForMailer(string $type, Admin|Customer|null $recipient): ?string
+    {
+        if (config('mail.default') === 'log') {
+            return $type;
+        }
+
+        if ($type === 'sms') {
+            return 'sms';
+        }
+
+        if ($type === 'both') {
+            $phone = $recipient?->phone;
+
+            return filled($phone) ? 'sms' : null;
+        }
+
+        // email (or any other email-like type) — do not persist when not using log mailer
+        return null;
+    }
+
+    /**
      * Mask sensitive data in message content
      */
     private static function maskSensitiveData(string $content): string
@@ -89,25 +123,25 @@ class CommunicationLogger
         $content = preg_replace('/\bPIN\s+is\s+(\d{4})\b/i', 'PIN is ****', $content);
         $content = preg_replace('/\bYour\s+PIN[:\s]+(\d{4})\b/i', 'Your PIN: ****', $content);
         $content = preg_replace('/\bPIN[:\s]+(\d{4})\b/i', 'PIN: ****', $content);
-        
+
         // Mask 6-digit OTPs
         $content = preg_replace('/\bOTP[:\s]+(\d{6})\b/i', 'OTP: ******', $content);
         $content = preg_replace('/\bOTP\s+is\s+(\d{6})\b/i', 'OTP is ******', $content);
         $content = preg_replace('/\bYour\s+OTP[:\s]+(\d{6})\b/i', 'Your OTP: ******', $content);
         $content = preg_replace('/\b(\d{6})\b/', '******', $content); // Standalone 6-digit numbers
-        
+
         // Mask password reset tokens/URLs
         $content = preg_replace('/reset[\/\?]token=([a-zA-Z0-9]{20,})/i', 'reset/token=****', $content);
         $content = preg_replace('/token=([a-zA-Z0-9]{20,})/i', 'token=****', $content);
         $content = preg_replace('/reset\/([a-zA-Z0-9]{20,})/i', 'reset/****', $content);
-        
+
         // Mask long tokens (64+ characters)
         $content = preg_replace('/\b([a-zA-Z0-9]{64,})\b/', '****', $content);
-        
+
         // Mask passwords in plain text
         $content = preg_replace('/\bpassword[:\s]+([^\s]+)/i', 'password: ****', $content);
         $content = preg_replace('/\bnew\s+password[:\s]+([^\s]+)/i', 'new password: ****', $content);
-        
+
         return $content;
     }
 
@@ -122,4 +156,3 @@ class CommunicationLogger
         return '****' . substr($phone, -4);
     }
 }
-

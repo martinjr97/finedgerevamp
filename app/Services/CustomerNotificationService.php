@@ -5,12 +5,17 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\Loan;
 use App\Models\Repayment;
+use App\Sms\Services\SmsTemplateService;
 use App\Support\CommunicationLogger;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class CustomerNotificationService
 {
+    public function __construct(
+        private readonly SmsTemplateService $smsTemplateService,
+    ) {}
+
     public function sendRepaymentCompleted(Repayment $repayment, string $completionSource = 'manual_approval'): void
     {
         $repayment->loadMissing(['customer', 'channel', 'loanRepayments.loan']);
@@ -65,12 +70,6 @@ class CustomerNotificationService
             config('app.name').' Team',
         ]);
 
-        $smsMessage = sprintf(
-            'Repayment %s of ZMW %s confirmed. Check dashboard for updated balances.',
-            $repayment->repayment_number,
-            number_format((float) $repayment->total_amount, 2)
-        );
-
         $metadata = [
             'notification_type' => 'repayment_completed',
             'repayment_id' => $repayment->id,
@@ -80,7 +79,72 @@ class CustomerNotificationService
         ];
 
         $this->sendEmail($customer, $subject, $emailMessage, $metadata);
-        $this->sendSms($customer, $smsMessage, $metadata);
+
+        $templateKey = $totalOutstanding <= 0.00001
+            ? 'repayment_success_full'
+            : 'repayment_success_partial';
+
+        $this->queueTemplateSms($customer, $templateKey, [
+            'name' => $customer->first_name,
+            'amount' => (float) $repayment->total_amount,
+            'balance' => $totalOutstanding,
+            'repayment_number' => $repayment->repayment_number,
+        ], 'repayment_completed', $metadata);
+    }
+
+    public function sendRepaymentFailed(Repayment $repayment, string $failureSource = 'gateway'): void
+    {
+        $repayment->loadMissing(['customer', 'channel']);
+        $customer = $repayment->customer;
+
+        if (! $customer) {
+            return;
+        }
+
+        $metadata = $repayment->metadata ?? [];
+        if (! empty($metadata['sms_repayment_failed_sent_at'])) {
+            return;
+        }
+
+        $outstanding = (float) $customer->getTotalOutstandingBalance();
+        $subject = 'Repayment Not Completed - '.$repayment->repayment_number;
+        $emailMessage = implode("\n", [
+            'Dear '.$customer->first_name.',',
+            '',
+            'Your repayment could not be completed.',
+            '',
+            'Repayment number: '.$repayment->repayment_number,
+            'Amount: ZMW '.number_format((float) $repayment->total_amount, 2),
+            'Status: '.($repayment->status_message ?? 'Failed'),
+            '',
+            'Outstanding balance: ZMW '.number_format($outstanding, 2),
+            '',
+            'Please try again or contact support if you need assistance.',
+            '',
+            config('app.name').' Team',
+        ]);
+
+        $notificationMetadata = [
+            'notification_type' => 'repayment_failed',
+            'repayment_id' => $repayment->id,
+            'repayment_number' => $repayment->repayment_number,
+            'failure_source' => $failureSource,
+        ];
+
+        $this->sendEmail($customer, $subject, $emailMessage, $notificationMetadata);
+
+        $this->queueTemplateSms($customer, 'repayment_failed', [
+            'name' => $customer->first_name,
+            'amount' => (float) $repayment->total_amount,
+            'balance' => $outstanding,
+            'repayment_number' => $repayment->repayment_number,
+        ], 'repayment_failed', $notificationMetadata);
+
+        $repayment->update([
+            'metadata' => array_merge($metadata, [
+                'sms_repayment_failed_sent_at' => now()->toIso8601String(),
+            ]),
+        ]);
     }
 
     public function sendLoanDisbursed(Loan $loan): void
@@ -116,13 +180,6 @@ class CustomerNotificationService
             config('app.name').' Team',
         ]);
 
-        $smsMessage = sprintf(
-            'Loan %s disbursed: ZMW %s. Ref %s.',
-            $loan->loan_number,
-            number_format((float) $loan->principal_amount, 2),
-            $loan->disbursement_reference ?? 'N/A'
-        );
-
         $metadata = [
             'notification_type' => 'loan_disbursed',
             'loan_id' => $loan->id,
@@ -131,7 +188,61 @@ class CustomerNotificationService
         ];
 
         $this->sendEmail($customer, $subject, $emailMessage, $metadata);
-        $this->sendSms($customer, $smsMessage, $metadata);
+
+        $this->queueTemplateSms($customer, 'loan_disbursed', [
+            'name' => $customer->first_name,
+            'loan_number' => $loan->loan_number,
+            'amount' => (float) $loan->principal_amount,
+            'due_date' => $loan->first_payment_date?->format('d M Y') ?? 'See dashboard',
+            'reference' => $loan->disbursement_reference ?? 'N/A',
+        ], 'loan_disbursed', $metadata, $loan->id);
+    }
+
+    public function sendCustomerApprovedSms(Customer $customer, string $pin): void
+    {
+        $this->queueTemplateSms($customer, 'customer_approved', [
+            'name' => $customer->first_name,
+            'phone' => $customer->phone ?? '',
+            'pin' => $pin,
+        ], 'customer_approved', [
+            'notification_type' => 'customer_approved',
+            'customer_id' => $customer->id,
+        ]);
+    }
+
+    public function sendAdminPinResetSms(Customer $customer, string $pin): void
+    {
+        $this->queueTemplateSms($customer, 'pin_reset_admin', [
+            'name' => $customer->first_name,
+            'phone' => $customer->phone ?? '',
+            'pin' => $pin,
+        ], 'pin_reset_admin', [
+            'notification_type' => 'pin_reset_admin',
+            'customer_id' => $customer->id,
+        ]);
+    }
+
+    public function sendRepaymentReminderSms(
+        Customer $customer,
+        string $reminderType,
+        Loan $loan,
+        float $amount,
+        string $dueDate,
+        int $daysOverdue = 0,
+    ): void {
+        $templateKey = $this->smsTemplateService->reminderTemplateKey($reminderType);
+
+        $this->queueTemplateSms($customer, $templateKey, [
+            'name' => $customer->first_name,
+            'loan_number' => $loan->loan_number,
+            'amount' => $amount,
+            'due_date' => $dueDate,
+            'days_overdue' => (string) max(0, $daysOverdue),
+        ], 'repayment_reminder_'.$reminderType, [
+            'notification_type' => 'repayment_reminder',
+            'reminder_type' => $reminderType,
+            'loan_id' => $loan->id,
+        ], $loan->id);
     }
 
     /**
@@ -196,7 +307,102 @@ class CustomerNotificationService
         ];
 
         $this->sendEmail($customer, $subject, $emailMessage, $metadata);
-        $this->sendSms($customer, $smsMessage, $metadata);
+        $this->sendRawSms($customer, $smsMessage, 'loan_payment_details_changed', $metadata, $loan->id);
+    }
+
+    /**
+     * @param  array<string, scalar|null>  $variables
+     * @param  array<string, mixed>  $metadata
+     */
+    private function queueTemplateSms(
+        Customer $customer,
+        string $templateKey,
+        array $variables,
+        string $messageType,
+        array $metadata = [],
+        ?int $loanId = null,
+    ): void {
+        if (! $customer->phone) {
+            return;
+        }
+
+        try {
+            $body = $this->smsTemplateService->render($templateKey, $variables);
+            if ($body === null) {
+                return;
+            }
+
+            $record = $this->smsTemplateService->queueForCustomer(
+                $customer,
+                $templateKey,
+                $variables,
+                $messageType,
+                $metadata,
+                $loanId,
+            );
+
+            if ($record) {
+                $isSensitive = $this->smsTemplateService->categoryForKey($templateKey)->isSensitive();
+                CommunicationLogger::log(
+                    subject: 'SMS Notification',
+                    message: $body,
+                    type: 'sms',
+                    isSensitive: $isSensitive,
+                    recipient: $customer,
+                    metadata: array_merge($metadata, [
+                        'template_key' => $templateKey,
+                        'sms_message_id' => $record->id,
+                    ]),
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to queue customer SMS notification', [
+                'customer_id' => $customer->id,
+                'template_key' => $templateKey,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    private function sendRawSms(
+        Customer $customer,
+        string $message,
+        string $messageType,
+        array $metadata = [],
+        ?int $loanId = null,
+    ): void {
+        if (! $customer->phone) {
+            return;
+        }
+
+        try {
+            app(\App\Sms\Services\SmsService::class)->queueSend([
+                'phone' => $customer->phone,
+                'body' => $message,
+                'category' => 'general',
+                'message_type' => $messageType,
+                'recipient' => $customer,
+                'customer_id' => $customer->id,
+                'loan_id' => $loanId,
+                'metadata' => $metadata,
+            ]);
+
+            CommunicationLogger::log(
+                subject: 'SMS Notification',
+                message: $message,
+                type: 'sms',
+                recipient: $customer,
+                metadata: $metadata,
+            );
+        } catch (\Throwable $e) {
+            Log::error('Failed to queue raw customer SMS', [
+                'customer_id' => $customer->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function sendEmail(Customer $customer, string $subject, string $message, array $metadata = []): void
@@ -222,34 +428,6 @@ class CustomerNotificationService
             Log::error('Failed to send customer email notification', [
                 'customer_id' => $customer->id,
                 'subject' => $subject,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    private function sendSms(Customer $customer, string $message, array $metadata = []): void
-    {
-        if (! $customer->phone) {
-            return;
-        }
-
-        try {
-            Log::info('Customer SMS Sent', [
-                'customer_id' => $customer->id,
-                'phone' => $customer->phone,
-                'message' => $message,
-            ]);
-
-            CommunicationLogger::log(
-                subject: 'SMS Notification',
-                message: $message,
-                type: 'sms',
-                recipient: $customer,
-                metadata: $metadata
-            );
-        } catch (\Throwable $e) {
-            Log::error('Failed to log customer SMS notification', [
-                'customer_id' => $customer->id,
                 'error' => $e->getMessage(),
             ]);
         }

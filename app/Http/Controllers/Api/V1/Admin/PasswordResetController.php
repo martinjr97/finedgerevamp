@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Sms\Enums\SmsCategory;
+use App\Sms\Services\SmsService;
+use App\Sms\Support\SmsMessageSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -49,21 +52,31 @@ class PasswordResetController extends Controller
             'expires_at' => now()->addMinutes(10),
         ], now()->addMinutes(10));
 
-        // TODO: Send OTP via SMS service
-        // For now, log it (in production, integrate your SMS service)
-        $otpMessage = "Your password reset OTP is: {$otp}. Valid for 10 minutes.";
-        
-        \Log::info('Password Reset OTP Sent to Phone', [
-            'admin_id' => $admin->id,
-            'phone' => $admin->phone,
-            'otp' => $otp, // Remove this in production
-        ]);
+        // Queue OTP via SMS gateway (never log plaintext OTP)
+        $otpMessage = sprintf('Your password reset OTP is: %s. Valid for 10 minutes.', $otp);
 
-        // Log to communications
+        try {
+            app(SmsService::class)->queueSend([
+                'phone' => $admin->phone,
+                'body' => $otpMessage,
+                'category' => SmsCategory::Otp,
+                'message_type' => 'password_reset_otp',
+                'recipient' => $admin,
+                'admin_id' => $admin->id,
+                'metadata' => ['notification_type' => 'password_reset_otp'],
+            ]);
+        } catch (\Throwable $e) {
+            \Log::warning('Failed to queue admin password reset OTP SMS', [
+                'admin_id' => $admin->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $redactedMessage = app(SmsMessageSanitizer::class)->preview(SmsCategory::Otp, $otpMessage);
         try {
             \App\Support\CommunicationLogger::log(
                 subject: 'Password Reset OTP',
-                message: $otpMessage,
+                message: $redactedMessage,
                 type: 'sms',
                 isSensitive: true,
                 recipient: $admin,

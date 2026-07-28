@@ -164,6 +164,48 @@ class GatewayQueueAssignmentTest extends TestCase
         $this->assertSame(3, $notification->tries);
     }
 
+    public function test_customer_registration_notification_uses_notifications_queue(): void
+    {
+        $notification = new \App\Notifications\CustomerRegistrationNotification('1234', '0977000001');
+
+        $this->assertSame(ApplicationQueue::notifications(), $notification->queue);
+        $this->assertSame(ApplicationQueue::connection(), $notification->connection);
+        $this->assertSame(3, $notification->tries);
+    }
+
+    public function test_customer_approval_notification_uses_notifications_queue(): void
+    {
+        $notification = new \App\Notifications\CustomerApprovalNotification('1234', '0977000001', true);
+
+        $this->assertSame(ApplicationQueue::notifications(), $notification->queue);
+        $this->assertSame(ApplicationQueue::connection(), $notification->connection);
+        $this->assertSame(3, $notification->tries);
+    }
+
+    public function test_horizon_supervisors_cover_all_application_and_financial_queues(): void
+    {
+        $defaults = config('horizon.defaults');
+
+        $covered = [];
+        foreach ($defaults as $supervisor) {
+            $connection = $supervisor['connection'];
+            foreach ($supervisor['queue'] as $queue) {
+                $covered[$connection][$queue] = true;
+            }
+        }
+
+        $this->assertArrayHasKey('notifications', $covered['redis'] ?? []);
+        $this->assertArrayHasKey('reports', $covered['redis'] ?? []);
+        $this->assertArrayHasKey('default', $covered['redis'] ?? []);
+        $this->assertArrayHasKey('maintenance', $covered['redis'] ?? []);
+        $this->assertArrayHasKey('payments-high', $covered['redis-financial'] ?? []);
+        $this->assertArrayHasKey('payments', $covered['redis-financial'] ?? []);
+        $this->assertArrayHasKey('disbursements-high', $covered['redis-financial'] ?? []);
+        $this->assertArrayHasKey('disbursements', $covered['redis-financial'] ?? []);
+
+        $this->assertSame('notifications', config('sms.queues.sms'));
+    }
+
     public function test_application_queue_helpers_return_expected_names(): void
     {
         $this->assertSame('reports', ApplicationQueue::reports());

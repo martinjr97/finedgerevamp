@@ -1124,13 +1124,24 @@
             document.getElementById('sendMessageModal').classList.remove('hidden');
         }
 
-        function closeSendMessageModal() {
+        function hideSendMessageModal() {
             document.getElementById('sendMessageModal').classList.add('hidden');
-            document.getElementById('sendMessageForm').reset();
-            // Reset radio buttons
-            document.querySelectorAll('input[name="type"]').forEach(radio => {
-                radio.checked = false;
-            });
+        }
+
+        function closeSendMessageModal() {
+            hideSendMessageModal();
+            const form = document.getElementById('sendMessageForm');
+            if (form) {
+                form.reset();
+            }
+            const subjectField = document.getElementById('subjectField');
+            const subjectInput = document.getElementById('subject');
+            if (subjectField) {
+                subjectField.classList.add('hidden');
+            }
+            if (subjectInput) {
+                subjectInput.removeAttribute('required');
+            }
         }
 
         // Close modal on outside click
@@ -1141,7 +1152,7 @@
         });
 
         // Toggle subject field based on message type
-        document.querySelectorAll('input[name="type"]').forEach(radio => {
+        document.querySelectorAll('#sendMessageForm input[name="type"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const subjectField = document.getElementById('subjectField');
                 const subjectInput = document.getElementById('subject');
@@ -1155,6 +1166,140 @@
                 }
             });
         });
+
+        document.getElementById('sendMessageForm')?.addEventListener('submit', function (e) {
+            const selectedType = this.querySelector('input[name="type"]:checked');
+            if (!selectedType) {
+                e.preventDefault();
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Select a message type',
+                        text: 'Choose Email, SMS, or Both before sending.',
+                        confirmButtonColor: '#6366f1',
+                    });
+                }
+                return;
+            }
+
+            const messageBody = (this.querySelector('textarea[name="message"]')?.value || '').trim();
+            if (!messageBody) {
+                e.preventDefault();
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Message required',
+                        text: 'Please enter a message before sending.',
+                        confirmButtonColor: '#6366f1',
+                    });
+                }
+                return;
+            }
+
+            // Keep trimmed value so empty whitespace is not posted.
+            this.querySelector('textarea[name="message"]').value = messageBody;
+
+            if (selectedType.value !== 'sms') {
+                const subjectInput = this.querySelector('input[name="subject"]');
+                const subject = (subjectInput?.value || '').trim();
+                if (!subject) {
+                    e.preventDefault();
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Subject required',
+                            text: 'Please enter an email subject.',
+                            confirmButtonColor: '#6366f1',
+                        });
+                    }
+                    return;
+                }
+                if (subjectInput) {
+                    subjectInput.value = subject;
+                }
+            } else {
+                // Ensure hidden email subject is not treated as required for SMS.
+                const subjectInput = this.querySelector('input[name="subject"]');
+                if (subjectInput) {
+                    subjectInput.removeAttribute('required');
+                    subjectInput.value = '';
+                }
+            }
+
+            const submitButton = this.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Sending...';
+            }
+
+            // Hide only — do NOT reset, or the POST loses type/message.
+            hideSendMessageModal();
+
+            if (window.Swal) {
+                Swal.fire({
+                    title: selectedType.value === 'email' ? 'Sending email...' : 'Sending SMS...',
+                    text: selectedType.value === 'email'
+                        ? 'Please wait while the email is sent.'
+                        : 'Please wait while we deliver the SMS via the provider.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                });
+            }
+        });
+
+        @if (session('success'))
+            document.addEventListener('DOMContentLoaded', function () {
+                if (!window.Swal) {
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: @json(session('message_queued') ? 'Message queued' : 'Message sent'),
+                    text: @json(session('success')),
+                    confirmButtonColor: '#6366f1',
+                });
+            });
+        @endif
+
+        @if (session('error'))
+            document.addEventListener('DOMContentLoaded', function () {
+                if (!window.Swal) {
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Message not sent',
+                    text: @json(session('error')),
+                    confirmButtonColor: '#ef4444',
+                });
+            });
+        @endif
+
+        @if ($errors->any() && old('type'))
+            document.addEventListener('DOMContentLoaded', function () {
+                showSendMessageModal();
+                const oldType = @json(old('type'));
+                const typeRadio = document.querySelector('#sendMessageForm input[name="type"][value="' + oldType + '"]');
+                if (typeRadio) {
+                    typeRadio.checked = true;
+                    typeRadio.dispatchEvent(new Event('change'));
+                }
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Could not send message',
+                        text: @json($errors->first()),
+                        confirmButtonColor: '#ef4444',
+                    });
+                }
+            });
+        @endif
     </script>
     @endpush
 
@@ -1170,7 +1315,7 @@
                         <label class="block text-sm font-medium text-slate-300 mb-2">Message Type <span class="text-red-400">*</span></label>
                         <div class="flex gap-4">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="type" value="email" class="w-4 h-4 text-indigo-600 bg-slate-700 border-slate-600 focus:ring-indigo-500">
+                                <input type="radio" name="type" value="email" required class="w-4 h-4 text-indigo-600 bg-slate-700 border-slate-600 focus:ring-indigo-500">
                                 <span class="text-slate-300">Email</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">

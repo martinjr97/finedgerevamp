@@ -3,12 +3,13 @@
 namespace App\Notifications;
 
 use App\Support\CommunicationLogger;
+use App\Support\Queue\ApplicationQueue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class CustomerRegistrationNotification extends Notification
+class CustomerRegistrationNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -19,6 +20,9 @@ class CustomerRegistrationNotification extends Notification
         public string $pin,
         public string $phone
     ) {
+        $this->tries = (int) config('queues.retries.notifications', 3);
+        $this->onConnection(ApplicationQueue::connection())
+            ->onQueue(ApplicationQueue::notifications());
     }
 
     /**
@@ -37,7 +41,7 @@ class CustomerRegistrationNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $subject = 'Welcome to ' . config('app.name') . ' - Your Account Details';
-        
+
         $mailMessage = (new MailMessage)
             ->subject($subject)
             ->greeting('Hello ' . $notifiable->first_name . '!')

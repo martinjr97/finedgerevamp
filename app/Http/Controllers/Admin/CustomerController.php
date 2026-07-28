@@ -19,6 +19,7 @@ use App\Models\MarketeerCustomerDetail;
 use App\Models\Ministry;
 use App\Models\Province;
 use App\Models\Loan;
+use App\Services\CustomerNotificationService;
 use App\Models\LoanRepayment;
 use App\Models\WalletProvider;
 use App\Support\NationalIdRules;
@@ -1542,27 +1543,26 @@ class CustomerController extends Controller
                 'must_change_pin' => true,
             ]);
 
-            // Log the PIN for development purposes
-            Log::info('Customer PIN Reset', [
-                'customer_id' => $customer->id,
-                'customer_email' => $customer->email,
-                'customer_name' => $customer->full_name,
-                'new_pin' => $pin,
-                'reset_by' => auth('admin')->user()->email ?? 'System',
-                'reset_at' => now()->toDateTimeString(),
-            ]);
-
             // Send email notification with new PIN
             $customer->notify(new \App\Notifications\CustomerRegistrationNotification(
                 $pin,
                 $customer->phone ?? $customer->email
             ));
+
+            try {
+                app(CustomerNotificationService::class)->sendAdminPinResetSms($customer->fresh(), $pin);
+            } catch (\Throwable $smsError) {
+                Log::error('Failed to queue admin PIN reset SMS', [
+                    'customer_id' => $customer->id,
+                    'error' => $smsError->getMessage(),
+                ]);
+            }
             
             // Note: Communication logging is handled in the CustomerRegistrationNotification class
 
             return redirect()
                 ->route('admin.customers.show', $customer)
-                ->with('status', 'Customer PIN has been reset successfully. The new PIN has been sent to the customer via email.');
+                ->with('status', 'Customer PIN has been reset successfully. The new PIN has been sent to the customer via email and SMS.');
         } catch (\Exception $e) {
             Log::error('Customer PIN Reset Failed', [
                 'customer_id' => $customer->id,

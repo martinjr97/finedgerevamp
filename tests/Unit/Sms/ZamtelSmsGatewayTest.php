@@ -16,7 +16,7 @@ class ZamtelSmsGatewayTest extends TestCase
 
         config([
             'sms.zamtel.api_key' => 'secret-api-key-123',
-            'sms.zamtel.sender_id' => 'FineEdge',
+            'sms.zamtel.sender_id' => 'finedge',
             'sms.zamtel.base_url' => 'https://bulksms.zamtel.co.zm',
         ]);
     }
@@ -47,6 +47,28 @@ class ZamtelSmsGatewayTest extends TestCase
         $this->assertStringContainsString('/senderId/', $url);
         $this->assertStringContainsString('/message/', $url);
         $this->assertStringContainsString('/message/Hello', $url);
+    }
+
+    public function test_sender_id_is_used_exactly_as_configured(): void
+    {
+        config(['sms.zamtel.sender_id' => 'finedge']);
+
+        Http::fake([
+            '*' => Http::response(['success' => true, 'message' => 'OK'], 200),
+        ]);
+
+        app(ZamtelSmsGateway::class)->send(new SmsMessage(
+            phone: '0977000001',
+            body: 'Hello',
+            category: SmsCategory::General,
+            messageType: 'test',
+        ));
+
+        $url = Http::recorded()[0][0]->url();
+
+        $this->assertStringContainsString('/senderId/finedge/', $url);
+        $this->assertStringNotContainsString('/senderId/Finedge/', $url);
+        $this->assertStringNotContainsString('/senderId/FineEdge/', $url);
     }
 
     public function test_http_202_with_success_true_is_accepted(): void

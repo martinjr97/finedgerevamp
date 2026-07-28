@@ -6,6 +6,7 @@ use App\Models\GeneralSetting;
 use App\Models\LoanPaymentSchedule;
 use App\Models\Customer;
 use App\Models\Communication;
+use App\Services\CustomerNotificationService;
 use App\Support\CommunicationLogger;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -295,14 +296,27 @@ class SendRepaymentReminders extends Command
             }
         }
 
-        // Send SMS if customer has phone (logged for now, integrate SMS service later)
+        // Send SMS if customer has phone (short template, separate from email body)
         if ($customer->phone) {
-            Log::info('Repayment Reminder SMS', [
-                'customer_id' => $customer->id,
-                'phone' => $customer->phone,
-                'message' => $message,
-            ]);
-            // TODO: Integrate SMS service
+            $daysOverdue = $dueDate->isPast()
+                ? (int) $dueDate->diffInDays(Carbon::today())
+                : 0;
+
+            try {
+                app(CustomerNotificationService::class)->sendRepaymentReminderSms(
+                    $customer,
+                    $reminderType,
+                    $loan,
+                    (float) $schedule->remaining_amount,
+                    $dueDate->format('d M Y'),
+                    $daysOverdue,
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to queue repayment reminder SMS', [
+                    'customer_id' => $customer->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         // Log to communications
@@ -333,7 +347,7 @@ class SendRepaymentReminders extends Command
                 'due_date' => $dueDate,
                 'amount' => $schedule->remaining_amount,
                 'communication_type' => $communicationType,
-                'communication_id' => $communication->id,
+                'communication_id' => $communication?->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

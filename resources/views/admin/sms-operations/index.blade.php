@@ -7,6 +7,11 @@
         @include('partials.admin.page-header', [
             'title' => 'SMS Operations',
             'description' => 'SMS gateway configuration, queue health, and recent outbound message audit.',
+            'buttons' => array_filter([
+                auth('admin')->user()?->can('sms-operations.view') || auth('admin')->user()?->can('sms-operations.manage')
+                    ? ['text' => 'SMS Templates', 'href' => route('admin.sms-templates.index'), 'action' => 'secondary']
+                    : null,
+            ]),
         ])
 
         <div class="rounded-2xl border px-4 py-3 text-sm

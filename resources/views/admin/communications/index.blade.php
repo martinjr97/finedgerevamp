@@ -43,7 +43,7 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-4 text-left border-r border-white/5">
-                                    {{ $communication->is_sensitive ? ($communication->masked_subject ?? '—') : ($communication->subject ?? '—') }}
+                                    {{ $communication->is_sensitive ? ($communication->masked_subject ?? '—') : ($communication->subject ?: ($communication->type === 'sms' ? 'SMS notification' : '—')) }}
                                     @if($communication->is_sensitive)
                                         <span class="ml-2 text-sm text-amber-400" title="Sensitive information masked">🔒</span>
                                     @endif

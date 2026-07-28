@@ -584,6 +584,15 @@ class GatewayIntegrationService
                 'gateway_attempt_status' => $attempt->status->value,
             ]),
         ]);
+
+        try {
+            $this->customerNotificationService->sendRepaymentFailed($repayment->fresh(), 'gateway');
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send gateway repayment failure SMS', [
+                'repayment_id' => $repayment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function scheduleQuery(PaymentGatewayAttempt $attempt): void

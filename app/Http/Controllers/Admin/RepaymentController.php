@@ -878,6 +878,15 @@ class RepaymentController extends Controller
             'metadata' => $metadata,
         ]);
 
+        try {
+            $this->customerNotificationService->sendRepaymentFailed($repayment->fresh(), 'admin_reject');
+        } catch (\Throwable $e) {
+            Log::error('Failed to send repayment rejected notification', [
+                'repayment_id' => $repayment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         return redirect()
             ->route('admin.repayments.show', $repayment)
             ->with('status', 'Repayment has been rejected.');
@@ -953,6 +962,15 @@ class RepaymentController extends Controller
             ]);
 
             DB::commit();
+
+            try {
+                $this->customerNotificationService->sendRepaymentFailed($repayment->fresh(), 'provider_confirmation');
+            } catch (\Throwable $notificationError) {
+                Log::error('Failed to send repayment failed notification', [
+                    'repayment_id' => $repayment->id,
+                    'error' => $notificationError->getMessage(),
+                ]);
+            }
 
             return redirect()
                 ->route('admin.repayments.show', $repayment)

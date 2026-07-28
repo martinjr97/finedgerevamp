@@ -26,6 +26,7 @@ final class ZamtelSmsGateway implements SmsGatewayInterface
     public function send(SmsMessage $message): SmsResult
     {
         $apiKey = trim((string) config('sms.zamtel.api_key'));
+        // Preserve casing exactly as configured (Zamtel sender IDs are case-sensitive).
         $senderId = trim((string) config('sms.zamtel.sender_id'));
 
         if ($apiKey === '' || $senderId === '') {

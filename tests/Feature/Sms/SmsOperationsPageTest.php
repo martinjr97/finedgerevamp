@@ -21,7 +21,19 @@ class SmsOperationsPageTest extends TestCase
             ->get(route('admin.sms-operations.index'))
             ->assertOk()
             ->assertSee('SMS Operations')
+            ->assertSee('SMS Templates')
             ->assertDontSee('ZAMTEL_SMS_API_KEY');
+    }
+
+    public function test_admin_can_view_sms_templates_index(): void
+    {
+        $this->seed(\Database\Seeders\SmsTemplateSeeder::class);
+        $admin = $this->makeAdmin(['sms-operations.view']);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.sms-templates.index'))
+            ->assertOk()
+            ->assertSee('customer_approved');
     }
 
     public function test_admin_without_permission_cannot_view_sms_operations(): void

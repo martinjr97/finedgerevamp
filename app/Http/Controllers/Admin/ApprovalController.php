@@ -13,6 +13,7 @@ use App\Models\Loan;
 use App\Models\Repayment;
 use App\Notifications\AdminUserInvited;
 use App\Notifications\CustomerApprovalNotification;
+use App\Services\CustomerNotificationService;
 use App\Services\LoanPaymentDetailsService;
 use App\Services\Loans\AutomaticLoanDisbursementService;
 use Illuminate\Http\RedirectResponse;
@@ -220,7 +221,7 @@ class ApprovalController extends Controller
         }
     }
 
-    public function approveCustomer(Customer $customer, Request $request): RedirectResponse
+    public function approveCustomer(Customer $customer, Request $request, CustomerNotificationService $customerNotificationService): RedirectResponse
     {
         try {
             abort_unless(auth('admin')->user()?->can('approvals.approve'), 403);
@@ -294,6 +295,15 @@ class ApprovalController extends Controller
                 Log::error('Failed to send customer approval notification', [
                     'customer_id' => $customer->id,
                     'error' => $notificationError->getMessage(),
+                ]);
+            }
+
+            try {
+                $customerNotificationService->sendCustomerApprovedSms($customer->fresh(), $pin);
+            } catch (\Throwable $smsError) {
+                Log::error('Failed to queue customer approval SMS', [
+                    'customer_id' => $customer->id,
+                    'error' => $smsError->getMessage(),
                 ]);
             }
 

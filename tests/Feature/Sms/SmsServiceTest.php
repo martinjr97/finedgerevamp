@@ -9,6 +9,7 @@ use App\Sms\Jobs\SendSmsJob;
 use App\Sms\Services\SmsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -16,11 +17,12 @@ class SmsServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_sms_disabled_creates_skipped_message_without_dispatching_job(): void
+    public function test_sms_disabled_skips_without_dispatching_or_logging(): void
     {
         config(['sms.enabled' => false, 'sms.provider' => 'zamtel']);
         Queue::fake();
         Http::fake();
+        Log::spy();
 
         $record = app(SmsService::class)->queueSend([
             'phone' => '0977000001',
@@ -34,6 +36,7 @@ class SmsServiceTest extends TestCase
         $this->assertSame('disabled', $record->skip_reason);
         Queue::assertNothingPushed();
         Http::assertNothingSent();
+        Log::shouldNotHaveReceived('info');
     }
 
     public function test_max_length_exceeded_marks_skipped(): void
@@ -64,11 +67,32 @@ class SmsServiceTest extends TestCase
             'message_type' => 'password_reset_otp',
         ]);
 
+        $this->assertSame('skipped', $record->status);
+        $this->assertSame('disabled', $record->skip_reason);
         $this->assertSame('[REDACTED OTP MESSAGE]', $record->message_body);
         $this->assertSame('[REDACTED OTP MESSAGE]', $record->message_preview);
     }
 
-    public function test_enabled_sms_dispatches_send_job_on_notifications_queue(): void
+    public function test_send_now_when_disabled_skips_without_logging(): void
+    {
+        config(['sms.enabled' => false, 'sms.provider' => 'log']);
+        Http::fake();
+        Log::spy();
+
+        $result = app(SmsService::class)->sendNow(new SmsMessageDto(
+            phone: '0977000001',
+            body: 'Hello',
+            category: SmsCategory::General,
+            messageType: 'test',
+        ));
+
+        $this->assertTrue($result->skipped());
+        $this->assertFalse($result->success());
+        Http::assertNothingSent();
+        Log::shouldNotHaveReceived('info');
+    }
+
+    public function test_enabled_with_log_provider_dispatches_job(): void
     {
         config([
             'sms.enabled' => true,
@@ -77,22 +101,44 @@ class SmsServiceTest extends TestCase
         ]);
         Queue::fake();
 
-        app(SmsService::class)->queueSend([
+        $record = app(SmsService::class)->queueSend([
             'phone' => '0977000001',
             'body' => 'Hello',
             'category' => SmsCategory::General,
             'message_type' => 'test',
         ]);
 
+        $this->assertSame('queued', $record->status);
+        $this->assertSame('log', $record->provider);
         Queue::assertPushed(SendSmsJob::class, function (SendSmsJob $job) {
             return $job->queue === 'notifications';
         });
+    }
+
+    public function test_send_recorded_marks_sent_with_log_provider(): void
+    {
+        config(['sms.enabled' => true, 'sms.provider' => 'log']);
+        Http::fake();
+
+        $record = app(SmsService::class)->sendRecorded([
+            'phone' => '0977000001',
+            'body' => 'Hello sync',
+            'category' => SmsCategory::General,
+            'message_type' => 'admin_communication',
+        ]);
+
+        $this->assertNotNull($record);
+        $this->assertSame('sent', $record->status);
+        $this->assertSame('log', $record->provider);
+        $this->assertNotNull($record->sent_at);
+        Http::assertNothingSent();
     }
 
     public function test_send_now_with_log_provider_when_enabled(): void
     {
         config(['sms.enabled' => true, 'sms.provider' => 'log']);
         Http::fake();
+        Log::spy();
 
         $result = app(SmsService::class)->sendNow(new SmsMessageDto(
             phone: '0977000001',
@@ -102,6 +148,10 @@ class SmsServiceTest extends TestCase
         ));
 
         $this->assertTrue($result->success());
+        $this->assertSame('log', $result->provider);
         Http::assertNothingSent();
+        Log::shouldHaveReceived('info')->withArgs(function ($message) {
+            return is_string($message) && str_contains($message, 'SMS (log provider)');
+        });
     }
 }

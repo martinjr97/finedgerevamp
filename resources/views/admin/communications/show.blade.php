@@ -38,6 +38,18 @@
                         <p class="text-xs text-amber-400 mt-1">⚠️ Sensitive information has been masked</p>
                     @endif
                 </div>
+                @else
+                <div>
+                    <label class="text-sm text-slate-400">Subject</label>
+                    <p class="text-slate-400 italic">{{ $communication->type === 'sms' ? 'SMS notification' : '—' }}</p>
+                </div>
+                @endif
+
+                @if($communication->error_message)
+                <div>
+                    <label class="text-sm text-slate-400">Delivery error</label>
+                    <p class="text-rose-300 text-sm mt-1">{{ $communication->error_message }}</p>
+                </div>
                 @endif
 
                 <div>
@@ -94,6 +106,53 @@
                 </div>
             </div>
         </div>
+
+        @if(isset($smsMessages) && $smsMessages->isNotEmpty())
+        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+            <h3 class="text-lg font-semibold text-white mb-4">SMS Delivery (Provider)</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-slate-400 border-b border-white/10">
+                            <th class="px-3 py-2 font-medium">ID</th>
+                            <th class="px-3 py-2 font-medium">Phone</th>
+                            <th class="px-3 py-2 font-medium">Provider</th>
+                            <th class="px-3 py-2 font-medium">Status</th>
+                            <th class="px-3 py-2 font-medium">HTTP</th>
+                            <th class="px-3 py-2 font-medium">Reference</th>
+                            <th class="px-3 py-2 font-medium">Provider message</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        @foreach($smsMessages as $sms)
+                            <tr>
+                                <td class="px-3 py-3 text-slate-300">#{{ $sms->id }}</td>
+                                <td class="px-3 py-3 text-white">{{ $sms->phone_number }}</td>
+                                <td class="px-3 py-3 text-slate-300">{{ $sms->provider }}</td>
+                                <td class="px-3 py-3">
+                                    <span class="rounded-full px-2 py-1 text-xs
+                                        {{ $sms->status === 'sent' ? 'bg-emerald-500/20 text-emerald-300' : ($sms->status === 'failed' ? 'bg-rose-500/20 text-rose-300' : ($sms->status === 'skipped' ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-500/20 text-slate-300')) }}">
+                                        {{ ucfirst($sms->status) }}
+                                    </span>
+                                    @if($sms->skip_reason)
+                                        <span class="block text-xs text-amber-400 mt-1">{{ $sms->skip_reason }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-3 text-slate-300">{{ $sms->http_status ?? '—' }}</td>
+                                <td class="px-3 py-3 text-slate-300">{{ $sms->provider_reference ?? '—' }}</td>
+                                <td class="px-3 py-3 text-slate-300">
+                                    {{ data_get($sms->provider_response, 'message') ?: '—' }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <p class="mt-3 text-xs text-slate-400">
+                Success means Zamtel accepted the message (<code class="text-slate-300">success: true</code> in the API response). Handset delivery is not guaranteed by that acceptance alone.
+            </p>
+        </div>
+        @endif
 
         <!-- Filters Applied -->
         @if(!empty($communication->filters))
