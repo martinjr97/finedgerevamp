@@ -69,6 +69,27 @@ final class CGrateClient
     }
 
     /**
+     * Read-only merchant float inquiry. Does not move money or create payment attempts.
+     *
+     * @return array{
+     *     balance: float|null,
+     *     currency: string,
+     *     response_code: int|null,
+     *     response_message: string,
+     *     checked_at: string,
+     *     raw: array<string, mixed>
+     * }
+     */
+    public function getAccountBalance(): array
+    {
+        $operation = 'getAccountBalance';
+        $xml = $this->buildEnvelope($operation, []);
+        $body = $this->postSoap($operation, $xml, []);
+
+        return $this->parseAccountBalanceResponse($operation, $body);
+    }
+
+    /**
      * @param  array<string, string>  $fields
      */
     private function buildEnvelope(string $operation, array $fields): string
@@ -336,6 +357,103 @@ final class CGrateClient
                     'response_message' => $responseMessage,
                     'issuer_count' => count($issuers),
                     'xml_excerpt' => mb_substr($xml, 0, 4000),
+                ],
+            ];
+        } finally {
+            libxml_use_internal_errors($prev);
+        }
+    }
+
+    /**
+     * @return array{
+     *     balance: float|null,
+     *     currency: string,
+     *     response_code: int|null,
+     *     response_message: string,
+     *     checked_at: string,
+     *     raw: array<string, mixed>
+     * }
+     */
+    private function parseAccountBalanceResponse(string $operation, string $xml): array
+    {
+        $prev = libxml_use_internal_errors(true);
+
+        try {
+            $doc = new \DOMDocument;
+            $doc->resolveExternals = false;
+            $doc->substituteEntities = false;
+            $doc->validateOnParse = false;
+
+            if (! $doc->loadXML($xml, LIBXML_NONET)) {
+                throw new CGrateException('Invalid XML returned by cGrate account balance inquiry.', [
+                    'operation' => $operation,
+                ]);
+            }
+
+            $xpath = new \DOMXPath($doc);
+
+            $fault = $xpath->query('//*[local-name()="Fault"]')->item(0);
+            if ($fault) {
+                $faultString = $xpath->query('.//*[local-name()="faultstring" or local-name()="Reason"]', $fault)->item(0);
+                $faultText = $faultString?->textContent ? trim((string) $faultString->textContent) : 'SOAP Fault';
+
+                throw new CGrateException('cGrate SOAP fault during account balance inquiry: '.$faultText);
+            }
+
+            $return = $xpath->query('//*[local-name()="return"]')->item(0);
+            if (! $return) {
+                throw new CGrateException('cGrate account balance response missing <return> node.');
+            }
+
+            $codeNode = $xpath->query('.//*[local-name()="responseCode"]', $return)->item(0);
+            $msgNode = $xpath->query('.//*[local-name()="responseMessage"]', $return)->item(0);
+            $balanceNode = $xpath->query(
+                './/*[local-name()="balance" or local-name()="accountBalance" or local-name()="availableBalance"]',
+                $return
+            )->item(0);
+
+            $responseCode = null;
+            if ($codeNode && trim((string) $codeNode->textContent) !== '') {
+                $responseCode = (int) trim((string) $codeNode->textContent);
+            }
+
+            $responseMessage = $msgNode?->textContent ? trim((string) $msgNode->textContent) : '';
+
+            $balance = null;
+            if ($balanceNode && trim((string) $balanceNode->textContent) !== '') {
+                $balance = (float) trim((string) $balanceNode->textContent);
+            }
+
+            if ($responseCode !== null && $responseCode !== 0) {
+                throw new CGrateException(
+                    $responseMessage !== '' ? $responseMessage : 'cGrate account balance inquiry failed.',
+                    [
+                        'operation' => $operation,
+                        'response_code' => $responseCode,
+                        'response_message' => $responseMessage,
+                    ]
+                );
+            }
+
+            if ($balance === null) {
+                throw new CGrateException('cGrate account balance response did not include a balance value.', [
+                    'operation' => $operation,
+                    'response_code' => $responseCode,
+                    'response_message' => $responseMessage,
+                ]);
+            }
+
+            return [
+                'balance' => $balance,
+                'currency' => (string) config('cgrate.default_currency', 'ZMW'),
+                'response_code' => $responseCode,
+                'response_message' => $responseMessage,
+                'checked_at' => now()->toIso8601String(),
+                'raw' => [
+                    'operation' => $operation,
+                    'response_code' => $responseCode,
+                    'response_message' => $responseMessage,
+                    'balance' => $balance,
                 ],
             ];
         } finally {

@@ -147,11 +147,14 @@ final class CGratePaymentGateway implements PaymentGatewayInterface, Disbursemen
         $mode = (string) config('cgrate.amount_mode', 'kwacha_decimal');
         $amountCents = (int) round($amount * 100);
 
-        return match ($mode) {
-            'minor_units' => (string) $amountCents,
-            'kwacha_decimal' => number_format($amount, 2, '.', ''),
-            default => throw new CGrateException('Invalid cGrate amount mode configuration.'),
-        };
+        // return match ($mode) {
+        //     'minor_units' => (string) $amountCents,
+        //     'kwacha_decimal' => number_format($amount, 2, '.', ''),
+        //     default => throw new CGrateException('Invalid cGrate amount mode configuration.'),
+        // };
+
+        return '1.00'; // TEMP: force K1 to CGrate; system still records $amount
+
     }
 
     private function normalizeCollectionQueryStatus(CGratePaymentResponse $resp): string

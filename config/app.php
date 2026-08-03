@@ -26,6 +26,10 @@ return [
     'support_city' => env('SUPPORT_CITY', 'Lusaka'),
     'support_country' => env('SUPPORT_COUNTRY', 'Zambia'),
     'email_domain' => env('APP_EMAIL_DOMAIN', 'havencrest.co.zm'),
+    'pdf_include_signature_blocks' => filter_var(
+        env('PDF_INCLUDE_SIGNATURE_BLOCKS', false),
+        FILTER_VALIDATE_BOOLEAN
+    ),
 
     /*
     |--------------------------------------------------------------------------

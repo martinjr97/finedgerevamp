@@ -991,6 +991,58 @@ body[data-theme="dark"] .content-area a.duplicate-warning-badge svg {
     font-weight: 600;
 }
 
+/* Status pills that must stay chromatic despite content-area color flattening */
+.status-pill {
+    display: inline-block;
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+}
+.status-pill-completed,
+.status-pill-active {
+    background: #d1fae5 !important;
+    border: 1px solid #10b981 !important;
+    color: #047857 !important;
+}
+.content-area .status-pill-completed,
+.content-area .status-pill-completed *,
+.content-area .status-pill-active,
+.content-area .status-pill-active * {
+    color: #047857 !important;
+}
+body[data-theme="dark"] .status-pill-completed,
+body[data-theme="dark"] .status-pill-active {
+    background: rgba(16, 185, 129, 0.22) !important;
+    border-color: #34d399 !important;
+    color: #6ee7b7 !important;
+}
+body[data-theme="dark"] .content-area .status-pill-completed,
+body[data-theme="dark"] .content-area .status-pill-completed *,
+body[data-theme="dark"] .content-area .status-pill-active,
+body[data-theme="dark"] .content-area .status-pill-active * {
+    color: #6ee7b7 !important;
+}
+.status-pill-approved {
+    background: #ffedd5 !important;
+    border: 1px solid #f97316 !important;
+    color: #c2410c !important;
+}
+.content-area .status-pill-approved,
+.content-area .status-pill-approved * {
+    color: #c2410c !important;
+}
+body[data-theme="dark"] .status-pill-approved {
+    background: rgba(249, 115, 22, 0.22) !important;
+    border-color: #fb923c !important;
+    color: #fdba74 !important;
+}
+body[data-theme="dark"] .content-area .status-pill-approved,
+body[data-theme="dark"] .content-area .status-pill-approved * {
+    color: #fdba74 !important;
+}
+
 /* Gateway routing premium toggles (green on / red off) */
 .gateway-toggle {
     position: relative;

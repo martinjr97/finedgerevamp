@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Services\DisbursementDestinationService;
+use App\Services\LoanPricingService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Services\DisbursementDestinationService;
-use App\Services\LoanPricingService;
-use Carbon\Carbon;
 
 class Loan extends Model
 {
@@ -318,6 +318,7 @@ class Loan extends Model
         } elseif ($this->disbursed_via_type === 'wallet') {
             return $this->belongsTo(Wallet::class, 'disbursed_via_id');
         }
+
         return null;
     }
 
@@ -350,13 +351,13 @@ class Loan extends Model
         $productCode = $loanProduct ? strtoupper($loanProduct->code) : 'DEF';
         $prefix = 'LN-'.$productCode;
         $date = now()->format('Ymd');
-        
+
         // Generate unique loan number
         do {
             $random = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-            $loanNumber = $prefix .'-'. $date .'-'. $random;
+            $loanNumber = $prefix.'-'.$date.'-'.$random;
         } while (self::where('loan_number', $loanNumber)->exists());
-        
+
         return $loanNumber;
     }
 
@@ -484,7 +485,7 @@ class Loan extends Model
 
         // Use stored accrual_period or fallback to rate type
         $accrualPeriod = $this->accrual_period ?? ($this->loanRate?->loanRateType?->accrual_period ?? 'daily');
-        
+
         $interest = 0;
         $rateUsed = 0;
 
@@ -503,7 +504,7 @@ class Loan extends Model
             // Get current cumulative interest before adding this accrual
             $lastAccrual = $this->accruals()->latest('accrual_date')->first();
             $cumulativeInterest = ($lastAccrual ? $lastAccrual->cumulative_interest : $this->interest_accrued) + $interest;
-            
+
             // Update loan totals
             $this->interest_accrued += $interest;
             $this->total_amount += $interest;
@@ -571,7 +572,7 @@ class Loan extends Model
                 'total_balance' => $this->principal_amount + $this->processing_fee + $totalInterest,
                 'accrual_period' => $accrualPeriod,
                 'rate_used' => $rateUsed,
-                'notes' => "Full interest calculated at loan creation (at_beginning accrual type)",
+                'notes' => 'Full interest calculated at loan creation (at_beginning accrual type)',
             ]);
         }
     }
@@ -684,6 +685,16 @@ class Loan extends Model
     }
 
     /**
+     * Human-readable tenure for financial documents (weeks/months).
+     */
+    public function tenureDisplayLabel(): string
+    {
+        $months = (int) $this->tenure_months;
+
+        return $months === 1 ? '1 Month' : $months.' Months';
+    }
+
+    /**
      * Whether repayment schedule rows use projected (not yet earned) interest.
      */
     public function scheduleUsesProjectedInterest(): bool
@@ -771,10 +782,10 @@ class Loan extends Model
      * Calculate repayment allocation splits (principal, interest, processing fee)
      * Priority: Principal and Interest are allocated proportionally (they make up the total)
      * Processing fee only applies if outstanding and applicable (MOU/Government customers)
-     * 
+     *
      * IMPORTANT: principal_amount + interest_amount + processing_fee_amount MUST equal paymentAmount
-     * 
-     * @param float $paymentAmount The amount being paid
+     *
+     * @param  float  $paymentAmount  The amount being paid
      * @return array{principal_amount: float, interest_amount: float, processing_fee_amount: float}
      */
     public function calculateRepaymentAllocation(float $paymentAmount): array
@@ -788,8 +799,8 @@ class Loan extends Model
         }
 
         // Check if processing fee should be considered (only for MOU/Government customers)
-        $hasProcessingFee = $this->processing_fee > 0 && 
-            $this->loanProduct && 
+        $hasProcessingFee = $this->processing_fee > 0 &&
+            $this->loanProduct &&
             in_array($this->loanProduct->category, ['mou', 'government', 'group_loans'], true);
 
         // Calculate outstanding amounts
@@ -835,7 +846,7 @@ class Loan extends Model
         // Allocate remaining payment proportionally between principal and interest
         if ($remainingPayment > 0) {
             $totalUnpaidPrincipalInterest = $unpaidPrincipal + $unpaidInterest;
-            
+
             if ($totalUnpaidPrincipalInterest > 0) {
                 // Calculate proportions for principal and interest
                 $principalProportion = $unpaidPrincipal / $totalUnpaidPrincipalInterest;
@@ -1093,13 +1104,13 @@ class Loan extends Model
 
         // Check if payment schedules exist in database
         $schedules = $this->paymentSchedules;
-        
+
         if ($schedules->isNotEmpty()) {
             // Return persisted schedules
             return $schedules->values()->map(function ($schedule, int $index) {
                 // Update status before returning
                 $schedule->updateStatus();
-                
+
                 return [
                     'period' => $index + 1,
                     'period_number' => $schedule->period_number,
@@ -1120,7 +1131,7 @@ class Loan extends Model
 
         // Fallback: Generate schedule dynamically if not persisted
         // This is for backward compatibility with loans created before payment schedules were persisted
-        if (!$this->first_payment_date || $this->tenure_months <= 0) {
+        if (! $this->first_payment_date || $this->tenure_months <= 0) {
             return [];
         }
 
@@ -1129,7 +1140,7 @@ class Loan extends Model
         $monthlyPayment = $this->getMonthlyPayment();
         $remainingTotal = $plan['schedule_total'];
         $explicitDueDates = $this->resolvePaymentDueDates();
-        
+
         for ($period = 1; $period <= $this->tenure_months; $period++) {
             $periodIndex = $period - 1;
             if ($explicitDueDates !== null) {
@@ -1139,12 +1150,12 @@ class Loan extends Model
             } else {
                 $paymentDate = $this->first_payment_date->copy()->addMonths($periodIndex);
             }
-            
+
             // For the last period, use the full remaining amount to avoid rounding errors
-            $expectedAmount = ($period === $this->tenure_months) 
-                ? $remainingTotal 
+            $expectedAmount = ($period === $this->tenure_months)
+                ? $remainingTotal
                 : $monthlyPayment;
-            
+
             // Calculate amount paid for this period (estimate based on total paid)
             $amountPaid = 0;
             if ($this->amount_paid > 0) {
@@ -1152,14 +1163,14 @@ class Loan extends Model
                 $paidPerPeriod = $this->amount_paid / $this->tenure_months;
                 $amountPaid = min($expectedAmount, $paidPerPeriod * $period);
             }
-            
+
             $remainingAmount = max(0, $expectedAmount - $amountPaid);
-            
+
             // Determine status
             $today = Carbon::today();
             $status = 'upcoming';
             $isOverdue = false;
-            
+
             if ($amountPaid >= $expectedAmount) {
                 $status = $paymentDate->isFuture() ? 'paid_early' : 'paid';
             } elseif ($amountPaid > 0) {
@@ -1172,7 +1183,7 @@ class Loan extends Model
                 $status = 'overdue';
                 $isOverdue = true;
             }
-            
+
             $schedule[] = [
                 'period' => $period,
                 'payment_date' => $paymentDate,
@@ -1182,10 +1193,10 @@ class Loan extends Model
                 'status' => $status,
                 'is_overdue' => $isOverdue,
             ];
-            
+
             $remainingTotal -= $expectedAmount;
         }
-        
+
         return $schedule;
     }
 
@@ -1207,7 +1218,7 @@ class Loan extends Model
             ->where('status', 'overdue')
             ->orWhere(function ($q) {
                 $q->where('due_date', '<', Carbon::today())
-                  ->where('remaining_amount', '>', 0);
+                    ->where('remaining_amount', '>', 0);
             })
             ->get();
 
@@ -1222,10 +1233,10 @@ class Loan extends Model
         return $this->paymentSchedules()
             ->where(function ($q) {
                 $q->where('status', 'overdue')
-                  ->orWhere(function ($query) {
-                      $query->where('due_date', '<', Carbon::today())
+                    ->orWhere(function ($query) {
+                        $query->where('due_date', '<', Carbon::today())
                             ->where('remaining_amount', '>', 0);
-                  });
+                    });
             })
             ->exists();
     }
@@ -1238,10 +1249,10 @@ class Loan extends Model
         return $this->paymentSchedules()
             ->where(function ($q) {
                 $q->where('status', 'overdue')
-                  ->orWhere(function ($query) {
-                      $query->where('due_date', '<', Carbon::today())
+                    ->orWhere(function ($query) {
+                        $query->where('due_date', '<', Carbon::today())
                             ->where('remaining_amount', '>', 0);
-                  });
+                    });
             })
             ->orderBy('due_date')
             ->get();
@@ -1252,7 +1263,7 @@ class Loan extends Model
      */
     public function getPARStatus(): ?string
     {
-        if (!in_array($this->status, ['approved', 'active'])) {
+        if (! in_array($this->status, ['approved', 'active'])) {
             return null;
         }
 
@@ -1260,15 +1271,15 @@ class Loan extends Model
         $mostOverdue = $this->paymentSchedules()
             ->where(function ($q) {
                 $q->where('status', 'overdue')
-                  ->orWhere(function ($query) {
-                      $query->where('due_date', '<', Carbon::today())
+                    ->orWhere(function ($query) {
+                        $query->where('due_date', '<', Carbon::today())
                             ->where('remaining_amount', '>', 0);
-                  });
+                    });
             })
             ->orderBy('days_overdue', 'desc')
             ->first();
 
-        if (!$mostOverdue) {
+        if (! $mostOverdue) {
             return null;
         }
 

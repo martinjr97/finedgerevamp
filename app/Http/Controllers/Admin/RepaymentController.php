@@ -405,11 +405,6 @@ class RepaymentController extends Controller
         $cashRegisters = CashRegister::query()->where('is_active', true)->orderBy('name')->get();
         $this->cashRegisterService->defaultRegister();
 
-        $totals = [
-            'outstanding' => $customer->getTotalOutstandingBalance(),
-            'overdue' => $customer->getTotalOverdueAmount(),
-        ];
-
         $preselectedLoan = null;
         if ($request->filled('loan_id')) {
             $preselectedLoan = $activeLoans->firstWhere('id', (int) $request->input('loan_id'));
@@ -427,6 +422,18 @@ class RepaymentController extends Controller
                 ],
             ];
         });
+
+        $customerOutstanding = (float) $customer->getTotalOutstandingBalance();
+        $displayOutstanding = $preselectedLoan
+            ? (float) ($loanLedgerById[$preselectedLoan->id]['outstanding'] ?? $preselectedLoan->outstanding_balance)
+            : $customerOutstanding;
+
+        $totals = [
+            'outstanding' => $displayOutstanding,
+            'customer_outstanding' => $customerOutstanding,
+            // Kept for overdue repayment-type amount hints (tile removed from UI).
+            'overdue' => (float) $customer->getTotalOverdueAmount(),
+        ];
 
         $returnToLoanUrl = $preselectedLoan
             ? route('admin.loans.show', $preselectedLoan)

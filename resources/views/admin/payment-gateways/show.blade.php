@@ -86,11 +86,21 @@
             <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
                 <div class="flex items-start justify-between gap-4">
                     <h2 class="text-xl font-semibold text-white">Linked Financial Account</h2>
-                    @if ($financialAccountUrl)
-                        <a href="{{ $financialAccountUrl }}" class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500/40 to-purple-500/40 border border-blue-400/70 px-3 py-1.5 text-sm font-semibold text-blue-200 hover:text-white transition">
-                            Open Account
-                        </a>
-                    @endif
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                        @if ($canCheckCgrateBalance ?? false)
+                            <form method="POST" action="{{ route('admin.payment-gateways.cgrate-balance', $gateway) }}">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500/40 to-blue-500/40 border border-cyan-400/70 px-3 py-1.5 text-sm font-semibold text-cyan-100 hover:text-white transition">
+                                    Check cGrate Balance
+                                </button>
+                            </form>
+                        @endif
+                        @if ($financialAccountUrl)
+                            <a href="{{ $financialAccountUrl }}" class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500/40 to-purple-500/40 border border-blue-400/70 px-3 py-1.5 text-sm font-semibold text-blue-200 hover:text-white transition">
+                                Open Account
+                            </a>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -111,6 +121,9 @@
                                 —
                             @endif
                         </p>
+                        @if ($canCheckCgrateBalance ?? false)
+                            <p class="mt-1 text-xs text-slate-500">FineEdge books only. Use Check cGrate Balance for live merchant float.</p>
+                        @endif
                     </div>
                     <div>
                         <p class="text-sm text-slate-400">Opening Balance</p>
@@ -258,3 +271,54 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!window.Swal) {
+                return;
+            }
+
+            @if(session('cgrate_balance'))
+                @php
+                    $checkedAt = session('cgrate_balance.checked_at');
+                    try {
+                        $checkedAtDisplay = $checkedAt
+                            ? \Illuminate\Support\Carbon::parse($checkedAt)->timezone(config('app.timezone'))->format('Y-m-d H:i:s')
+                            : '—';
+                    } catch (\Throwable) {
+                        $checkedAtDisplay = (string) ($checkedAt ?? '—');
+                    }
+                @endphp
+                Swal.fire({
+                    icon: 'success',
+                    title: 'cGrate merchant balance',
+                    html: `
+                        <p style="font-size: 1.75rem; font-weight: 700; margin: 0.5rem 0;">
+                            {{ session('cgrate_balance.currency', 'ZMW') }}
+                            {{ number_format((float) session('cgrate_balance.balance', 0), 2) }}
+                        </p>
+                        <p style="font-size: 0.875rem; opacity: 0.8; margin: 0;">
+                            Checked at {{ $checkedAtDisplay }}
+                        </p>
+                        <p style="font-size: 0.75rem; opacity: 0.65; margin-top: 0.75rem;">
+                            Diagnostic only — FineEdge linked wallet balance was not changed.
+                        </p>
+                    `,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#06b6d4',
+                });
+            @endif
+
+            @if(session('cgrate_balance_error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'cGrate balance check failed',
+                    text: @json(session('cgrate_balance_error')),
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#ef4444',
+                });
+            @endif
+        });
+    </script>
+@endpush

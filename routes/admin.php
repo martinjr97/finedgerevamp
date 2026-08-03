@@ -99,6 +99,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('customers/select-product-type', [CustomerController::class, 'selectProductType'])->name('customers.select-product-type');
         Route::get('customers/export', [CustomerController::class, 'export'])->name('customers.export');
         Route::get('customers/{customer}/statement', [\App\Http\Controllers\Admin\CustomerStatementController::class, 'show'])->name('customers.statement');
+        Route::get('customers/{customer}/statement/pdf', [\App\Http\Controllers\Admin\CustomerStatementController::class, 'downloadPdf'])->name('customers.statement.pdf');
         Route::get('customers/{customer}/loans', [CustomerController::class, 'loans'])->name('customers.loans');
         Route::get('customers/{customer}/repayments', [CustomerController::class, 'repayments'])->name('customers.repayments');
         Route::get('customers/{customer}/repayments/create', [RepaymentController::class, 'createForCustomer'])->name('customers.repayments.create');
@@ -160,6 +161,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::delete('payment-gateway-destination-mappings/{paymentGatewayDestinationMapping}', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'destroy'])->name('payment-gateway-destination-mappings.destroy');
         Route::post('payment-gateway-destination-mappings/sync-cgrate-issuers', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'syncCgrateIssuers'])->name('payment-gateway-destination-mappings.sync-cgrate-issuers');
         Route::resource('payment-gateways', \App\Http\Controllers\Admin\PaymentGatewayController::class)->only(['index', 'show', 'edit', 'update']);
+        Route::post('payment-gateways/{paymentGateway}/cgrate-balance', [\App\Http\Controllers\Admin\PaymentGatewayController::class, 'checkCgrateBalance'])->name('payment-gateways.cgrate-balance');
         Route::get('payment-gateways/{paymentGateway}/destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'legacyIndex'])->name('payment-gateways.destination-mappings.index');
         Route::post('payment-gateways/{paymentGateway}/destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'legacyStore'])->name('payment-gateways.destination-mappings.store');
         Route::get('payment-operations', [\App\Http\Controllers\Admin\PaymentOperationsController::class, 'index'])->name('payment-operations.index');

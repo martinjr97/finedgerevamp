@@ -49,15 +49,16 @@
             </div>
         @endif
 
-        <div class="grid gap-4 md:grid-cols-2">
-            <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-                <p class="text-xs uppercase tracking-[0.2em] text-emerald-200">Outstanding Balance</p>
-                <p class="mt-2 text-2xl font-bold text-emerald-300">ZMW {{ number_format($totals['outstanding'], 2) }}</p>
-            </div>
-            <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
-                <p class="text-xs uppercase tracking-[0.2em] text-amber-200">Overdue Balance</p>
-                <p class="mt-2 text-2xl font-bold text-amber-300">ZMW {{ number_format($totals['overdue'], 2) }}</p>
-            </div>
+        <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 max-w-md">
+            <p class="text-xs uppercase tracking-[0.2em] text-emerald-200">Outstanding Balance</p>
+            <p id="outstanding_balance_value" class="mt-2 text-2xl font-bold text-emerald-300">ZMW {{ number_format($totals['outstanding'], 2) }}</p>
+            <p id="outstanding_balance_hint" class="mt-1 text-xs text-emerald-100/80">
+                @if($preselectedLoan)
+                    For loan {{ $preselectedLoan->loan_number }}
+                @else
+                    Across {{ $activeLoans->count() }} active loan(s)
+                @endif
+            </p>
         </div>
 
         <form id="repaymentForm" method="POST" action="{{ route('admin.customers.repayments.store', $customer) }}" class="space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
@@ -141,7 +142,7 @@
                 </div>
 
                 <div id="amount_group" class="{{ $defaultRepaymentType === 'partial' ? '' : 'hidden' }}">
-                    <label class="block text-sm font-medium text-slate-200">Amount (Partial)</label>
+                    <label for="amount" class="block text-base font-bold tracking-wide text-cyan-200">Amount (Partial)</label>
                     <input type="number" name="amount" id="amount" value="{{ $defaultAmount }}" min="0.01" step="0.01" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40" placeholder="0.00">
                     <p id="amount_limit_hint" class="mt-1 text-xs text-slate-400"></p>
                     <div id="overpayment_warning" class="hidden mt-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100 space-y-3">
@@ -360,9 +361,13 @@
         const overpaymentModalConfirm = document.getElementById('overpayment_modal_confirm');
         let pendingOverpaymentSubmit = false;
 
-        const totalOutstanding = {{ json_encode((float) $totals['outstanding']) }};
+        const customerOutstanding = {{ json_encode((float) ($totals['customer_outstanding'] ?? $totals['outstanding'])) }};
+        const totalOutstanding = customerOutstanding;
         const totalOverdue = {{ json_encode((float) $totals['overdue']) }};
         const activeLoanCount = {{ $activeLoans->count() }};
+        const preselectedLoanNumber = @json($preselectedLoan?->loan_number);
+        const outstandingBalanceValue = document.getElementById('outstanding_balance_value');
+        const outstandingBalanceHint = document.getElementById('outstanding_balance_hint');
 
         const channelPreviews = @json(collect($channelPreviews)->mapWithKeys(fn ($preview, $id) => [(string) $id => $preview->toArray()]));
 
@@ -431,6 +436,29 @@
             return amount > ctx.outstanding + 0.0001;
         }
 
+        function updateOutstandingBalanceTile() {
+            if (!outstandingBalanceValue || !outstandingBalanceHint) {
+                return;
+            }
+
+            const loanOption = loanSelect?.options[loanSelect.selectedIndex];
+            const loanOutstanding = parseFloat(loanOption?.dataset?.outstanding || '');
+            const loanSelected = Boolean(loanSelect?.value) && !Number.isNaN(loanOutstanding);
+            const useLoanScope = loanSelected
+                && repaymentType.value !== 'full'
+                && repaymentType.value !== 'overdue';
+
+            if (useLoanScope) {
+                outstandingBalanceValue.textContent = formatZmw(loanOutstanding);
+                outstandingBalanceHint.textContent = 'For loan '
+                    + (loanOption.textContent || '').split(' - ')[0].trim();
+                return;
+            }
+
+            outstandingBalanceValue.textContent = formatZmw(customerOutstanding);
+            outstandingBalanceHint.textContent = 'Across ' + activeLoanCount + ' active loan(s)';
+        }
+
         function updateRepaymentTypeHint() {
             if (!repaymentTypeHint) {
                 return;
@@ -449,6 +477,8 @@
             } else {
                 repaymentTypeHint.textContent = 'Enter the amount collected. Payments above the current outstanding balance are allowed and may create customer credit/suspense once the full loan obligation is met.';
             }
+
+            updateOutstandingBalanceTile();
         }
 
         function updateOverpaymentUi() {
@@ -680,7 +710,11 @@
 
         repaymentType.addEventListener('change', togglePartialFields);
         if (loanSelect) {
-            loanSelect.addEventListener('change', updateAmountHint);
+            loanSelect.addEventListener('change', function () {
+                updateAmountHint();
+                updateOutstandingBalanceTile();
+                updateCollectionProcessingPanel();
+            });
         }
         if (amountInput) {
             amountInput.addEventListener('input', updateAmountHint);

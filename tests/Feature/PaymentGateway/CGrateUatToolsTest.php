@@ -37,6 +37,45 @@ class CGrateUatToolsTest extends TestCase
         $this->assertSame('getAvailableCashDepositIssuers', $result['raw']['operation'] ?? null);
     }
 
+    public function test_get_account_balance_parses_balance_from_return_node(): void
+    {
+        config([
+            'cgrate.enabled' => true,
+            'cgrate.username' => 'uat-user',
+            'cgrate.password' => 'secret-password',
+            'cgrate.base_url' => 'https://test.543.cgrate.co.zm',
+            'cgrate.default_currency' => 'ZMW',
+        ]);
+
+        Http::fake(function ($request) {
+            $this->assertStringContainsString('<kon:getAccountBalance', $request->body());
+
+            return Http::response(
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                .'<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">'
+                .'<env:Body>'
+                .'<ns2:getAccountBalanceResponse xmlns:ns2="http://konik.cgrate.com">'
+                .'<return>'
+                .'<responseCode>0</responseCode>'
+                .'<responseMessage>Successful</responseMessage>'
+                .'<balance>98542.68</balance>'
+                .'</return>'
+                .'</ns2:getAccountBalanceResponse>'
+                .'</env:Body>'
+                .'</env:Envelope>',
+                200
+            );
+        });
+
+        $result = app(CGrateClient::class)->getAccountBalance();
+
+        $this->assertSame(98542.68, $result['balance']);
+        $this->assertSame('ZMW', $result['currency']);
+        $this->assertSame(0, $result['response_code']);
+        $this->assertSame('Successful', $result['response_message']);
+        $this->assertSame('getAccountBalance', $result['raw']['operation'] ?? null);
+    }
+
     public function test_issuer_command_fails_when_cgrate_disabled(): void
     {
         config(['cgrate.enabled' => false]);

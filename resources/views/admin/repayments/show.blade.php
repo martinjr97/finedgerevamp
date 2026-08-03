@@ -87,7 +87,7 @@
             </div>
         </div>
 
-        @if($gatewayAttempt)
+        @if($gatewayAttempt && $repayment->status !== 'completed')
             <details class="group rounded-3xl border {{ $panelStyle['border'] }} {{ $panelStyle['bg'] }} shadow-lg" @if($gatewayPanelOpen) open @endif>
                 <summary class="flex cursor-pointer list-none items-start justify-between gap-4 p-6 [&::-webkit-details-marker]:hidden">
                     <div class="min-w-0 flex-1">
@@ -313,15 +313,19 @@
                         <span class="text-slate-400">Status:</span>
                         @php
                             $statusColors = [
-                                'pending' => 'bg-amber-500/20 text-amber-300',
-                                'processing' => 'bg-blue-500/20 text-blue-300',
-                                'completed' => 'bg-emerald-500/20 text-emerald-300',
-                                'failed' => 'bg-rose-500/20 text-rose-300',
-                                'cancelled' => 'bg-slate-500/20 text-slate-300',
+                                'pending' => 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+                                'processing' => 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+                                'completed' => 'status-pill status-pill-completed',
+                                'failed' => 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
+                                'cancelled' => 'bg-slate-500/20 text-slate-300 border border-slate-500/30',
                             ];
-                            $statusColor = $statusColors[$repayment->status] ?? 'bg-slate-500/20 text-slate-300';
+                            $statusColor = $statusColors[$repayment->status] ?? 'bg-slate-500/20 text-slate-300 border border-slate-500/30';
+                            $isCompletedStatus = $repayment->status === 'completed';
                         @endphp
-                        <span class="inline-block rounded-full px-3 py-1 text-xs font-medium {{ $statusColor }}">
+                        <span @class([
+                            'inline-block rounded-full px-3 py-1 text-xs font-medium' => ! $isCompletedStatus,
+                            $statusColor,
+                        ])>
                             {{ ucfirst($repayment->status) }}
                         </span>
                     </div>

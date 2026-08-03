@@ -171,6 +171,20 @@
                         Extend Loan
                     </button>
                 @endcan
+                @can('loans.disburse')
+                    @if (! $loan->isSettled() && (float) $loan->outstanding_balance > 0)
+                        <button
+                            type="button"
+                            onclick="window.dispatchEvent(new CustomEvent('open-early-settlement'))"
+                            class="inline-flex items-center gap-2 rounded-2xl border border-purple-400/40 bg-gradient-to-r from-purple-500 to-purple-700 px-4 py-3 font-semibold text-white shadow-lg shadow-purple-500/30 hover:from-purple-600 hover:to-purple-800 transition"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Early Settlement
+                        </button>
+                    @endif
+                @endcan
                 @if ($canRefundRepayments && $refundableLoanRepayments->isNotEmpty())
                     @php
                         $primaryRefundable = $refundableLoanRepayments->first();
@@ -207,16 +221,20 @@
                         @php
                             $statusColors = [
                                 'pending_approval' => 'bg-amber-500/20 text-amber-300',
-                                'approved' => 'bg-blue-500/20 text-blue-300',
-                                'active' => 'bg-emerald-500/20 text-emerald-300',
-                                'completed' => 'bg-green-500/20 text-green-300',
-                                'settled' => 'bg-teal-500/20 text-teal-300',
+                                'approved' => 'status-pill status-pill-approved',
+                                'active' => 'status-pill status-pill-active',
+                                'completed' => 'status-pill status-pill-completed',
+                                'settled' => 'status-pill status-pill-completed',
                                 'defaulted' => 'bg-rose-500/20 text-rose-300',
                                 'cancelled' => 'bg-slate-500/20 text-slate-300',
                             ];
                             $statusColor = $statusColors[$loan->status] ?? 'bg-slate-500/20 text-slate-300';
+                            $usesStatusPill = in_array($loan->status, ['approved', 'active', 'completed', 'settled'], true);
                         @endphp
-                        <span class="inline-block rounded-full px-2 py-1 text-xs {{ $statusColor }}">
+                        <span @class([
+                            'inline-block rounded-full px-2 py-1 text-xs' => ! $usesStatusPill,
+                            $statusColor,
+                        ])>
                             {{ ucfirst(str_replace('_', ' ', $loan->status)) }}
                         </span>
                     </div>
@@ -266,149 +284,162 @@
                             <span class="font-medium text-white">{{ $loan->loan_settled_date->format('d M Y') }}</span>
                         </div>
                     @endif
-                </div>
-            </div>
-
-            @include('admin.loans.partials.financial-summary')
-
-            @if ($loan->accrual_period || $loan->last_accrual_date)
-                <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
-                    <h2 class="text-xl font-semibold text-white">Accrual</h2>
-                    <div class="space-y-3 text-sm">
-                        @if ($loan->accrual_period)
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-400">Accrual period</span>
-                                <span class="font-medium text-white">{{ ucfirst($loan->accrual_period) }}</span>
-                            </div>
-                        @endif
-                        @if ($loan->last_accrual_date)
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-400">Last accrual date</span>
-                                <span class="font-medium text-white">{{ $loan->last_accrual_date->format('d M Y') }}</span>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            @endif
-
-            {{-- Customer Information --}}
-            <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
-                <h2 class="text-xl font-semibold text-white">Customer Information</h2>
-                <div class="space-y-3 text-sm">
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400">Name:</span>
-                        @if($loan->customer)
-                            <a href="{{ route('admin.customers.show', $loan->customer) }}" class="font-medium text-cyan-400 hover:text-cyan-300 hover:underline transition">
-                                {{ $loan->customer->full_name }}
-                            </a>
-                        @else
-                            <span class="font-medium text-white">—</span>
-                        @endif
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400">Email:</span>
-                        <span class="font-medium text-white">{{ $loan->customer->email ?? '—' }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400">Phone:</span>
-                        <span class="font-medium text-white">{{ $loan->customer->phone ?? '—' }}</span>
-                    </div>
-                    <div class="border-t border-white/10 pt-3 mt-1">
-                        @include('partials.admin.disbursement-destination-summary', ['loan' => $loan])
-                    </div>
-                    @if($loan->disbursed_via_type)
+                    @if ($loan->approver)
                         <div class="flex items-center justify-between border-t border-white/10 pt-3">
-                            <span class="text-slate-400">Disbursed From (treasury):</span>
-                            <span class="font-medium text-white">{{ ucfirst($loan->disbursed_via_type) }} #{{ $loan->disbursed_via_id }}</span>
+                            <span class="text-slate-400">Approved By:</span>
+                            <span class="font-medium text-white">{{ $loan->approver->full_name ?? '—' }}</span>
                         </div>
                     @endif
-                    @if ($loan->disbursement_reference)
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-400">Disbursement Reference:</span>
-                            <span class="font-medium text-white">{{ $loan->disbursement_reference }}</span>
+                    @if ($loan->approved_at)
+                        <div class="flex items-center justify-between {{ $loan->approver ? '' : 'border-t border-white/10 pt-3' }}">
+                            <span class="text-slate-400">Approved At:</span>
+                            <span class="font-medium text-white">{{ $loan->approved_at->format('d M Y H:i') }}</span>
                         </div>
                     @endif
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400">Disbursement Status:</span>
-                        <span class="inline-block rounded-full px-2 py-1 text-xs {{ $loan->disbursement_status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' : ($loan->disbursement_status === 'processing' ? 'bg-blue-500/20 text-blue-300' : ($loan->disbursement_status === 'failed' ? 'bg-rose-500/20 text-rose-300' : 'bg-amber-500/20 text-amber-300')) }}">
-                            {{ ucfirst($loan->disbursement_status) }}
-                        </span>
-                    </div>
-                    @if ($loan->disbursed_at)
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-400">Disbursed At:</span>
-                            <span class="font-medium text-white">{{ $loan->disbursed_at->format('d M Y H:i') }}</span>
-                        </div>
-                    @endif
-                    @if ($loan->disbursement_notes)
-                        <div>
-                            <span class="text-slate-400">Disbursement Description:</span>
-                            <p class="font-medium text-white mt-1">{{ $loan->disbursement_notes }}</p>
-                        </div>
-                    @endif
-                    @if(($activeDisbursementGateway ?? null) && ($disbursementGatewayAvailable ?? false))
-                        <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm">
-                            <p class="text-emerald-200 font-medium">cGrate treasury</p>
-                            <p class="text-slate-300 mt-1">{{ $activeDisbursementGateway->linkedAccountLabel() }}</p>
-                            <p class="text-slate-400 mt-1">Balance: ZMW {{ number_format((float) $activeDisbursementGateway->linkedAccountBalance(), 2) }}</p>
-                        </div>
-                    @endif
-
-                    @if ($disbursementDestinationMappingWarning)
-                        <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
-                            <p class="font-medium">cGrate mapping warning</p>
-                            <p class="text-slate-300 mt-1">{{ $disbursementDestinationMappingWarning }}</p>
-                        </div>
-                    @endif
-
-                    @if(($disbursementAttempts ?? collect())->isNotEmpty())
-                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm space-y-2">
-                            <p class="text-slate-300 font-medium">Gateway disbursement attempts</p>
-                            @foreach($disbursementAttempts as $attempt)
-                                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-2 first:border-t-0 first:pt-0">
-                                    <span class="text-slate-400">{{ $attempt->provider_reference ?? $attempt->internal_reference }}</span>
-                                    <span class="rounded-full px-2 py-0.5 text-xs bg-white/10 text-slate-200">{{ ucfirst($attempt->status->value) }}</span>
-                                </div>
-                                @if($attempt->response_message)
-                                    <p class="text-xs text-slate-500">{{ $attempt->response_message }}</p>
-                                @endif
-                            @endforeach
-                        </div>
-                    @endif
-                    @if($loan->disbursement_status === 'processing')
-                        <div class="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-200">
-                            Disbursement is processing via cGrate. Refresh this page to check status.
+                    @if ($loan->approval_notes)
+                        <div class="{{ ($loan->approver || $loan->approved_at) ? '' : 'border-t border-white/10 pt-3' }}">
+                            <span class="text-slate-400">Approval Notes:</span>
+                            <p class="font-medium text-white mt-1">{{ $loan->approval_notes }}</p>
                         </div>
                     @endif
                 </div>
             </div>
 
-            {{-- Approval Information --}}
-            @if ($loan->approved_by || $loan->approval_notes)
+            <div class="space-y-6">
+                @include('admin.loans.partials.financial-summary')
+
+                @if ($loan->accrual_period || $loan->last_accrual_date)
+                    <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
+                        <h2 class="text-xl font-semibold text-white">Accrual</h2>
+                        <div class="space-y-3 text-sm">
+                            @if ($loan->accrual_period)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400">Accrual period</span>
+                                    <span class="font-medium text-white">{{ ucfirst($loan->accrual_period) }}</span>
+                                </div>
+                            @endif
+                            @if ($loan->last_accrual_date)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400">Last accrual date</span>
+                                    <span class="font-medium text-white">{{ $loan->last_accrual_date->format('d M Y') }}</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            {{-- Customer + Disbursement (full-width balanced row) --}}
+            <div class="md:col-span-2 grid gap-6 md:grid-cols-2">
                 <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
-                    <h2 class="text-xl font-semibold text-white">Approval Information</h2>
+                    <h2 class="text-xl font-semibold text-white">Customer Information</h2>
                     <div class="space-y-3 text-sm">
-                        @if ($loan->approver)
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-400">Approved By:</span>
-                                <span class="font-medium text-white">{{ $loan->approver->full_name ?? '—' }}</span>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Name:</span>
+                            @if($loan->customer)
+                                <a href="{{ route('admin.customers.show', $loan->customer) }}" class="font-medium text-cyan-400 hover:text-cyan-300 hover:underline transition">
+                                    {{ $loan->customer->full_name }}
+                                </a>
+                            @else
+                                <span class="font-medium text-white">—</span>
+                            @endif
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Email:</span>
+                            <span class="font-medium text-white">{{ $loan->customer->email ?? '—' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Phone:</span>
+                            <span class="font-medium text-white">{{ $loan->customer->phone ?? '—' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
+                    <h2 class="text-xl font-semibold text-white">Disbursement</h2>
+                    <div class="space-y-3 text-sm">
+                        @include('partials.admin.disbursement-destination-summary', ['loan' => $loan])
+                        @if($loan->disbursed_via_type)
+                            <div class="flex items-center justify-between border-t border-white/10 pt-3">
+                                <span class="text-slate-400">Disbursed From (treasury):</span>
+                                <span class="font-medium text-white">{{ ucfirst($loan->disbursed_via_type) }} #{{ $loan->disbursed_via_id }}</span>
                             </div>
                         @endif
-                        @if ($loan->approved_at)
+                        @if ($loan->disbursement_reference)
                             <div class="flex items-center justify-between">
-                                <span class="text-slate-400">Approved At:</span>
-                                <span class="font-medium text-white">{{ $loan->approved_at->format('d M Y H:i') }}</span>
+                                <span class="text-slate-400">Disbursement Reference:</span>
+                                <span class="font-medium text-white">{{ $loan->disbursement_reference }}</span>
                             </div>
                         @endif
-                        @if ($loan->approval_notes)
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Disbursement Status:</span>
+                            @php
+                                $disbursementStatusColors = [
+                                    'completed' => 'status-pill status-pill-completed',
+                                    'processing' => 'bg-blue-500/20 text-blue-300',
+                                    'failed' => 'bg-rose-500/20 text-rose-300',
+                                    'pending' => 'bg-amber-500/20 text-amber-300',
+                                ];
+                                $disbursementStatusColor = $disbursementStatusColors[$loan->disbursement_status]
+                                    ?? 'bg-amber-500/20 text-amber-300';
+                                $disbursementUsesStatusPill = $loan->disbursement_status === 'completed';
+                            @endphp
+                            <span @class([
+                                'inline-block rounded-full px-2 py-1 text-xs' => ! $disbursementUsesStatusPill,
+                                $disbursementStatusColor,
+                            ])>
+                                {{ ucfirst($loan->disbursement_status) }}
+                            </span>
+                        </div>
+                        @if ($loan->disbursed_at)
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Disbursed At:</span>
+                                <span class="font-medium text-white">{{ $loan->disbursed_at->format('d M Y H:i') }}</span>
+                            </div>
+                        @endif
+                        @if ($loan->disbursement_notes)
                             <div>
-                                <span class="text-slate-400">Notes:</span>
-                                <p class="font-medium text-white mt-1">{{ $loan->approval_notes }}</p>
+                                <span class="text-slate-400">Disbursement Description:</span>
+                                <p class="font-medium text-white mt-1">{{ $loan->disbursement_notes }}</p>
+                            </div>
+                        @endif
+                        @if(($activeDisbursementGateway ?? null) && ($disbursementGatewayAvailable ?? false))
+                            <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm">
+                                <p class="text-emerald-200 font-medium">cGrate treasury</p>
+                                <p class="text-slate-300 mt-1">{{ $activeDisbursementGateway->linkedAccountLabel() }}</p>
+                                <p class="text-slate-400 mt-1">Balance: ZMW {{ number_format((float) $activeDisbursementGateway->linkedAccountBalance(), 2) }}</p>
+                            </div>
+                        @endif
+
+                        @if ($disbursementDestinationMappingWarning)
+                            <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+                                <p class="font-medium">cGrate mapping warning</p>
+                                <p class="text-slate-300 mt-1">{{ $disbursementDestinationMappingWarning }}</p>
+                            </div>
+                        @endif
+
+                        @if(($disbursementAttempts ?? collect())->isNotEmpty())
+                            <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm space-y-2">
+                                <p class="text-slate-300 font-medium">Gateway disbursement attempts</p>
+                                @foreach($disbursementAttempts as $attempt)
+                                    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-2 first:border-t-0 first:pt-0">
+                                        <span class="text-slate-400">{{ $attempt->provider_reference ?? $attempt->internal_reference }}</span>
+                                        <span class="rounded-full px-2 py-0.5 text-xs bg-white/10 text-slate-200">{{ ucfirst($attempt->status->value) }}</span>
+                                    </div>
+                                    @if($attempt->response_message)
+                                        <p class="text-xs text-slate-500">{{ $attempt->response_message }}</p>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+                        @if($loan->disbursement_status === 'processing')
+                            <div class="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-200">
+                                Disbursement is processing via cGrate. Refresh this page to check status.
                             </div>
                         @endif
                     </div>
                 </div>
-            @endif
+            </div>
         </div>
 
         @if ($paymentDetailChangeTrail->isNotEmpty())
@@ -1471,58 +1502,54 @@
         @endpush
 
         {{-- Loan Extensions --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-white">Loan Extensions</h2>
-                <span class="text-xs text-slate-400">Maximum 3 extensions per loan</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full w-full text-sm text-slate-300">
-                    <thead>
-                        <tr class="bg-slate-100 text-center text-sm font-semibold uppercase tracking-[0.2em] border-b border-slate-300">
-                            <th class="px-4 py-3 text-left text-slate-800">Date</th>
-                            <th class="px-4 py-3 text-left text-slate-800">Type</th>
-                            <th class="px-4 py-3 text-left text-slate-800">Interest</th>
-                            <th class="px-4 py-3 text-left text-slate-800">Old Due Date</th>
-                            <th class="px-4 py-3 text-left text-slate-800">New Due Date</th>
-                            <th class="px-4 py-3 text-left text-slate-800">Admin</th>
-                            <th class="px-4 py-3 text-left text-slate-800">Notes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($loan->loanExtensions as $extension)
-                            <tr class="border-t border-white/5">
-                                <td class="px-4 py-3 text-white">
-                                    {{ $extension->created_at?->format('d M Y H:i') ?? '—' }}
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="font-medium text-white">{{ $extension->type_label }}</span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="text-white font-semibold">ZMW {{ number_format((float) $extension->interest_amount, 2) }}</div>
-                                    <div class="text-xs text-slate-400">
-                                        {{ $extension->interest_mode_label }}
-                                        @if(!is_null($extension->interest_rate))
-                                            ({{ number_format((float) $extension->interest_rate, 4) }}%)
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3">{{ $extension->old_due_date?->format('d M Y') ?? '—' }}</td>
-                                <td class="px-4 py-3">{{ $extension->new_due_date?->format('d M Y') ?? '—' }}</td>
-                                <td class="px-4 py-3">{{ $extension->creator?->full_name ?? 'System' }}</td>
-                                <td class="px-4 py-3 text-slate-400">{{ $extension->notes ?: '—' }}</td>
+        @if ($loan->loanExtensions->isNotEmpty())
+            <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold text-white">Loan Extensions</h2>
+                    <span class="text-xs text-slate-400">Maximum 3 extensions per loan</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full w-full text-sm text-slate-300">
+                        <thead>
+                            <tr class="bg-slate-100 text-center text-sm font-semibold uppercase tracking-[0.2em] border-b border-slate-300">
+                                <th class="px-4 py-3 text-left text-slate-800">Date</th>
+                                <th class="px-4 py-3 text-left text-slate-800">Type</th>
+                                <th class="px-4 py-3 text-left text-slate-800">Interest</th>
+                                <th class="px-4 py-3 text-left text-slate-800">Old Due Date</th>
+                                <th class="px-4 py-3 text-left text-slate-800">New Due Date</th>
+                                <th class="px-4 py-3 text-left text-slate-800">Admin</th>
+                                <th class="px-4 py-3 text-left text-slate-800">Notes</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-4 py-6 text-center text-slate-400">
-                                    No extensions recorded for this loan.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach($loan->loanExtensions as $extension)
+                                <tr class="border-t border-white/5">
+                                    <td class="px-4 py-3 text-white">
+                                        {{ $extension->created_at?->format('d M Y H:i') ?? '—' }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="font-medium text-white">{{ $extension->type_label }}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="text-white font-semibold">ZMW {{ number_format((float) $extension->interest_amount, 2) }}</div>
+                                        <div class="text-xs text-slate-400">
+                                            {{ $extension->interest_mode_label }}
+                                            @if(!is_null($extension->interest_rate))
+                                                ({{ number_format((float) $extension->interest_rate, 4) }}%)
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">{{ $extension->old_due_date?->format('d M Y') ?? '—' }}</td>
+                                    <td class="px-4 py-3">{{ $extension->new_due_date?->format('d M Y') ?? '—' }}</td>
+                                    <td class="px-4 py-3">{{ $extension->creator?->full_name ?? 'System' }}</td>
+                                    <td class="px-4 py-3 text-slate-400">{{ $extension->notes ?: '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        @endif
 
         @include('admin.loans.partials.settlement-panel')
 

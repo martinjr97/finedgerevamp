@@ -3,53 +3,51 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Support\ZambianPhoneRules;
-use App\Models\Bank;
-use App\Models\Loan;
-use App\Models\Customer;
-use App\Models\LoanProduct;
-use App\Models\CustomerGroup;
-use App\Models\Repayment;
-use App\Models\LoanRepayment;
-use App\Models\LoanExtension;
-use App\Models\Channel;
-use App\Models\FinancialInstitution;
-use App\Models\Wallet;
-use App\Services\CustomerNotificationService;
 use App\Http\Requests\Admin\StoreLoanRefundRequest;
+use App\Models\Bank;
+use App\Models\Channel;
+use App\Models\Customer;
+use App\Models\CustomerGroup;
+use App\Models\FinancialInstitution;
+use App\Models\Loan;
+use App\Models\LoanExtension;
+use App\Models\LoanProduct;
+use App\Models\LoanRepayment;
+use App\Models\PaymentGateway;
+use App\Models\PaymentGatewayAttempt;
+use App\Models\Repayment;
+use App\Models\Wallet;
+use App\PaymentPlatform\Enums\GatewayDirection;
+use App\PaymentPlatform\Services\GatewayIntegrationService;
+use App\PaymentPlatform\Services\PaymentGatewayDestinationMappingResolver;
+use App\PaymentPlatform\Support\CGrateIssuerNameResolver;
+use App\Services\CustomerNotificationService;
 use App\Services\LoanExtensionService;
 use App\Services\LoanPaymentDetailsService;
 use App\Services\LoanRepaymentLedgerService;
-use App\Services\SharedPaymentDetailsDetectionService;
 use App\Services\LoanRepaymentRefundService;
 use App\Services\Loans\AutomaticLoanDisbursementService;
 use App\Services\Loans\DTOs\ManualDisbursementDTO;
 use App\Services\Loans\LoanCancellationService;
 use App\Services\Loans\LoanDisbursementService;
+use App\Services\SharedPaymentDetailsDetectionService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\View\View;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\PaymentPlatform\Services\GatewayIntegrationService;
-use App\PaymentPlatform\Support\CGrateIssuerNameResolver;
-use App\PaymentPlatform\Services\PaymentGatewayDestinationMappingResolver;
-use App\Models\PaymentGateway;
-use App\Models\PaymentGatewayAttempt;
-use App\PaymentPlatform\Enums\GatewayDirection;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class LoanController extends Controller
 {
@@ -58,15 +56,13 @@ class LoanController extends Controller
         private readonly LoanExtensionService $loanExtensionService,
         private readonly LoanPaymentDetailsService $loanPaymentDetailsService,
         private readonly LoanDisbursementService $loanDisbursementService,
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request): View
     {
         $admin = auth('admin')->user();
         $companyFilterId = $admin->getCompanyFilterId();
-        
+
         $query = Loan::with(['customer', 'loanProduct', 'customerGroup', 'channel', 'approver']);
 
         // Filter by company if not primary company admin
@@ -128,7 +124,7 @@ class LoanController extends Controller
         $loanProductsQuery = LoanProduct::where('is_active', '=', true, 'and');
         $customerGroupsQuery = CustomerGroup::where('is_active', '=', true, 'and')->with('loanProduct');
         $customersQuery = Customer::query();
-        
+
         if ($companyFilterId !== null) {
             $loanProductsQuery->where('company_id', $companyFilterId);
             $customerGroupsQuery->whereHas('loanProduct', function ($q) use ($companyFilterId) {
@@ -136,7 +132,7 @@ class LoanController extends Controller
             });
             $customersQuery->where('company_id', $companyFilterId);
         }
-        
+
         $loanProducts = $loanProductsQuery->orderBy('name', 'asc')->get();
         $customerGroups = $customerGroupsQuery->orderBy('name', 'asc')->get();
         $customers = $customersQuery->orderBy('first_name', 'asc')->orderBy('last_name', 'asc')->get();
@@ -148,7 +144,7 @@ class LoanController extends Controller
     {
         $admin = auth('admin')->user();
         $companyFilterId = $admin->getCompanyFilterId();
-        
+
         $query = Loan::with([
             'customer',
             'loanProduct',
@@ -239,9 +235,10 @@ class LoanController extends Controller
             ]);
         });
 
-        $filename = 'loans-export-' . now()->format('Y-m-d_His') . '.xlsx';
+        $filename = 'loans-export-'.now()->format('Y-m-d_His').'.xlsx';
 
-        return Excel::download(new class($exportData) implements FromCollection, WithHeadings, WithColumnWidths, WithStyles {
+        return Excel::download(new class($exportData) implements FromCollection, WithColumnWidths, WithHeadings, WithStyles
+        {
             protected $data;
 
             public function __construct($data)
@@ -297,7 +294,7 @@ class LoanController extends Controller
         $admin = auth('admin')->user();
         $companyFilterId = $admin->getCompanyFilterId();
         $today = Carbon::today();
-        
+
         // Get loans that have payment schedules due today
         $query = Loan::with(['customer', 'loanProduct', 'customerGroup', 'channel'])
             ->whereHas('paymentSchedules', function ($q) use ($today) {
@@ -332,6 +329,7 @@ class LoanController extends Controller
             $loan->todays_schedule = $loan->paymentSchedules()
                 ->whereDate('due_date', $today)
                 ->first();
+
             return $loan;
         });
 
@@ -343,7 +341,7 @@ class LoanController extends Controller
         $admin = auth('admin')->user();
         $companyFilterId = $admin->getCompanyFilterId();
         $today = Carbon::today();
-        
+
         // Get loans that have payment schedules due today
         $query = Loan::with(['customer', 'loanProduct', 'customerGroup', 'channel', 'paymentSchedules'])
             ->whereHas('paymentSchedules', function ($q) use ($today) {
@@ -377,7 +375,7 @@ class LoanController extends Controller
             $todaysSchedule = $loan->paymentSchedules()
                 ->whereDate('due_date', $today)
                 ->first();
-            
+
             return [
                 'Loan Number' => $loan->loan_number,
                 'Customer Name' => $loan->customer->full_name ?? 'N/A',
@@ -400,9 +398,10 @@ class LoanController extends Controller
             ];
         });
 
-        $filename = 'todays-payments-' . $today->format('Y-m-d') . '.xlsx';
+        $filename = 'todays-payments-'.$today->format('Y-m-d').'.xlsx';
 
-        return Excel::download(new class($exportData) implements FromCollection, WithHeadings, WithColumnWidths, WithStyles {
+        return Excel::download(new class($exportData) implements FromCollection, WithColumnWidths, WithHeadings, WithStyles
+        {
             protected $data;
 
             public function __construct($data)
@@ -788,14 +787,14 @@ class LoanController extends Controller
         if (in_array($interestMode, [
             LoanExtension::INTEREST_MODE_CUSTOM_RATE,
             LoanExtension::INTEREST_MODE_FIXED_AMOUNT,
-        ], true) && !isset($validated['interest_value'])) {
+        ], true) && ! isset($validated['interest_value'])) {
             return redirect()
                 ->route('admin.loans.show', $loan)
                 ->with('error', 'Interest value is required for the selected interest mode.')
                 ->withInput();
         }
 
-        if ($extensionType === LoanExtension::TYPE_RESTRUCTURE && !isset($validated['new_installment_count'])) {
+        if ($extensionType === LoanExtension::TYPE_RESTRUCTURE && ! isset($validated['new_installment_count'])) {
             return redirect()
                 ->route('admin.loans.show', $loan)
                 ->with('error', 'New installment count is required for restructure extensions.')
@@ -822,25 +821,38 @@ class LoanController extends Controller
 
     public function exportSchedulePdf(Loan $loan)
     {
-        $loan->load(['customer.company', 'loanProduct', 'customerGroup']);
-        
-        if (!$loan->first_payment_date || $loan->tenure_months <= 0) {
+        abort_unless(auth('admin')->user()?->can('loans.view'), 403);
+
+        $loan->load([
+            'customer.company',
+            'loanProduct',
+            'customerGroup',
+            'paymentSchedules',
+        ]);
+
+        if (! $loan->first_payment_date || $loan->tenure_months <= 0) {
             return redirect()
                 ->route('admin.loans.show', $loan)
                 ->with('error', 'Loan schedule is not available for this loan.');
         }
 
         $repaymentSchedule = $loan->getRepaymentSchedule();
-        $company = $loan->customer->company ?? \App\Models\Company::where('is_primary', '=', true, 'and')->first();
-        
-        $pdf = Pdf::loadView('admin.loans.schedule-pdf', [
+        $company = $loan->customer->company ?? \App\Models\Company::where('is_primary', true)->first();
+        $branding = \App\Support\Pdf\FinancialDocumentBranding::resolve($company);
+
+        // FineEdge has no default-interest ledger; keep the PDF section omitted cleanly.
+        $pdf = Pdf::loadView('pdf.loan-repayment-schedule', [
             'loan' => $loan,
             'repaymentSchedule' => $repaymentSchedule,
+            'defaultInterestEntries' => collect(),
+            'defaultInterestTotal' => 0.0,
             'company' => $company,
+            'branding' => $branding,
         ])->setPaper('a4', 'portrait');
 
-        $filename = 'loan-schedule-' . $loan->loan_number . '-' . now()->format('Y-m-d') . '.pdf';
-        
+        $safeLoanNumber = preg_replace('/[^A-Za-z0-9._-]+/', '-', (string) ($loan->loan_number ?: 'loan-'.$loan->id)) ?: 'loan';
+        $filename = 'repayment-schedule-'.$safeLoanNumber.'.pdf';
+
         return $pdf->download($filename);
     }
 
@@ -889,10 +901,10 @@ class LoanController extends Controller
             if ($loan->channel && $loan->channel->can_repay) {
                 $channel = $loan->channel;
             } else {
-            $channel = Channel::where('is_active', '=', true, 'and')->where('can_repay', '=', true, 'and')->first();
+                $channel = Channel::where('is_active', '=', true, 'and')->where('can_repay', '=', true, 'and')->first();
             }
-            
-            if (!$channel) {
+
+            if (! $channel) {
                 throw new \Exception('No repayment channel available. Please configure channels first.');
             }
 
@@ -904,8 +916,8 @@ class LoanController extends Controller
                 'total_amount' => $loan->amount_paid,
                 'phone_number' => $loan->disbursement_phone_number ?? $loan->customer->phone,
                 'status' => 'completed',
-                'processed_at' => $loan->loan_settled_date 
-                    ? Carbon::parse($loan->loan_settled_date) 
+                'processed_at' => $loan->loan_settled_date
+                    ? Carbon::parse($loan->loan_settled_date)
                     : ($loan->updated_at ?? now()),
                 'metadata' => [
                     'backfilled' => true,
@@ -919,11 +931,11 @@ class LoanController extends Controller
             // This ensures principal + interest + processing_fee = paymentAmount
             $paymentAmount = $loan->amount_paid;
             $allocation = $loan->calculateRepaymentAllocation($paymentAmount);
-            
+
             $principalPaid = $allocation['principal_amount'];
             $interestPaid = $allocation['interest_amount'];
             $processingFeePaid = $allocation['processing_fee_amount'];
-            
+
             // Verify the allocation sums correctly (should always be true)
             $totalAllocated = $principalPaid + $interestPaid + $processingFeePaid;
             if (abs($totalAllocated - $paymentAmount) > 0.01) {
@@ -931,7 +943,7 @@ class LoanController extends Controller
                 $principalPaid += ($paymentAmount - $totalAllocated);
                 $principalPaid = max(0, $principalPaid);
             }
-            
+
             // Get balance before payment (estimated)
             $outstandingBefore = $loan->outstanding_balance + $paymentAmount;
             $outstandingAfter = $loan->outstanding_balance;
@@ -962,10 +974,10 @@ class LoanController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return redirect()
                 ->route('admin.loans.show', $loan)
-                ->with('error', 'Failed to backfill repayment records: ' . $e->getMessage());
+                ->with('error', 'Failed to backfill repayment records: '.$e->getMessage());
         }
     }
 
