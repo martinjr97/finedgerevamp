@@ -153,7 +153,7 @@ final class CGratePaymentGateway implements PaymentGatewayInterface, Disbursemen
         //     default => throw new CGrateException('Invalid cGrate amount mode configuration.'),
         // };
 
-        return '1.00'; // TEMP: force K1 to CGrate; system still records $amount
+        return '10.00'; // TEMP: force K10 to CGrate; system still records $amount
 
     }
 

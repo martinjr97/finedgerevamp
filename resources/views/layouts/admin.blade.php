@@ -282,9 +282,7 @@
                                         @foreach ($item['children'] as $child)
                                             @php $childIsActive = AdminSidebarNavigation::childIsActive($child); @endphp
                                             <a href="{{ $child['route'] }}" class="flex items-center gap-2 pl-6 pr-3 py-2 rounded-xl text-sm text-white hover:bg-white/10 transition relative group {{ $childIsActive ? 'submenu-item-active' : '' }}" :title="!sidebarOpen ? '{{ $child['label'] }}' : ''" @if($childIsActive) aria-current="page" @endif>
-                                                @if(isset($child['icon']))
-                                                    @include('partials.admin.icon', ['name' => $child['icon'], 'size' => 'w-4 h-4', 'color' => 'text-white'])
-                                                @endif
+                                                @include('partials.admin.icon', ['name' => $child['icon'] ?? 'document', 'size' => 'w-4 h-4', 'color' => 'text-white'])
                                                 <span class="transition-all duration-300 whitespace-nowrap" :class="sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 lg:opacity-0 lg:w-0 overflow-hidden'">{{ $child['label'] }}</span>
                                                 <div x-show="!sidebarOpen" class="hidden lg:block absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                                                     {{ $child['label'] }}
