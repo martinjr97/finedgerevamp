@@ -164,21 +164,21 @@
             @endif
         </div>
 
-        <div class="rounded-3xl border border-muted bg-white p-4 shadow-lg">
-            <div class="overflow-x-auto">
+        <div class="admin-data-table">
+            <div class="admin-data-table__scroll">
                 <table class="min-w-full w-full text-sm">
                     <thead>
-                        <tr class="border-b border-muted text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                            <th class="px-4 py-3">Gateway</th>
-                            <th class="px-4 py-3">Destination Type</th>
-                            <th class="px-4 py-3">FineEdge Destination</th>
-                            <th class="px-4 py-3">Gateway Field</th>
-                            <th class="px-4 py-3">Gateway Value</th>
-                            <th class="px-4 py-3">Environment</th>
-                            <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3">Last Verified</th>
-                            <th class="px-4 py-3">Loans</th>
-                            <th class="px-4 py-3">Actions</th>
+                        <tr class="text-left text-xs font-semibold uppercase text-muted">
+                            <th>Gateway</th>
+                            <th>Destination Type</th>
+                            <th>FineEdge Destination</th>
+                            <th>Gateway Field</th>
+                            <th>Gateway Value</th>
+                            <th>Environment</th>
+                            <th>Status</th>
+                            <th>Last Verified</th>
+                            <th>Loans</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -190,28 +190,28 @@
                                     ? ($loanCountsByBank[$mapping->financial_institution_id] ?? 0)
                                     : 0;
                             @endphp
-                            <tr class="border-t border-muted align-top hover:bg-slate-50/80">
-                                <td class="px-4 py-4 font-medium text-primary">{{ $gateway?->name ?? '—' }}</td>
-                                <td class="px-4 py-4">{{ MappingUi::destinationTypeLabel($mapping->destination_type) }}</td>
-                                <td class="px-4 py-4 text-primary">{{ MappingUi::fineEdgeDestinationLabel($mapping) }}</td>
-                                <td class="px-4 py-4">
+                            <tr class="align-top hover:bg-slate-50/80">
+                                <td class="font-medium text-primary">{{ $gateway?->name ?? '—' }}</td>
+                                <td>{{ MappingUi::destinationTypeLabel($mapping->destination_type) }}</td>
+                                <td class="text-primary">{{ MappingUi::fineEdgeDestinationLabel($mapping) }}</td>
+                                <td>
                                     @if ($gateway)
                                         {{ MappingUi::gatewayFieldLabel($gateway, $mapping->gateway_key) }}
                                     @else
                                         {{ $mapping->gateway_key }}
                                     @endif
                                 </td>
-                                <td class="px-4 py-4 font-mono text-primary">{{ $mapping->gateway_value }}</td>
-                                <td class="px-4 py-4">{{ MappingUi::environmentLabel($mapping->environment) }}</td>
-                                <td class="px-4 py-4">
+                                <td class="font-mono text-primary">{{ $mapping->gateway_value }}</td>
+                                <td>{{ MappingUi::environmentLabel($mapping->environment) }}</td>
+                                <td>
                                     <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold {{ $statusBadge['class'] }}">
                                         <span aria-hidden="true">{{ $statusBadge['emoji'] }}</span>
                                         {{ $statusBadge['label'] }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4 text-muted">{{ MappingUi::lastVerifiedLabel($mapping->last_verified_at) }}</td>
-                                <td class="px-4 py-4 text-muted">{{ $loanCount > 0 ? number_format($loanCount) : '—' }}</td>
-                                <td class="px-4 py-4">
+                                <td class="text-muted">{{ MappingUi::lastVerifiedLabel($mapping->last_verified_at) }}</td>
+                                <td class="text-muted">{{ $loanCount > 0 ? number_format($loanCount) : '—' }}</td>
+                                <td>
                                     <div class="flex flex-wrap gap-2">
                                         @if ($canManage)
                                             @php
@@ -251,7 +251,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="px-4 py-8 text-center text-muted">No destination mappings match your filters.</td>
+                                <td colspan="10" class="py-8 text-center text-muted">No destination mappings match your filters.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -259,8 +259,8 @@
             </div>
 
             @if ($mappings->hasPages())
-                <div class="mt-4 border-t border-muted pt-4">
-                    {{ $mappings->links() }}
+                <div class="admin-table-footer">
+                    {{ $mappings->withQueryString()->links() }}
                 </div>
             @endif
         </div>
@@ -279,32 +279,32 @@
                 <div class="overflow-x-auto">
                     <table class="min-w-full w-full text-sm">
                         <thead>
-                            <tr class="border-b border-muted text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                                <th class="px-4 py-3">Issuer Value</th>
-                                <th class="px-4 py-3">Type</th>
-                                <th class="px-4 py-3">Discovered At</th>
-                                <th class="px-4 py-3">Status</th>
+                            <tr class="text-left text-xs font-semibold uppercase text-muted">
+                                <th>Issuer Value</th>
+                                <th>Type</th>
+                                <th>Discovered At</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse (($discoveredIssuers['issuers'] ?? []) as $issuer)
-                                <tr class="border-t border-muted">
-                                    <td class="px-4 py-3 font-mono text-primary">{{ $issuer }}</td>
-                                    <td class="px-4 py-3">{{ MappingUi::issuerValueType((string) $issuer) }}</td>
-                                    <td class="px-4 py-3 text-muted">
+                                <tr>
+                                    <td class="font-mono text-primary">{{ $issuer }}</td>
+                                    <td>{{ MappingUi::issuerValueType((string) $issuer) }}</td>
+                                    <td class="text-muted">
                                         @if (! empty($discoveredIssuers['discovered_at']))
                                             {{ \Carbon\Carbon::parse($discoveredIssuers['discovered_at'])->isToday() ? 'Today' : \Carbon\Carbon::parse($discoveredIssuers['discovered_at'])->diffForHumans() }}
                                         @else
                                             —
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td>
                                         <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">Available</span>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-4 py-6 text-center text-muted">No issuer discovery snapshot yet. Use <strong>Sync cGrate Issuers</strong> to fetch the latest list.</td>
+                                    <td colspan="4" class="py-6 text-center text-muted">No issuer discovery snapshot yet. Use <strong>Sync cGrate Issuers</strong> to fetch the latest list.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -321,34 +321,34 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full w-full text-sm">
                     <thead>
-                        <tr class="border-b border-muted text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                            <th class="px-4 py-3">FineEdge Bank</th>
-                            <th class="px-4 py-3">Mapping Exists</th>
-                            <th class="px-4 py-3">Gateway Value</th>
-                            <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3">Environment</th>
-                            <th class="px-4 py-3">Last Verified</th>
-                            <th class="px-4 py-3">Loans Using Bank</th>
-                            <th class="px-4 py-3">Actions</th>
+                        <tr class="text-left text-xs font-semibold uppercase text-muted">
+                            <th>FineEdge Bank</th>
+                            <th>Mapping Exists</th>
+                            <th>Gateway Value</th>
+                            <th>Status</th>
+                            <th>Environment</th>
+                            <th>Last Verified</th>
+                            <th>Loans Using Bank</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($coverageRows as $row)
                             @php $statusBadge = MappingUi::statusBadge($row['status']); @endphp
-                            <tr class="border-t border-muted align-top hover:bg-slate-50/80">
-                                <td class="px-4 py-4 font-medium text-primary">{{ $row['bank_name'] }}</td>
-                                <td class="px-4 py-4">{{ $row['mapping_exists'] ? 'Yes' : 'No' }}</td>
-                                <td class="px-4 py-4 font-mono">{{ $row['gateway_value'] ?? '—' }}</td>
-                                <td class="px-4 py-4">
+                            <tr class="align-top hover:bg-slate-50/80">
+                                <td class="font-medium text-primary">{{ $row['bank_name'] }}</td>
+                                <td>{{ $row['mapping_exists'] ? 'Yes' : 'No' }}</td>
+                                <td class="font-mono">{{ $row['gateway_value'] ?? '—' }}</td>
+                                <td>
                                     <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold {{ $statusBadge['class'] }}">
                                         <span aria-hidden="true">{{ $statusBadge['emoji'] }}</span>
                                         {{ $statusBadge['label'] }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4">{{ is_string($row['environment']) ? MappingUi::environmentLabel($row['environment'] === '—' ? null : $row['environment']) : strtoupper((string) $row['environment']) }}</td>
-                                <td class="px-4 py-4 text-muted">{{ MappingUi::lastVerifiedLabel($row['last_verified_at']) }}</td>
-                                <td class="px-4 py-4 text-muted">{{ $row['loan_count'] > 0 ? number_format($row['loan_count']) : '—' }}</td>
-                                <td class="px-4 py-4">
+                                <td>{{ is_string($row['environment']) ? MappingUi::environmentLabel($row['environment'] === '—' ? null : $row['environment']) : strtoupper((string) $row['environment']) }}</td>
+                                <td class="text-muted">{{ MappingUi::lastVerifiedLabel($row['last_verified_at']) }}</td>
+                                <td class="text-muted">{{ $row['loan_count'] > 0 ? number_format($row['loan_count']) : '—' }}</td>
+                                <td>
                                     @if ($canManage && $selectedGateway)
                                         @php
                                             $coveragePayload = $row['mapping_payload']

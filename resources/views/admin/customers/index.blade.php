@@ -123,37 +123,37 @@
             </form>
         </div>
 
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-lg">
-            <div class="overflow-x-auto">
+        <div class="admin-data-table">
+            <div class="admin-data-table__scroll">
                 <table class="min-w-full w-full text-base text-slate-300">
                     <thead>
-                        <tr class="text-base font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b-2 border-white/20">
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Name</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Email</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Phone</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">National ID</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Product</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Company / Group</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Account Status</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Approval Status</th>
-                            <th class="px-4 py-4 text-lg">Actions</th>
+                        <tr class="font-semibold uppercase text-white/80 text-center">
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>National ID</th>
+                            <th>Product</th>
+                            <th>Company / Group</th>
+                            <th>Account Status</th>
+                            <th>Approval Status</th>
+                            <th scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($customers as $customer)
-                            <tr class="border-t border-white/40 text-center hover:bg-white/5 transition">
-                                <td class="px-4 py-4 font-medium text-white border-r border-white/5">
+                            <tr class="text-center">
+                                <td class="font-medium text-white">
                                     {{ $customer->full_name }}
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">{{ $customer->email }}</td>
-                                <td class="px-4 py-4 border-r border-white/5">{{ $customer->phone ?? '—' }}</td>
-                                <td class="px-4 py-4 border-r border-white/5">{{ $customer->national_id ?? '—' }}</td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>{{ $customer->email }}</td>
+                                <td>{{ $customer->phone ?? '—' }}</td>
+                                <td>{{ $customer->national_id ?? '—' }}</td>
+                                <td>
                                     <span class="rounded-full bg-cyan-500/20 px-2 py-1 text-sm text-cyan-300">
                                         {{ $customer->loanProduct->name ?? '—' }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     @if($customer->loanProduct && ($customer->loanProduct->category === 'character' || $customer->loanProduct->category === 'collateral'))
                                         <span class="rounded-full bg-purple-500/20 px-2 py-1 text-sm text-purple-300 font-normal">
                                             {{ $customer->customerGroup->name ?? '—' }}
@@ -162,21 +162,21 @@
                                         {{ $customer->company->name ?? '—' }}
                                     @endif
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <span class="text-sm font-medium {{ $customer->status === 'active' ? 'text-emerald-400' : ($customer->status === 'pending' ? 'text-amber-400' : 'text-rose-400') }}">
                                         {{ ucfirst($customer->status) }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <span class="text-sm font-medium {{ $customer->approval_status === 'approved' ? 'text-emerald-400' : ($customer->approval_status === 'pending' ? 'text-amber-400' : 'text-rose-400') }}">
                                         {{ ucfirst($customer->approval_status ?? 'unknown') }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4">
+                                <td>
                                     <div class="inline-flex items-center gap-3">
                                         @can('customers.view')
-                                        <a href="{{ route('admin.customers.show', $customer) }}" class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500/40 to-blue-600/40 border-2 border-blue-400/70 px-4 py-2 text-base font-semibold text-blue-200 hover:from-blue-500/60 hover:to-blue-600/60 hover:border-blue-400 hover:text-white transition shadow-md shadow-blue-500/20">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <a href="{{ route('admin.customers.show', $customer) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-blue-400/50 bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-500/20 transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                             </svg>
@@ -188,19 +188,15 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="px-4 py-8 text-center text-slate-400">No customers found.</td>
+                                <td colspan="9" class="py-8 text-center text-slate-400">No customers found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            
-            {{-- Pagination --}}
-            @if($customers->hasPages())
-                <div class="mt-6 flex items-center justify-center">
-                    {{ $customers->links() }}
-                </div>
-            @endif
+            <div class="admin-table-footer">
+                {{ $customers->withQueryString()->links() }}
+            </div>
         </div>
     </div>
 @endsection

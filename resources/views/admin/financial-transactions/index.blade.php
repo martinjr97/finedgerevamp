@@ -84,55 +84,56 @@
                 </div>
             </form>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full w-full text-base text-slate-300">
+            <div class="admin-data-table">
+            <div class="admin-data-table__scroll">
+                <table class="min-w-full w-full">
                     <thead>
-                        <tr class="text-base font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b-2 border-white/20">
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Date</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Transaction #</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Type</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Category</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Description</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Source</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Destination</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Amount</th>
-                            <th class="px-4 py-4 text-lg">Actions</th>
+                        <tr class="font-semibold uppercase text-white/80 text-center">
+                            <th scope="col">Date</th>
+                            <th scope="col">Transaction #</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Source</th>
+                            <th scope="col">Destination</th>
+                            <th scope="col">Amount</th>
+                            <th scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($transactions as $transaction)
-                            <tr class="border-t border-white/40 text-center hover:bg-white/5 transition">
-                                <td class="px-4 py-4 border-r border-white/5">{{ $transaction->transaction_date->format('M d, Y') }}</td>
-                                <td class="px-4 py-4 font-mono text-sm border-r border-white/5">{{ $transaction->transaction_number }}</td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                            <tr class="text-center">
+                                <td>{{ $transaction->transaction_date->format('M d, Y') }}</td>
+                                <td class="font-mono text-sm">{{ $transaction->transaction_number }}</td>
+                                <td>
                                     <span class="text-sm font-medium {{ $transaction->type === 'income' ? 'text-emerald-400' : ($transaction->type === 'expense' ? 'text-rose-400' : 'text-blue-400') }}">
                                         {{ ucfirst($transaction->type) }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4 capitalize border-r border-white/5">{{ str_replace('_', ' ', $transaction->category ?? '—') }}</td>
-                                <td class="px-4 py-4 text-left border-r border-white/5">{{ $transaction->description }}</td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td class="capitalize">{{ str_replace('_', ' ', $transaction->category ?? '—') }}</td>
+                                <td class="text-left">{{ $transaction->description }}</td>
+                                <td>
                                     @if($transaction->source)
                                         {{ $transaction->source->name ?? '—' }}
                                     @else
                                         —
                                     @endif
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     @if($transaction->destination)
                                         {{ $transaction->destination->name ?? '—' }}
                                     @else
                                         —
                                     @endif
                                 </td>
-                                <td class="px-4 py-4 font-semibold border-r border-white/5 {{ $transaction->type === 'income' ? 'text-emerald-400' : ($transaction->type === 'expense' ? 'text-rose-400' : 'text-blue-400') }}">
+                                <td class="font-semibold {{ $transaction->type === 'income' ? 'text-emerald-400' : ($transaction->type === 'expense' ? 'text-rose-400' : 'text-blue-400') }}">
                                     {{ $transaction->type === 'expense' ? '-' : ($transaction->type === 'transfer' ? '±' : '+') }}{{ number_format($transaction->amount, 2) }}
                                 </td>
-                                <td class="px-4 py-4">
+                                <td>
                                     <div class="inline-flex items-center gap-3">
                                         @can('financial-transactions.view')
-                                        <a href="{{ route('admin.financial-transactions.show', $transaction) }}" class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 border-blue-400/70 px-4 py-2 text-base font-semibold text-blue-200 hover:from-blue-500/60 hover:to-purple-500/60 hover:border-blue-400 hover:text-white transition shadow-md shadow-blue-500/20">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <a href="{{ route('admin.financial-transactions.show', $transaction) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-blue-400/50 bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-500/20 transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                             </svg>
@@ -144,15 +145,16 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="px-4 py-8 text-center text-slate-400">No transactions found.</td>
+                                <td colspan="9" class="py-8 text-center text-slate-400">No transactions found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
 
-            <div class="mt-6">
-                {{ $transactions->links() }}
+            <div class="admin-table-footer">
+                {{ $transactions->withQueryString()->links() }}
+            </div>
             </div>
         </div>
     </div>

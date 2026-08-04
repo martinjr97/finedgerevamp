@@ -107,27 +107,27 @@
         </div>
 
         {{-- List --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-lg">
-            <div class="overflow-x-auto">
+        <div class="admin-data-table">
+            <div class="admin-data-table__scroll">
                 <table class="min-w-full w-full text-base text-slate-300">
                     <thead>
-                        <tr class="text-base font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b-2 border-white/20">
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Reference</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Applicant</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Contact</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Product / Group</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Status</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Submitted</th>
-                            <th class="px-4 py-4 text-lg">Actions</th>
+                        <tr class="font-semibold uppercase text-white/80 text-center">
+                            <th>Reference</th>
+                            <th>Applicant</th>
+                            <th>Contact</th>
+                            <th>Product / Group</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($requests as $requestModel)
-                            <tr class="border-t border-white/40 text-center hover:bg-white/5 transition">
-                                <td class="px-4 py-4 font-medium text-white border-r border-white/5">
+                            <tr class="text-center">
+                                <td class="font-medium text-white">
                                     {{ $requestModel->reference ?? '—' }}
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <div class="flex flex-col items-start gap-1">
                                         <span class="text-base font-medium text-white">
                                             {{ $requestModel->first_name }} {{ $requestModel->last_name }}
@@ -139,13 +139,13 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <div class="flex flex-col items-start gap-1">
                                         <span class="text-sm">{{ $requestModel->phone ?? '—' }}</span>
                                         <span class="text-xs text-slate-400">{{ $requestModel->email ?? '—' }}</span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <div class="flex flex-col items-start gap-1">
                                         <span class="rounded-full bg-cyan-500/20 px-2 py-1 text-sm text-cyan-300">
                                             {{ $requestModel->product->name ?? '—' }}
@@ -157,7 +157,7 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     @php
                                         $status = $requestModel->status ?? 'pending';
                                         $statusLabel = match ($status) {
@@ -175,7 +175,7 @@
                                         {{ $statusLabel }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <div class="flex flex-col items-start gap-1">
                                         <span class="text-sm">
                                             {{ $requestModel->created_at?->format('d M Y') }}
@@ -185,7 +185,7 @@
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4">
+                                <td>
                                     <div class="flex flex-wrap items-center justify-center gap-2">
                                         <a
                                             href="{{ route('admin.customer-requests.show', $requestModel) }}"
@@ -230,7 +230,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                                <td colspan="7" class="py-8 text-center text-slate-400">
                                     No customer registration requests found.
                                 </td>
                             </tr>
@@ -238,12 +238,9 @@
                     </tbody>
                 </table>
             </div>
-
-            @if($requests->hasPages())
-                <div class="mt-6 flex items-center justify-center">
-                    {{ $requests->links() }}
-                </div>
-            @endif
+            <div class="admin-table-footer">
+                {{ $requests->withQueryString()->links() }}
+            </div>
         </div>
     </div>
 
@@ -260,7 +257,7 @@
                         </p>
                     </div>
                     <button type="button" class="text-slate-400 hover:text-white js-close-revert-modal">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>

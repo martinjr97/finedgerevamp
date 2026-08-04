@@ -63,42 +63,42 @@
                 </form>
             </div>
 
-            <div class="rounded-3xl border border-white/10 bg-white p-6 shadow-lg">
-                <div class="overflow-x-auto">
+            <div class="admin-data-table">
+                <div class="admin-data-table__scroll">
                     <table class="min-w-full w-full text-sm">
                         <thead>
-                            <tr class="bg-slate-100 border-b border-slate-300 text-left">
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-800">When</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-800">Event</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-800">Record</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-800">Actor</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-800">Changed Fields</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-800">Details</th>
+                            <tr class="bg-slate-100 text-left">
+                                <th class="text-xs font-semibold uppercase text-slate-800">When</th>
+                                <th class="text-xs font-semibold uppercase text-slate-800">Event</th>
+                                <th class="text-xs font-semibold uppercase text-slate-800">Record</th>
+                                <th class="text-xs font-semibold uppercase text-slate-800">Actor</th>
+                                <th class="text-xs font-semibold uppercase text-slate-800">Changed Fields</th>
+                                <th class="text-xs font-semibold uppercase text-slate-800">Details</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($auditLogs as $log)
-                                <tr class="border-t border-slate-200 align-top">
-                                    <td class="px-4 py-3">
+                                <tr class="align-top">
+                                    <td>
                                         <p class="font-medium text-primary">{{ $log->created_at?->format('d M Y H:i:s') ?? '—' }}</p>
                                         @if($log->created_at)
                                             <p class="text-xs text-muted">{{ $log->created_at->diffForHumans() }}</p>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td>
                                         <span class="inline-flex rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-xs font-semibold text-primary">
                                             {{ ucfirst($log->event) }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td>
                                         <p class="font-medium text-primary">{{ class_basename($log->auditable_type) }}</p>
                                         <p class="text-xs text-muted">ID: {{ $log->auditable_id }}</p>
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td>
                                         <p class="font-medium text-primary">{{ $log->actor_name ?: 'System' }}</p>
                                         <p class="text-xs text-muted">{{ class_basename($log->actor_type ?? '') ?: '—' }} {{ $log->actor_id ? '#'.$log->actor_id : '' }}</p>
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td>
                                         @if(!empty($log->changed_fields))
                                             <div class="flex flex-wrap gap-1">
                                                 @foreach($log->changed_fields as $field)
@@ -109,7 +109,7 @@
                                             <span class="text-muted">—</span>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td>
                                         <details class="rounded-xl border border-slate-300 bg-slate-50">
                                             <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-primary">View</summary>
                                             <div class="border-t border-slate-200 px-3 py-3 space-y-3">
@@ -136,7 +136,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-4 py-10 text-center text-sm text-muted">No audit logs found for the selected filters.</td>
+                                    <td colspan="6" class="py-10 text-center text-sm text-muted">No audit logs found for the selected filters.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -144,8 +144,8 @@
                 </div>
 
                 @if(method_exists($auditLogs, 'links'))
-                    <div class="mt-6">
-                        {{ $auditLogs->links() }}
+                    <div class="admin-table-footer">
+                        {{ $auditLogs->withQueryString()->links() }}
                     </div>
                 @endif
             </div>

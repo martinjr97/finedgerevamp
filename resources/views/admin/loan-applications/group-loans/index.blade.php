@@ -57,40 +57,40 @@
             </form>
         </div>
 
-        <div class="rounded-3xl border border-white/10 bg-white/5 shadow-lg overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm text-slate-300">
+        <div class="admin-data-table">
+            <div class="admin-data-table__scroll">
+                <table class="min-w-full text-sm">
                     <thead class="bg-white/[0.03] text-xs uppercase tracking-[0.2em] text-slate-400">
                         <tr>
-                            <th class="px-4 py-3 text-left">Reference</th>
-                            <th class="px-4 py-3 text-left">Loan / Group</th>
-                            <th class="px-4 py-3 text-left">Members</th>
-                            <th class="px-4 py-3 text-left">Totals</th>
-                            <th class="px-4 py-3 text-left">Status</th>
-                            <th class="px-4 py-3 text-left">Submitted</th>
-                            <th class="px-4 py-3 text-right">Actions</th>
+                            <th class="text-left">Reference</th>
+                            <th class="text-left">Loan / Group</th>
+                            <th class="text-left">Members</th>
+                            <th class="text-left">Totals</th>
+                            <th class="text-left">Status</th>
+                            <th class="text-left">Submitted</th>
+                            <th class="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($applications as $application)
-                            <tr class="border-t border-white/5">
-                                <td class="px-4 py-3">
+                            <tr>
+                                <td>
                                     <p class="font-semibold text-white">{{ $application->reference }}</p>
                                     <p class="text-xs text-slate-400">{{ $application->loanProduct?->name ?? 'N/A' }}</p>
                                 </td>
-                                <td class="px-4 py-3">
+                                <td>
                                     <p class="text-white">{{ $application->loan_name }}</p>
                                     <p class="text-xs text-slate-400">{{ $application->group_name }}</p>
                                 </td>
-                                <td class="px-4 py-3">
+                                <td>
                                     <p>{{ number_format($application->members_count) }} selected</p>
                                     <p class="text-xs text-slate-400">{{ ucfirst($application->repayment_structure) }}</p>
                                 </td>
-                                <td class="px-4 py-3">
+                                <td>
                                     <p>Disb.: ZMW {{ number_format((float) $application->total_disbursement_amount, 2) }}</p>
                                     <p class="text-xs text-slate-400">Repay.: ZMW {{ number_format((float) $application->total_repayment_amount, 2) }}</p>
                                 </td>
-                                <td class="px-4 py-3">
+                                <td>
                                     @php
                                         $itemMetadata = is_array($application->metadata) ? $application->metadata : [];
                                         $itemRejectionResolution = (string) data_get($itemMetadata, 'rejection.resolution', '');
@@ -120,8 +120,8 @@
                                         </p>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3">{{ optional($application->submitted_at ?? $application->created_at)->format('d M Y, H:i') }}</td>
-                                <td class="px-4 py-3">
+                                <td>{{ optional($application->submitted_at ?? $application->created_at)->format('d M Y, H:i') }}</td>
+                                <td>
                                     <div class="flex flex-wrap justify-end gap-2">
                                         <a href="{{ route('admin.loan-applications.group-loans.show', $application) }}" class="rounded-xl border border-white/20 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10 transition">View</a>
                                         @if ($itemCanPrepareRevision)
@@ -140,16 +140,15 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-4 py-10 text-center text-slate-400">No group loan applications found.</td>
+                                <td colspan="7" class="py-10 text-center text-slate-400">No group loan applications found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div>
-            {{ $applications->links() }}
+            <div class="admin-table-footer">
+                {{ $applications->withQueryString()->links() }}
+            </div>
         </div>
     </div>
 @endsection

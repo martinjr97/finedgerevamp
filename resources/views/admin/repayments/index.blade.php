@@ -112,52 +112,52 @@
         </div>
 
         {{-- Repayments Table --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-lg">
-            <div class="overflow-x-auto">
+        <div class="admin-data-table">
+            <div class="admin-data-table__scroll">
                 <table class="min-w-full w-full text-base text-slate-300">
                     <thead>
-                        <tr class="text-base font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b-2 border-white/20">
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Repayment #</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Date</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Customer</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Channel</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Amount</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Recovery Method</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Loans</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Status</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">External Ref</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Processed At</th>
-                            <th class="px-4 py-4 text-lg">Actions</th>
+                        <tr class="font-semibold uppercase text-white/80 text-center">
+                            <th>Repayment #</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Channel</th>
+                            <th>Amount</th>
+                            <th>Recovery Method</th>
+                            <th>Loans</th>
+                            <th>Status</th>
+                            <th>External Ref</th>
+                            <th>Processed At</th>
+                            <th scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($repayments as $repayment)
-                            <tr class="border-t border-white/40 text-center hover:bg-white/5 transition">
-                                <td class="px-4 py-4 font-medium text-white border-r border-white/5">
+                            <tr class="text-center">
+                                <td class="font-medium text-white">
                                     {{ $repayment->repayment_number }}
                                 </td>
-                                <td class="px-4 py-4 text-slate-400 border-r border-white/5">
+                                <td class="text-slate-400">
                                     {{ $repayment->created_at->format('M d, Y') }}
                                     <div class="text-sm text-slate-500">{{ $repayment->created_at->format('g:i A') }}</div>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <div class="text-left">
                                         <div class="font-medium text-white">{{ $repayment->customer->full_name ?? 'N/A' }}</div>
                                         <div class="text-sm text-slate-400">{{ $repayment->customer->email ?? 'N/A' }}</div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <span class="rounded-full bg-cyan-500/20 px-2 py-1 text-sm text-cyan-300">
                                         {{ $repayment->channel->name ?? '—' }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4 font-medium text-white border-r border-white/5">
+                                <td class="font-medium text-white">
                                     ZMW {{ number_format($repayment->total_amount, 2) }}
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5 text-slate-300">
+                                <td class="text-slate-300">
                                     {{ $repayment->recoveryMethodLabel() }}
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <div class="text-sm text-slate-400">
                                         @php
                                             $loanCount = $repayment->loanRepayments->count();
@@ -191,7 +191,7 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     @php
                                         $statusTextColors = [
                                             'pending' => 'text-amber-400',
@@ -206,7 +206,7 @@
                                         {{ ucfirst($repayment->status) }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <div class="text-sm text-slate-400">
                                         @if($repayment->external_reference)
                                             <div class="font-mono">{{ substr($repayment->external_reference, 0, 15) }}...</div>
@@ -215,7 +215,7 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-slate-400 border-r border-white/5">
+                                <td class="text-slate-400">
                                     @if($repayment->processed_at)
                                         {{ $repayment->processed_at->format('M d, Y') }}
                                         <div class="text-sm text-slate-500">{{ $repayment->processed_at->format('g:i A') }}</div>
@@ -223,11 +223,11 @@
                                         —
                                     @endif
                                 </td>
-                                <td class="px-4 py-4">
+                                <td>
                                     @can('repayments.view')
                                     <a href="{{ route('admin.repayments.show', $repayment) }}" 
-                                       class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 border-blue-400/70 px-4 py-2 text-base font-semibold text-blue-200 hover:from-blue-500/60 hover:to-purple-500/60 hover:border-blue-400 hover:text-white transition shadow-md shadow-blue-500/20">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       class="inline-flex items-center gap-1.5 rounded-lg border border-blue-400/50 bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-500/20 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                         </svg>
@@ -238,7 +238,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="px-4 py-8 text-center text-slate-400">
+                                <td colspan="10" class="py-8 text-center text-slate-400">
                                     No repayments found.
                                 </td>
                             </tr>
@@ -246,13 +246,9 @@
                     </tbody>
                 </table>
             </div>
-
-            {{-- Pagination --}}
-            @if($repayments->hasPages())
-                <div class="mt-6">
-                    {{ $repayments->links() }}
-                </div>
-            @endif
+            <div class="admin-table-footer">
+                {{ $repayments->withQueryString()->links() }}
+            </div>
         </div>
     </div>
 @endsection

@@ -45,48 +45,48 @@
             <button type="submit" class="rounded-xl bg-cyan-500/30 border border-cyan-400/50 px-4 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/40">Filter</button>
         </form>
 
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-lg">
-            <div class="overflow-x-auto">
+        <div class="admin-data-table">
+            <div class="admin-data-table__scroll">
                 <table class="support-ticket-table min-w-full w-full text-base">
                     <thead>
-                        <tr class="text-base font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b-2 border-white/20">
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Ticket #</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Submitted By</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Subject</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Assigned</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Status</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Open</th>
-                            <th class="px-4 py-4 text-lg border-r border-white/10">Created</th>
-                            <th class="px-4 py-4 text-lg">Actions</th>
+                        <tr class="font-semibold uppercase text-white/80 text-center">
+                            <th>Ticket #</th>
+                            <th>Submitted By</th>
+                            <th>Subject</th>
+                            <th>Assigned</th>
+                            <th>Status</th>
+                            <th>Open</th>
+                            <th>Created</th>
+                            <th scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($tickets as $ticket)
-                            <tr class="text-center hover:bg-white/5 transition">
-                                <td class="px-4 py-4 border-r border-white/5 font-semibold text-white">#{{ $ticket->id }}</td>
-                                <td class="px-4 py-4 border-r border-white/5 text-left">
+                            <tr class="text-center">
+                                <td class="font-semibold text-white">#{{ $ticket->id }}</td>
+                                <td class="text-left">
                                     <span class="text-base font-medium text-white">{{ $ticket->name }}</span>
                                     @if ($ticket->email)<span class="block text-xs text-slate-400">{{ $ticket->email }}</span>@endif
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5 text-left">
+                                <td class="text-left">
                                     <span class="text-base">{{ \Illuminate\Support\Str::limit($ticket->subject, 50) }}</span>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5 text-sm text-slate-300">
+                                <td class="text-sm text-slate-300">
                                     {{ $ticket->assignedStaffName() ?? '—' }}
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5">
+                                <td>
                                     <span class="text-sm font-medium">{{ $ticket->statusLabel() }}</span>
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5 text-xs text-slate-400">
+                                <td class="text-xs text-slate-400">
                                     {{ $ticket->ageForHumans() }}
                                 </td>
-                                <td class="px-4 py-4 border-r border-white/5 text-xs">
+                                <td class="text-xs">
                                     {{ $ticket->created_at?->format('d M Y H:i') }}
                                     @if ($ticket->comments_max_created_at)
                                         <span class="block text-slate-500">Last reply {{ \Carbon\Carbon::parse($ticket->comments_max_created_at)->diffForHumans() }}</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-4">
+                                <td>
                                     <a href="{{ route('admin.support-tickets.show', $ticket) }}"
                                        class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500/40 to-blue-500/40 border-2 border-blue-400/70 px-4 py-2 text-base font-semibold text-blue-100 hover:from-blue-500/60 hover:to-blue-500/60 transition">
                                         View
@@ -95,13 +95,15 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-4 py-8 text-center text-slate-400">No support tickets found.</td>
+                                <td colspan="8" class="py-8 text-center text-slate-400">No support tickets found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            <div class="mt-6">{{ $tickets->links() }}</div>
+            <div class="admin-table-footer">
+                {{ $tickets->withQueryString()->links() }}
+            </div>
         </div>
     </div>
 @endsection

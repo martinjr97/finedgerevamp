@@ -17,26 +17,30 @@
             ]
         ])
 
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-lg">
-            <div class="overflow-x-auto">
-                <table data-datatable="true" class="min-w-full w-full text-sm text-slate-300">
+        <div class="admin-data-table">
+            <table
+                data-datatable="true"
+                data-datatable-per-page="10"
+                data-datatable-search-placeholder="Search markets…"
+                class="min-w-full w-full"
+            >
                     <thead>
-                        <tr class="text-sm font-semibold uppercase tracking-[0.25em] text-white/80 text-center">
-                            <th class="px-4 py-4 text-base">Name</th>
-                            <th class="px-4 py-4 text-base">Code</th>
-                            <th class="px-4 py-4 text-base">Location</th>
-                            <th class="px-4 py-4 text-base">Contact Person</th>
-                            <th class="px-4 py-4 text-base">Portfolio Manager</th>
-                            <th class="px-4 py-4 text-base">Status</th>
-                            <th class="px-4 py-4 text-base">Actions</th>
+                        <tr class="text-sm font-semibold uppercase text-white/80 text-center">
+                            <th scope="col">Name</th>
+                            <th scope="col">Code</th>
+                            <th scope="col">Location</th>
+                            <th scope="col">Contact Person</th>
+                            <th scope="col">Portfolio Manager</th>
+                            <th scope="col">Status</th>
+                            <th data-sortable="false" scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($markets as $market)
-                            <tr class="border-t border-white/5 text-center">
-                                <td class="px-4 py-3 font-medium text-white">{{ $market->name }}</td>
-                                <td class="px-4 py-3">{{ $market->code }}</td>
-                                <td class="px-4 py-3">
+                            <tr class="text-center">
+                                <td class="font-medium text-white">{{ $market->name }}</td>
+                                <td>{{ $market->code }}</td>
+                                <td>
                                     <div class="text-xs">
                                         <div>{{ $market->province->name ?? '—' }}, {{ $market->district->name ?? '—' }}</div>
                                         @if($market->city)
@@ -44,7 +48,7 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-4 py-3">
+                                <td>
                                     <div class="text-xs">
                                         <div class="font-medium">{{ $market->contact_person_name }}</div>
                                         <div class="text-slate-400">{{ $market->contact_person_phone }}</div>
@@ -53,19 +57,19 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-4 py-3">
+                                <td>
                                     @if($market->portfolioManager)
                                         <span class="text-xs">{{ $market->portfolioManager->first_name }} {{ $market->portfolioManager->last_name }}</span>
                                     @else
                                         <span class="text-slate-500 text-xs">—</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3">
+                                <td>
                                     <span class="rounded-full px-2 py-1 text-xs {{ $market->is_active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300' }}">
                                         {{ $market->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3">
+                                <td>
                                     <div class="flex items-center justify-center gap-2">
                                         <a href="{{ route('admin.markets.show', $market) }}" class="rounded-full bg-blue-500/20 border border-blue-500/50 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-500/30 hover:border-blue-500 transition">View</a>
                                         <a href="{{ route('admin.markets.edit', $market) }}" class="rounded-full bg-amber-500/20 border border-amber-500/50 px-3 py-1.5 text-xs font-medium text-amber-300 hover:bg-amber-500/30 hover:border-amber-500 transition">Edit</a>
@@ -79,12 +83,11 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-slate-400">No markets found.</td>
+                                <td colspan="7" class="py-8 text-center text-slate-400">No markets found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
-            </div>
         </div>
     </div>
 @endsection

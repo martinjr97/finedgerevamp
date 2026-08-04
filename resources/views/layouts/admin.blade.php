@@ -570,12 +570,37 @@
                     };
 
                     document.querySelectorAll('[data-datatable]').forEach((table) => {
-                        if (table.dataset.datatableInit === 'true') {
+                        if (table.dataset.datatableInit === 'true' || table.dataset.datatableInit === 'skipped-empty') {
                             return;
                         }
 
                         const adminTableRoot = table.closest('.admin-data-table');
                         const isAdminDataTable = Boolean(adminTableRoot);
+
+                        // simple-datatables v9 throws on a single colspan empty-state row.
+                        const tbody = table.querySelector('tbody');
+                        const bodyRows = tbody ? Array.from(tbody.querySelectorAll(':scope > tr')) : [];
+                        const isEmptyPlaceholder = bodyRows.length === 0 || bodyRows.every((row) => {
+                            const cells = Array.from(row.querySelectorAll(':scope > td'));
+                            return cells.length === 1 && cells[0].hasAttribute('colspan');
+                        });
+
+                        if (isEmptyPlaceholder) {
+                            const emptyMessage = bodyRows[0]?.querySelector('td')?.textContent?.trim()
+                                || 'No records to display';
+                            table.dataset.datatableInit = 'skipped-empty';
+
+                            if (isAdminDataTable) {
+                                const empty = document.createElement('div');
+                                empty.className = 'admin-data-table__empty';
+                                empty.setAttribute('role', 'status');
+                                empty.textContent = emptyMessage;
+                                table.replaceWith(empty);
+                                return;
+                            }
+
+                            bodyRows.forEach((row) => row.remove());
+                        }
 
                         const perPage = parseInt(table.dataset.datatablePerPage ?? '10', 10);
                         const perPageSelect = (table.dataset.datatablePerPageSelect ?? '10,25,50,100')
@@ -598,7 +623,7 @@
                             }
                         });
 
-                        const searchPlaceholder = table.dataset.datatableSearchPlaceholder || 'Search…';
+                        const searchPlaceholder = table.dataset.datatableSearchPlaceholder || 'Search records…';
 
                         // simple-datatables v9 renders: <select> + labels.perPage (no {select} token).
                         const options = {
@@ -713,7 +738,7 @@
                                 header.appendChild(indicator);
                             });
                         } catch (error) {
-                            console.error('Failed to initialize DataTable:', error);
+                            console.error('Failed to initialize DataTable:', error?.message || error);
                         }
                     });
                 }
