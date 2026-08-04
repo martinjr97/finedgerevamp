@@ -1794,3 +1794,237 @@ body[data-theme="dark"] .admin-data-table .dataTable-info {
     color: var(--color-muted);
     padding: 0.58rem 0.9rem;
 }
+
+/* ---------- Customer profile header ---------- */
+.customer-profile-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--brand-border);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+.customer-profile-header__identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+    flex: 1 1 18rem;
+}
+.customer-avatar {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 2px solid var(--brand-border);
+    background: var(--color-surface-alt);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.customer-avatar--photo {
+    cursor: zoom-in;
+}
+.customer-avatar--photo:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+}
+.customer-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.customer-avatar--initials {
+    background: var(--color-brand);
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.customer-avatar--initials span {
+    color: #fff !important;
+}
+.customer-profile-header__eyebrow {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--color-muted) !important;
+}
+.customer-profile-header__name {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--color-primary);
+}
+.customer-profile-header__meta {
+    margin: 0.35rem 0 0;
+    font-size: 0.875rem;
+    color: var(--color-muted) !important;
+    overflow-wrap: anywhere;
+}
+.customer-profile-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid var(--brand-border);
+    background: var(--color-surface-alt);
+    color: var(--color-primary) !important;
+}
+.customer-profile-badge--purple {
+    background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-brand) 35%, transparent);
+    color: var(--color-brand) !important;
+}
+.customer-profile-badge--blue {
+    background: color-mix(in srgb, #3b82f6 12%, transparent);
+    border-color: color-mix(in srgb, #60a5fa 40%, transparent);
+    color: #1d4ed8 !important;
+}
+.customer-profile-badge--emerald {
+    background: color-mix(in srgb, #10b981 12%, transparent);
+    border-color: color-mix(in srgb, #34d399 40%, transparent);
+    color: #047857 !important;
+}
+.customer-profile-header__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex: 1 1 18rem;
+    max-width: 100%;
+    min-width: 0;
+}
+.customer-profile-header__primary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    max-width: 100%;
+}
+.customer-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2.35rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+    white-space: nowrap;
+}
+.customer-action-btn--primary {
+    background: var(--color-brand);
+    color: #fff !important;
+}
+.customer-action-btn--primary:hover {
+    opacity: 0.92;
+}
+.customer-action-btn--accent {
+    background: color-mix(in srgb, var(--color-brand) 85%, #312e81);
+    color: #fff !important;
+}
+.customer-action-btn--secondary {
+    background: var(--color-surface);
+    border-color: var(--brand-border);
+    color: var(--color-primary) !important;
+}
+.customer-action-btn--secondary:hover {
+    background: var(--color-surface-alt);
+}
+.customer-other-actions-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    z-index: 40;
+    min-width: 14rem;
+    max-width: min(20rem, calc(100vw - 2rem));
+    padding: 0.35rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--brand-border);
+    background: var(--color-surface);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+.customer-other-actions-item {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    border-radius: 0.55rem;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-align: left;
+    color: var(--color-primary) !important;
+    text-decoration: none;
+    cursor: pointer;
+}
+.customer-other-actions-item:hover,
+.customer-other-actions-item:focus-visible {
+    background: var(--color-surface-alt);
+    outline: none;
+}
+.customer-other-actions-sep {
+    height: 1px;
+    margin: 0.3rem 0.4rem;
+    background: var(--brand-border);
+}
+@media (max-width: 1024px) {
+    .customer-profile-header__actions {
+        align-items: stretch;
+        width: 100%;
+        flex-basis: 100%;
+    }
+    .customer-profile-header__primary {
+        justify-content: flex-start;
+    }
+}
+@media (max-width: 768px) {
+    .customer-avatar {
+        width: 56px;
+        height: 56px;
+    }
+    .customer-profile-header__name {
+        font-size: 1.35rem;
+    }
+    .customer-profile-header__actions {
+        align-items: stretch;
+        width: 100%;
+    }
+    .customer-profile-header__primary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: stretch;
+    }
+    .customer-profile-header__primary > .relative {
+        grid-column: 1 / -1;
+    }
+    .customer-action-btn {
+        width: 100%;
+        white-space: normal;
+        text-align: center;
+    }
+    .customer-other-actions-menu {
+        left: 0;
+        right: 0;
+        max-width: none;
+    }
+}

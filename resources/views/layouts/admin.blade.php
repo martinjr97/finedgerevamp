@@ -317,7 +317,7 @@
                 </div>
             </aside>
 
-            <div class="flex-1 flex flex-col min-h-screen lg:transition-all lg:duration-300" :class="sidebarOpen ? 'lg:ml-0' : 'lg:ml-0'">
+            <div class="flex-1 flex flex-col min-h-screen min-w-0 lg:transition-all lg:duration-300" :class="sidebarOpen ? 'lg:ml-0' : 'lg:ml-0'">
                 <header class="border-b px-4 lg:px-10 py-3 flex items-center justify-between topbar sticky top-0 z-30">
                     <div class="flex items-center gap-3 flex-1">
                         <button @click="toggleSidebar()" class="topbar-icon-btn lg:hidden" aria-label="Toggle sidebar">
@@ -334,15 +334,15 @@
                             <p class="text-xs uppercase tracking-[0.4em] text-cyan-300">{{ config('app.system_name') }}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 sm:gap-4">
-                        <a href="{{ route('help.index') }}" class="topbar-action-link" data-help-link>
+                    <div class="flex items-center gap-2 sm:gap-4 min-w-0 shrink">
+                        <a href="{{ route('help.index') }}" class="topbar-action-link hidden sm:inline-flex" data-help-link>
                             Help
                         </a>
-                        <button type="button" class="topbar-action-link" onclick="startSystemTour()">
+                        <button type="button" class="topbar-action-link hidden sm:inline-flex" onclick="startSystemTour()">
                             Start Tour
                         </button>
                         <details class="relative group">
-                            <summary class="flex items-center gap-3 cursor-pointer list-none min-w-[230px]">
+                            <summary class="flex items-center gap-2 sm:gap-3 cursor-pointer list-none min-w-0 max-w-[10.5rem] sm:max-w-none sm:min-w-[230px] overflow-hidden">
                                 <div class="h-10 w-10 rounded-full border border-white/10 flex-shrink-0 flex items-center justify-center">
                                     @if ($topbarAvatarUrl)
                                         <img src="{{ $topbarAvatarUrl }}" alt="Admin avatar" class="h-full w-full rounded-full object-cover">
@@ -350,7 +350,7 @@
                                         <span class="text-sm font-semibold text-cyan-300">{{ $topbarInitials }}</span>
                                     @endif
                                 </div>
-                                <div class="text-left flex-1 truncate">
+                                <div class="text-left min-w-0 flex-1 overflow-hidden">
                                     <p class="text-sm font-semibold truncate">
                                         {{ $currentAdmin?->full_name ?? 'Admin User' }}
                                     </p>
@@ -375,7 +375,7 @@
                     </div>
                 </header>
 
-                <main class="flex-1 px-6 lg:px-12 py-10 content-area">
+                <main class="flex-1 min-w-0 px-6 lg:px-12 py-10 content-area">
                     @include('partials.admin.flash')
                     @yield('content')
                 </main>

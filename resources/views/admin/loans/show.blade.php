@@ -9,6 +9,19 @@
         $paymentDetailsStageLabel = $loan->status === 'pending_approval'
             ? 'before approval'
             : 'before disbursement';
+
+        $repaymentSchedule = [];
+        $hasScheduleComponents = false;
+        $scheduleUsesProjected = false;
+        if ($loan->first_payment_date && $loan->tenure_months > 0) {
+            $repaymentSchedule = $loan->getRepaymentSchedule();
+            $hasScheduleComponents = collect($repaymentSchedule)->contains(
+                fn ($row) => ($row['principal_component'] ?? null) !== null
+                    || ($row['interest_component'] ?? null) !== null
+            );
+            $scheduleUsesProjected = $loan->scheduleUsesProjectedInterest();
+        }
+        $hasRepaymentSchedule = ! empty($repaymentSchedule);
     @endphp
 
     <div class="space-y-8">
@@ -199,6 +212,16 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                         </svg>
                         Issue Refund
+                    </button>
+                @endif
+                @if ($hasRepaymentSchedule)
+                    <button type="button"
+                            onclick="openRepaymentScheduleModal()"
+                            class="inline-flex items-center gap-2 rounded-2xl border border-blue-300/40 bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-3 font-semibold text-white shadow-lg shadow-blue-500/30 hover:from-blue-600 hover:to-indigo-700 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Repayment Schedule
                     </button>
                 @endif
                 <a href="{{ route('admin.loans.index') }}" class="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm text-white hover:bg-white/10 transition">
@@ -1553,137 +1576,171 @@
 
         @include('admin.loans.partials.settlement-panel')
 
-        {{-- Repayment Schedule --}}
-        @if ($loan->first_payment_date && $loan->tenure_months > 0)
-            @php
-                $repaymentSchedule = $loan->getRepaymentSchedule();
-                $hasScheduleComponents = collect($repaymentSchedule)->contains(
-                    fn ($row) => ($row['principal_component'] ?? null) !== null
-                        || ($row['interest_component'] ?? null) !== null
-                );
-                $scheduleUsesProjected = $loan->scheduleUsesProjectedInterest();
-            @endphp
-            @if (!empty($repaymentSchedule))
-                <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
-                        <div>
-                            <h2 class="text-xl font-semibold text-white">Repayment Schedule</h2>
+        {{-- Repayment Schedule Modal --}}
+        @if ($hasRepaymentSchedule)
+            <div id="repaymentScheduleModal"
+                 class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+                 onclick="if (event.target === this) closeRepaymentScheduleModal()"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="repaymentScheduleModalTitle">
+                <div class="relative flex w-full max-w-7xl max-h-[92vh] flex-col overflow-hidden rounded-3xl border border-[var(--brand-border)] bg-[var(--color-surface)] p-5 shadow-2xl sm:p-6"
+                     onclick="event.stopPropagation()">
+                    <div class="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-[var(--brand-border)] pb-4">
+                        <div class="min-w-0">
+                            <h2 id="repaymentScheduleModalTitle" class="text-xl font-semibold text-[var(--color-primary)]">Repayment Schedule</h2>
+                            <p class="mt-1 text-sm text-[var(--color-muted)]">{{ $loan->loan_number }}</p>
                             @if ($scheduleUsesProjected)
-                                <p class="mt-1 text-xs text-amber-200/90 max-w-xl">Installment interest is projected (full-term disclosure). Booked outstanding excludes unearned interest.</p>
+                                <p class="mt-1 text-xs text-amber-200/90 max-w-2xl">Installment interest is projected (full-term disclosure). Booked outstanding excludes unearned interest.</p>
                             @endif
                         </div>
-                        <a href="{{ route('admin.loans.schedule-pdf', $loan) }}" target="_blank" class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            Export PDF Schedule
-                        </a>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="{{ route('admin.loans.schedule-pdf', $loan) }}"
+                               target="_blank"
+                               class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Export PDF Schedule
+                            </a>
+                            <button type="button"
+                                    onclick="closeRepaymentScheduleModal()"
+                                    class="inline-flex items-center gap-2 rounded-2xl border border-[var(--brand-border)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-surface-alt)] transition"
+                                    aria-label="Close repayment schedule">
+                                Close
+                            </button>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full w-full text-sm text-slate-300">
-                            <thead>
-                                <tr class="bg-slate-100 text-center text-sm font-semibold uppercase tracking-[0.25em] border-b border-slate-300">
-                                    <th class="px-4 py-4 text-base text-slate-800 font-bold">Period</th>
-                                    <th class="px-4 py-4 text-base text-slate-800 font-bold">Payment Date</th>
-                                    <th class="px-4 py-4 text-base text-slate-800 font-bold">Expected</th>
-                                    @if ($hasScheduleComponents)
-                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Principal</th>
-                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Fee</th>
-                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Interest</th>
-                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Basis</th>
-                                    @endif
-                                    <th class="px-4 py-4 text-base text-slate-800 font-bold">Paid</th>
-                                    <th class="px-4 py-4 text-base text-slate-800 font-bold">Remaining</th>
-                                    <th class="px-4 py-4 text-base text-slate-800 font-bold">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($repaymentSchedule as $scheduleItem)
-                                    @php
-                                        $statusColors = [
-                                            'paid' => 'bg-emerald-500/20 text-emerald-300',
-                                            'paid_early' => 'bg-blue-500/20 text-blue-300',
-                                            'partial' => 'bg-amber-500/20 text-amber-300',
-                                            'overdue' => 'bg-rose-500/20 text-rose-300',
-                                            'upcoming' => 'bg-slate-500/20 text-slate-300',
-                                        ];
-                                        $statusColor = $statusColors[$scheduleItem['status']] ?? 'bg-slate-500/20 text-slate-300';
-                                        $statusLabels = [
-                                            'paid' => 'Paid',
-                                            'paid_early' => 'Paid Early',
-                                            'partial' => 'Partial',
-                                            'overdue' => 'Overdue',
-                                            'upcoming' => 'Upcoming',
-                                        ];
-                                        $statusLabel = $statusLabels[$scheduleItem['status']] ?? ucfirst($scheduleItem['status']);
-                                    @endphp
-                                    <tr class="border-t border-white/5 text-center {{ $scheduleItem['is_overdue'] ? 'bg-rose-500/5' : '' }}">
-                                        <td class="px-4 py-3 font-medium text-white">
-                                            {{ $scheduleItem['period'] }}/{{ $loan->tenure_months }}
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <div class="text-white">{{ $scheduleItem['payment_date']->format('d M Y') }}</div>
-                                            @if($scheduleItem['payment_date']->isPast() && $scheduleItem['status'] !== 'paid')
-                                                <div class="text-xs text-rose-400">{{ $scheduleItem['payment_date']->diffForHumans() }}</div>
-                                            @elseif($scheduleItem['payment_date']->isFuture())
-                                                <div class="text-xs text-slate-400">{{ $scheduleItem['payment_date']->diffForHumans() }}</div>
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3 font-semibold text-white">
-                                            ZMW {{ number_format($scheduleItem['expected_amount'], 2) }}
-                                            @if (!empty($scheduleItem['is_projected_interest']))
-                                                <div class="text-[10px] text-amber-400/80 uppercase tracking-wide">proj. interest</div>
-                                            @endif
-                                        </td>
+                    <div class="min-h-0 flex-1 overflow-auto">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full w-full text-sm text-slate-300">
+                                <thead class="sticky top-0 z-10">
+                                    <tr class="bg-slate-100 text-center text-sm font-semibold uppercase tracking-[0.25em] border-b border-slate-300">
+                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Period</th>
+                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Payment Date</th>
+                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Expected</th>
                                         @if ($hasScheduleComponents)
-                                            <td class="px-4 py-3 text-xs">{{ isset($scheduleItem['principal_component']) ? 'ZMW '.number_format($scheduleItem['principal_component'], 2) : '—' }}</td>
-                                            <td class="px-4 py-3 text-xs">{{ isset($scheduleItem['fee_component']) ? 'ZMW '.number_format($scheduleItem['fee_component'], 2) : '—' }}</td>
-                                            <td class="px-4 py-3 text-xs">{{ isset($scheduleItem['interest_component']) ? 'ZMW '.number_format($scheduleItem['interest_component'], 2) : '—' }}</td>
-                                            <td class="px-4 py-3 text-xs text-slate-400">{{ $scheduleItem['schedule_basis'] ?? '—' }}</td>
+                                            <th class="px-4 py-4 text-base text-slate-800 font-bold">Principal</th>
+                                            <th class="px-4 py-4 text-base text-slate-800 font-bold">Fee</th>
+                                            <th class="px-4 py-4 text-base text-slate-800 font-bold">Interest</th>
+                                            <th class="px-4 py-4 text-base text-slate-800 font-bold">Basis</th>
                                         @endif
-                                        <td class="px-4 py-3 {{ $scheduleItem['amount_paid'] > 0 ? 'text-emerald-400 font-medium' : 'text-slate-500' }}">
-                                            @if($scheduleItem['amount_paid'] > 0)
-                                                ZMW {{ number_format($scheduleItem['amount_paid'], 2) }}
-                                            @else
-                                                —
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3 {{ $scheduleItem['remaining_amount'] > 0 ? 'text-amber-400 font-medium' : 'text-slate-500' }}">
-                                            @if($scheduleItem['remaining_amount'] > 0)
-                                                ZMW {{ number_format($scheduleItem['remaining_amount'], 2) }}
-                                            @else
-                                                —
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <span class="inline-block rounded-full px-3 py-1 text-xs font-medium {{ $statusColor }}">
-                                                {{ $statusLabel }}
-                                            </span>
-                                        </td>
+                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Paid</th>
+                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Remaining</th>
+                                        <th class="px-4 py-4 text-base text-slate-800 font-bold">Status</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr class="border-t-2 border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
-                                    <td colspan="2" class="px-4 py-4 text-right font-semibold text-white">
-                                        Schedule total{{ $scheduleUsesProjected ? ' (projected)' : '' }}:
-                                    </td>
-                                    <td class="px-4 py-4 text-center font-bold text-white" colspan="{{ $hasScheduleComponents ? 5 : 1 }}">
-                                        ZMW {{ number_format($loan->getScheduleExpectedTotal(), 2) }}
-                                    </td>
-                                    <td class="px-4 py-4 text-center font-medium text-emerald-400">
-                                        ZMW {{ number_format($loan->amount_paid, 2) }}
-                                    </td>
-                                    <td class="px-4 py-4 text-center font-medium text-amber-400" title="{{ $scheduleUsesProjected ? 'Sum of installment remainings (may differ from booked outstanding when interest accrues daily)' : 'Sum of installment remainings' }}">
-                                        ZMW {{ number_format(collect($repaymentSchedule)->sum('remaining_amount'), 2) }}
-                                    </td>
-                                    <td class="px-4 py-4"></td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach ($repaymentSchedule as $scheduleItem)
+                                        @php
+                                            $statusColors = [
+                                                'paid' => 'bg-emerald-500/20 text-emerald-300',
+                                                'paid_early' => 'bg-blue-500/20 text-blue-300',
+                                                'partial' => 'bg-amber-500/20 text-amber-300',
+                                                'overdue' => 'bg-rose-500/20 text-rose-300',
+                                                'upcoming' => 'bg-slate-500/20 text-slate-300',
+                                            ];
+                                            $statusColor = $statusColors[$scheduleItem['status']] ?? 'bg-slate-500/20 text-slate-300';
+                                            $statusLabels = [
+                                                'paid' => 'Paid',
+                                                'paid_early' => 'Paid Early',
+                                                'partial' => 'Partial',
+                                                'overdue' => 'Overdue',
+                                                'upcoming' => 'Upcoming',
+                                            ];
+                                            $statusLabel = $statusLabels[$scheduleItem['status']] ?? ucfirst($scheduleItem['status']);
+                                        @endphp
+                                        <tr class="border-t border-white/5 text-center {{ $scheduleItem['is_overdue'] ? 'bg-rose-500/5' : '' }}">
+                                            <td class="px-4 py-3 font-medium text-white">
+                                                {{ $scheduleItem['period'] }}/{{ $loan->tenure_months }}
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <div class="text-white">{{ $scheduleItem['payment_date']->format('d M Y') }}</div>
+                                                @if($scheduleItem['payment_date']->isPast() && $scheduleItem['status'] !== 'paid')
+                                                    <div class="text-xs text-rose-400">{{ $scheduleItem['payment_date']->diffForHumans() }}</div>
+                                                @elseif($scheduleItem['payment_date']->isFuture())
+                                                    <div class="text-xs text-slate-400">{{ $scheduleItem['payment_date']->diffForHumans() }}</div>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-3 font-semibold text-white">
+                                                ZMW {{ number_format($scheduleItem['expected_amount'], 2) }}
+                                                @if (!empty($scheduleItem['is_projected_interest']))
+                                                    <div class="text-[10px] text-amber-400/80 uppercase tracking-wide">proj. interest</div>
+                                                @endif
+                                            </td>
+                                            @if ($hasScheduleComponents)
+                                                <td class="px-4 py-3 text-xs">{{ isset($scheduleItem['principal_component']) ? 'ZMW '.number_format($scheduleItem['principal_component'], 2) : '—' }}</td>
+                                                <td class="px-4 py-3 text-xs">{{ isset($scheduleItem['fee_component']) ? 'ZMW '.number_format($scheduleItem['fee_component'], 2) : '—' }}</td>
+                                                <td class="px-4 py-3 text-xs">{{ isset($scheduleItem['interest_component']) ? 'ZMW '.number_format($scheduleItem['interest_component'], 2) : '—' }}</td>
+                                                <td class="px-4 py-3 text-xs text-slate-400">{{ $scheduleItem['schedule_basis'] ?? '—' }}</td>
+                                            @endif
+                                            <td class="px-4 py-3 {{ $scheduleItem['amount_paid'] > 0 ? 'text-emerald-400 font-medium' : 'text-slate-500' }}">
+                                                @if($scheduleItem['amount_paid'] > 0)
+                                                    ZMW {{ number_format($scheduleItem['amount_paid'], 2) }}
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-3 {{ $scheduleItem['remaining_amount'] > 0 ? 'text-amber-400 font-medium' : 'text-slate-500' }}">
+                                                @if($scheduleItem['remaining_amount'] > 0)
+                                                    ZMW {{ number_format($scheduleItem['remaining_amount'], 2) }}
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <span class="inline-block rounded-full px-3 py-1 text-xs font-medium {{ $statusColor }}">
+                                                    {{ $statusLabel }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot>
+                                    <tr class="border-t-2 border-[var(--brand-border)] bg-[var(--color-surface-alt)]">
+                                        <td colspan="2" class="px-4 py-4 text-right font-semibold text-[var(--color-primary)]">
+                                            Schedule total{{ $scheduleUsesProjected ? ' (projected)' : '' }}:
+                                        </td>
+                                        <td class="px-4 py-4 text-center font-bold text-[var(--color-primary)]" colspan="{{ $hasScheduleComponents ? 5 : 1 }}">
+                                            ZMW {{ number_format($loan->getScheduleExpectedTotal(), 2) }}
+                                        </td>
+                                        <td class="px-4 py-4 text-center font-medium text-emerald-600">
+                                            ZMW {{ number_format($loan->amount_paid, 2) }}
+                                        </td>
+                                        <td class="px-4 py-4 text-center font-medium text-amber-600" title="{{ $scheduleUsesProjected ? 'Sum of installment remainings (may differ from booked outstanding when interest accrues daily)' : 'Sum of installment remainings' }}">
+                                            ZMW {{ number_format(collect($repaymentSchedule)->sum('remaining_amount'), 2) }}
+                                        </td>
+                                        <td class="px-4 py-4"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            @endif
+            </div>
+            @push('scripts')
+            <script>
+                function openRepaymentScheduleModal() {
+                    const modal = document.getElementById('repaymentScheduleModal');
+                    if (!modal) return;
+                    modal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+
+                function closeRepaymentScheduleModal() {
+                    const modal = document.getElementById('repaymentScheduleModal');
+                    if (!modal) return;
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') {
+                        closeRepaymentScheduleModal();
+                    }
+                });
+            </script>
+            @endpush
         @endif
 
         {{-- Accruals Table --}}

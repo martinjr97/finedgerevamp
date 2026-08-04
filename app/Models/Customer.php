@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class Customer extends Authenticatable
@@ -152,6 +152,24 @@ class Customer extends Authenticatable
         );
     }
 
+    /**
+     * Initials for avatar fallback (e.g. Martin Mwale → MM).
+     */
+    public function initials(): string
+    {
+        $parts = preg_split('/\s+/u', trim((string) $this->full_name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if ($parts === []) {
+            return '?';
+        }
+
+        if (count($parts) === 1) {
+            return mb_strtoupper(mb_substr($parts[0], 0, 1));
+        }
+
+        return mb_strtoupper(mb_substr($parts[0], 0, 1).mb_substr($parts[array_key_last($parts)], 0, 1));
+    }
+
     public function parentCustomer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'parent_customer_id');
@@ -287,7 +305,7 @@ class Customer extends Authenticatable
     {
         $maximumLoanTake = $this->maximum_loan_take ?? 0;
         $outstandingBalance = $this->getTotalOutstandingBalance();
-        
+
         return max(0, $maximumLoanTake - $outstandingBalance);
     }
 
@@ -297,18 +315,18 @@ class Customer extends Authenticatable
     public function canTakeAnotherLoan(): bool
     {
         $customerGroup = $this->customerGroup;
-        
+
         // If no group, cannot take multiple loans
-        if (!$customerGroup) {
+        if (! $customerGroup) {
             return false;
         }
 
         // If multiple loans not allowed and customer has active loans, cannot take another
-        if (!$customerGroup->allow_multiple_loans) {
+        if (! $customerGroup->allow_multiple_loans) {
             $activeLoansCount = $this->loans()
                 ->whereIn('status', ['approved', 'active', 'pending_approval'])
                 ->count();
-            
+
             return $activeLoansCount === 0;
         }
 
@@ -372,7 +390,7 @@ class Customer extends Authenticatable
     public function getTotalOverdueAmount(): float
     {
         $totalOverdue = 0.00;
-        
+
         foreach ($this->activeLoans() as $loan) {
             $totalOverdue += $loan->getOverdueAmount();
         }

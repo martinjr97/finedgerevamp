@@ -261,6 +261,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('customers/{customer}/recalculate-credit-score', [CustomerController::class, 'recalculateCreditScore'])->name('customers.recalculate-credit-score');
         Route::get('customers/{customer}/kyc/create', [KycController::class, 'create'])->name('customers.kyc.create');
         Route::get('customers/{customer}/kyc', [KycController::class, 'show'])->name('customers.kyc.show');
+        Route::get('customers/{customer}/kyc/profile-picture', [KycController::class, 'profilePicture'])->name('customers.kyc.profile-picture');
         Route::post('customers/{customer}/kyc', [KycController::class, 'store'])->name('customers.kyc.store');
 
         // Loan Calculator

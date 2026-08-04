@@ -122,11 +122,8 @@
                             <th>Customer</th>
                             <th>Channel</th>
                             <th>Amount</th>
-                            <th>Recovery Method</th>
-                            <th>Loans</th>
                             <th>Status</th>
                             <th>External Ref</th>
-                            <th>Processed At</th>
                             <th scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
@@ -154,43 +151,6 @@
                                 <td class="font-medium text-white">
                                     ZMW {{ number_format($repayment->total_amount, 2) }}
                                 </td>
-                                <td class="text-slate-300">
-                                    {{ $repayment->recoveryMethodLabel() }}
-                                </td>
-                                <td>
-                                    <div class="text-sm text-slate-400">
-                                        @php
-                                            $loanCount = $repayment->loanRepayments->count();
-                                            $loans = $repayment->loanRepayments->take(2);
-                                            $totalPrincipal = $repayment->loanRepayments->sum('principal_amount');
-                                            $totalInterest = $repayment->loanRepayments->sum('interest_amount');
-                                            $totalFee = $repayment->loanRepayments->sum('processing_fee_amount');
-                                        @endphp
-                                        @if($loanCount > 0)
-                                            @foreach($loans as $loanRepayment)
-                                                <div class="mb-1">
-                                                    <span class="font-medium">{{ $loanRepayment->loan->loan_number ?? 'N/A' }}</span>
-                                                    <div class="text-slate-500 text-sm">
-                                                        P: {{ number_format($loanRepayment->principal_amount, 2) }} | 
-                                                        I: {{ number_format($loanRepayment->interest_amount, 2) }}
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                            @if($loanCount > 2)
-                                                <div class="text-cyan-400">+{{ $loanCount - 2 }} more</div>
-                                            @endif
-                                            <div class="mt-2 pt-2 border-t border-white/10 text-slate-300">
-                                                <div>Total P: ZMW {{ number_format($totalPrincipal, 2) }}</div>
-                                                <div>Total I: ZMW {{ number_format($totalInterest, 2) }}</div>
-                                                @if($totalFee > 0)
-                                                    <div>Total Fee: ZMW {{ number_format($totalFee, 2) }}</div>
-                                                @endif
-                                            </div>
-                                        @else
-                                            N/A
-                                        @endif
-                                    </div>
-                                </td>
                                 <td>
                                     @php
                                         $statusTextColors = [
@@ -215,14 +175,6 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="text-slate-400">
-                                    @if($repayment->processed_at)
-                                        {{ $repayment->processed_at->format('M d, Y') }}
-                                        <div class="text-sm text-slate-500">{{ $repayment->processed_at->format('g:i A') }}</div>
-                                    @else
-                                        —
-                                    @endif
-                                </td>
                                 <td>
                                     @can('repayments.view')
                                     <a href="{{ route('admin.repayments.show', $repayment) }}" 
@@ -238,7 +190,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="py-8 text-center text-slate-400">
+                                <td colspan="8" class="py-8 text-center text-slate-400">
                                     No repayments found.
                                 </td>
                             </tr>

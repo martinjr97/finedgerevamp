@@ -8,20 +8,21 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
 use App\Models\CustomerPaymentDetail;
-use App\Models\District;
 use App\Models\CustomerRegistrationRequest;
+use App\Models\District;
 use App\Models\FinancialInstitution;
 use App\Models\FinancialInstitutionBranch;
 use App\Models\KycDocument;
+use App\Models\Loan;
 use App\Models\LoanProduct;
+use App\Models\LoanRepayment;
 use App\Models\Market;
 use App\Models\MarketeerCustomerDetail;
 use App\Models\Ministry;
 use App\Models\Province;
-use App\Models\Loan;
-use App\Services\CustomerNotificationService;
-use App\Models\LoanRepayment;
 use App\Models\WalletProvider;
+use App\Rules\ValidNationalIdNumber;
+use App\Services\CustomerNotificationService;
 use App\Support\NationalIdRules;
 use App\Support\ZambianPhoneRules;
 use Carbon\Carbon;
@@ -32,13 +33,12 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use App\Rules\ValidNationalIdNumber;
 use Illuminate\View\View;
-use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class CustomerController extends Controller
@@ -110,7 +110,7 @@ class CustomerController extends Controller
         $loanProductsQuery = LoanProduct::where('is_active', true);
         $customerGroupsQuery = CustomerGroup::where('is_active', true)->with('loanProduct');
         $companiesQuery = Company::where('status', 'active');
-        
+
         if ($companyFilterId !== null) {
             $loanProductsQuery->where('company_id', $companyFilterId);
             $customerGroupsQuery->whereHas('loanProduct', function ($q) use ($companyFilterId) {
@@ -118,7 +118,7 @@ class CustomerController extends Controller
             });
             $companiesQuery->where('id', $companyFilterId);
         }
-        
+
         $loanProducts = $loanProductsQuery->orderBy('name')->get();
         $customerGroups = $customerGroupsQuery->orderBy('name')->get();
         $companies = $companiesQuery->orderBy('name')->get();
@@ -147,8 +147,8 @@ class CustomerController extends Controller
     {
         abort_unless(auth('admin')->user()?->can('customers.create'), 403);
         $productId = $request->query('product_id');
-        
-        if (!$productId) {
+
+        if (! $productId) {
             return redirect()->route('admin.customers.select-product-type')
                 ->with('error', 'Please select a product type first.');
         }
@@ -158,7 +158,7 @@ class CustomerController extends Controller
         $relationshipManagers = Admin::where('is_relationship_manager', true)
             ->orderBy('first_name')
             ->get();
-        
+
         $ministries = Ministry::where('is_active', true)->orderBy('name')->get();
         $provinces = Province::where('is_active', true)->orderBy('name')->get();
         $districts = District::where('is_active', true)->orderBy('name')->get();
@@ -219,7 +219,7 @@ class CustomerController extends Controller
                 $request->session()->flash('_old_input', $oldInput);
             }
         }
-        
+
         // Get customer groups for products that require group assignment.
         $customerGroups = collect();
         if (in_array($product->category, ['character', 'collateral', 'group_loans'], true)) {
@@ -299,7 +299,7 @@ class CustomerController extends Controller
             'registered_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:customers,email',
             'phone' => ZambianPhoneRules::nullableUnique(),
-            'date_of_birth' => ['nullable', 'date', 'before_or_equal:' . now()->subYears(16)->format('Y-m-d')],
+            'date_of_birth' => ['nullable', 'date', 'before_or_equal:'.now()->subYears(16)->format('Y-m-d')],
             'gender' => ['nullable', 'in:male,female,other'],
             'address_line1' => 'required|string|max:255',
             'city' => 'required|string|max:100',
@@ -324,7 +324,7 @@ class CustomerController extends Controller
                 'last_name' => 'required_if:customer_type,representative|nullable|string|max:255',
                 'national_id_type' => 'required_if:customer_type,representative|nullable|'.Rule::in(array_keys(NationalIdRules::typeLabels())),
                 'national_id' => array_merge(
-                    ['required_if:customer_type,representative', 'nullable', 'string', 'max:50', new ValidNationalIdNumber()],
+                    ['required_if:customer_type,representative', 'nullable', 'string', 'max:50', new ValidNationalIdNumber],
                     [Rule::unique('customers', 'national_id')]
                 ),
                 'email' => 'required|email|unique:customers,email',
@@ -462,7 +462,7 @@ class CustomerController extends Controller
         }
 
         $registrationRequest = null;
-        if (!empty($validated['registration_request_id'] ?? null)) {
+        if (! empty($validated['registration_request_id'] ?? null)) {
             $registrationRequest = CustomerRegistrationRequest::query()
                 ->where('id', $validated['registration_request_id'])
                 ->where('loan_product_id', $product->id)
@@ -511,7 +511,7 @@ class CustomerController extends Controller
                     $customerData['first_name'] = $customerData['registered_name'];
                     $customerData['last_name'] = $customerData['registered_name']; // keep non-null for DB constraint
                     $customerData['parent_customer_id'] = null;
-                } elseif (!empty($customerData['parent_customer_id'])) {
+                } elseif (! empty($customerData['parent_customer_id'])) {
                     // Representatives inherit company and product from parent company customer
                     $parent = Customer::find($customerData['parent_customer_id']);
                     if ($parent) {
@@ -528,7 +528,7 @@ class CustomerController extends Controller
                     ->where('code', 'GOV-DEFAULT')
                     ->first();
 
-                if (!$defaultGroup) {
+                if (! $defaultGroup) {
                     // Create DEFAULT group if it doesn't exist
                     $defaultGroup = CustomerGroup::create([
                         'loan_product_id' => $product->id,
@@ -679,49 +679,49 @@ class CustomerController extends Controller
 
             $customer = Customer::create($customerData);
 
-	            if ($registrationRequest && $product->category === 'government') {
-	                $employment = $registrationRequest->employment_details ?? [];
+            if ($registrationRequest && $product->category === 'government') {
+                $employment = $registrationRequest->employment_details ?? [];
 
-	                $bankInstitutionId = isset($employment['bank_financial_institution_id'])
-	                    ? (int) $employment['bank_financial_institution_id']
-	                    : null;
-	                $bankBranchId = isset($employment['bank_financial_institution_branch_id'])
-	                    ? (int) $employment['bank_financial_institution_branch_id']
-	                    : null;
+                $bankInstitutionId = isset($employment['bank_financial_institution_id'])
+                    ? (int) $employment['bank_financial_institution_id']
+                    : null;
+                $bankBranchId = isset($employment['bank_financial_institution_branch_id'])
+                    ? (int) $employment['bank_financial_institution_branch_id']
+                    : null;
 
-	                $institution = $bankInstitutionId ? FinancialInstitution::query()->find($bankInstitutionId) : null;
-	                $branch = $bankBranchId ? FinancialInstitutionBranch::query()->find($bankBranchId) : null;
+                $institution = $bankInstitutionId ? FinancialInstitution::query()->find($bankInstitutionId) : null;
+                $branch = $bankBranchId ? FinancialInstitutionBranch::query()->find($bankBranchId) : null;
 
-	                $bankName = trim((string) ($employment['bank_name'] ?? ''));
-	                $bankBranch = trim((string) ($employment['bank_branch'] ?? ''));
-	                if ($institution) {
-	                    $bankName = trim((string) $institution->name);
-	                }
-	                if ($branch) {
-	                    $bankBranch = trim((string) $branch->name);
-	                }
+                $bankName = trim((string) ($employment['bank_name'] ?? ''));
+                $bankBranch = trim((string) ($employment['bank_branch'] ?? ''));
+                if ($institution) {
+                    $bankName = trim((string) $institution->name);
+                }
+                if ($branch) {
+                    $bankBranch = trim((string) $branch->name);
+                }
 
-	                $accountName = trim((string) ($employment['bank_account_name'] ?? ''));
-	                $accountNumber = trim((string) ($employment['bank_account_number'] ?? ''));
+                $accountName = trim((string) ($employment['bank_account_name'] ?? ''));
+                $accountNumber = trim((string) ($employment['bank_account_number'] ?? ''));
 
-	                if ($bankName !== '' && $bankBranch !== '' && $accountName !== '' && $accountNumber !== '') {
-	                    CustomerPaymentDetail::updateOrCreate(
-	                        ['customer_id' => $customer->id],
-	                        [
-	                            'method_type' => 'bank',
-	                            'bank_financial_institution_id' => $institution?->id,
-	                            'bank_financial_institution_branch_id' => $branch?->id,
-	                            'bank_name' => Str::upper($bankName),
-	                            'bank_branch' => Str::upper($bankBranch),
-	                            'account_name' => Str::upper($accountName),
-	                            'account_number' => Str::upper($accountNumber),
-	                            'wallet_provider_id' => null,
-	                            'wallet_provider' => null,
-	                            'wallet_number' => null,
-	                        ]
-	                    );
-	                }
-	            }
+                if ($bankName !== '' && $bankBranch !== '' && $accountName !== '' && $accountNumber !== '') {
+                    CustomerPaymentDetail::updateOrCreate(
+                        ['customer_id' => $customer->id],
+                        [
+                            'method_type' => 'bank',
+                            'bank_financial_institution_id' => $institution?->id,
+                            'bank_financial_institution_branch_id' => $branch?->id,
+                            'bank_name' => Str::upper($bankName),
+                            'bank_branch' => Str::upper($bankBranch),
+                            'account_name' => Str::upper($accountName),
+                            'account_number' => Str::upper($accountNumber),
+                            'wallet_provider_id' => null,
+                            'wallet_provider' => null,
+                            'wallet_number' => null,
+                        ]
+                    );
+                }
+            }
 
             // If this customer comes from a registration request, link it and copy KYC
             if ($registrationRequest) {
@@ -729,7 +729,7 @@ class CustomerController extends Controller
                 $kycPaths = $payload['kyc_paths'] ?? [];
                 $documentType = $payload['document_type'] ?? 'nrc';
 
-                if (!empty($kycPaths) && is_array($kycPaths)) {
+                if (! empty($kycPaths) && is_array($kycPaths)) {
                     KycDocument::create([
                         'customer_id' => $customer->id,
                         'document_type' => $documentType,
@@ -775,7 +775,7 @@ class CustomerController extends Controller
             }
 
             // Send onboarding message immediately only when approval is not required.
-            if (!$requiresApproval) {
+            if (! $requiresApproval) {
                 $customer->notify(new \App\Notifications\CustomerRegistrationNotification(
                     $pin,
                     $customer->phone ?? $customer->email
@@ -790,7 +790,7 @@ class CustomerController extends Controller
             } else {
                 $message .= ' The account will be activated after KYC upload.';
             }
-            
+
             return redirect()
                 ->route('admin.customers.kyc.create', $customer)
                 ->with('status', $message);
@@ -815,6 +815,7 @@ class CustomerController extends Controller
 
         $monthWindows = collect(range(0, 2))->map(function ($i) use ($today) {
             $month = $today->copy()->startOfMonth()->subMonths($i);
+
             return [
                 'key' => $month->format('Y-m'),
                 'label' => $month->format('M Y'),
@@ -897,7 +898,19 @@ class CustomerController extends Controller
             $duplicateInfo = \App\Support\DuplicateDetectionService::detectDuplicates($customer);
         }
 
-        return view('admin.customers.show', compact('customer', 'duplicateInfo', 'customerCashflowStats'));
+        $profilePictureUrl = null;
+        $profilePath = $customer->latestKycDocument?->profile_picture_path;
+        if (is_string($profilePath) && $profilePath !== '' && ! str_contains($profilePath, '..') && ! str_starts_with($profilePath, '/')) {
+            $disk = \Illuminate\Support\Facades\Storage::disk('public');
+            if ($disk->exists($profilePath)) {
+                $mime = $disk->mimeType($profilePath) ?: '';
+                if (str_starts_with($mime, 'image/')) {
+                    $profilePictureUrl = route('admin.customers.kyc.profile-picture', $customer);
+                }
+            }
+        }
+
+        return view('admin.customers.show', compact('customer', 'duplicateInfo', 'customerCashflowStats', 'profilePictureUrl'));
     }
 
     /**
@@ -909,14 +922,14 @@ class CustomerController extends Controller
 
         try {
             \App\Support\CreditScoreService::updateCreditScore($customer);
-            
+
             return redirect()
                 ->route('admin.customers.show', $customer)
                 ->with('status', 'Credit score recalculated successfully.');
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.customers.show', $customer)
-                ->with('error', 'Failed to recalculate credit score: ' . $e->getMessage());
+                ->with('error', 'Failed to recalculate credit score: '.$e->getMessage());
         }
     }
 
@@ -957,17 +970,17 @@ class CustomerController extends Controller
         if ($customer->loanProduct && $customer->loanProduct->category === 'marketeer') {
             $customer->load('marketeerCustomerDetail');
         }
-        
+
         $product = $customer->loanProduct;
         $companies = Company::orderBy('name')->get();
         $relationshipManagers = Admin::where('is_relationship_manager', true)
             ->orderBy('first_name')
             ->get();
-        
+
         $ministries = Ministry::where('is_active', true)->orderBy('name')->get();
         $provinces = Province::where('is_active', true)->orderBy('name')->get();
         $districts = District::where('is_active', true)->orderBy('name')->get();
-        
+
         // Get customer groups for products that require group assignment.
         $customerGroups = collect();
         if (in_array($product->category, ['character', 'collateral', 'group_loans'], true)) {
@@ -1033,7 +1046,7 @@ class CustomerController extends Controller
             'registered_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:customers,email,'.$customer->id,
             'phone' => ZambianPhoneRules::nullableUnique(ignoreId: $customer->id),
-            'date_of_birth' => ['nullable', 'date', 'before_or_equal:' . now()->subYears(16)->format('Y-m-d')],
+            'date_of_birth' => ['nullable', 'date', 'before_or_equal:'.now()->subYears(16)->format('Y-m-d')],
             'gender' => ['nullable', 'in:male,female,other'],
             'address_line1' => 'required|string|max:255',
             'city' => 'required|string|max:100',
@@ -1061,7 +1074,7 @@ class CustomerController extends Controller
                 'last_name' => 'required_if:customer_type,representative|nullable|string|max:255',
                 'national_id_type' => 'required_if:customer_type,representative|nullable|'.Rule::in(array_keys(NationalIdRules::typeLabels())),
                 'national_id' => array_merge(
-                    ['required_if:customer_type,representative', 'nullable', 'string', 'max:50', new ValidNationalIdNumber()],
+                    ['required_if:customer_type,representative', 'nullable', 'string', 'max:50', new ValidNationalIdNumber],
                     [Rule::unique('customers', 'national_id')->ignore($customer->id)]
                 ),
                 'email' => 'required|email|unique:customers,email,'.$customer->id,
@@ -1188,7 +1201,7 @@ class CustomerController extends Controller
             // Get the new product if loan_product_id is being updated
             $newProduct = LoanProduct::findOrFail($validated['loan_product_id']);
             $productChanged = $product && $product->id !== $newProduct->id;
-            
+
             $updateData = [
                 'loan_product_id' => $validated['loan_product_id'],
                 'company_id' => in_array($newProduct->category, ['government', 'character', 'collateral', 'marketeer', 'group_loans'], true) ? null : ($validated['company_id'] ?? null),
@@ -1219,7 +1232,7 @@ class CustomerController extends Controller
                     $updateData['first_name'] = $updateData['registered_name'];
                     $updateData['last_name'] = $updateData['registered_name']; // keep non-null for DB constraint
                     $updateData['parent_customer_id'] = null;
-                } elseif (!empty($updateData['parent_customer_id'])) {
+                } elseif (! empty($updateData['parent_customer_id'])) {
                     $parent = Customer::find($updateData['parent_customer_id']);
                     if ($parent) {
                         $updateData['company_id'] = $parent->company_id;
@@ -1234,7 +1247,7 @@ class CustomerController extends Controller
                     ->where('code', 'GOV-DEFAULT')
                     ->first();
 
-                if (!$defaultGroup) {
+                if (! $defaultGroup) {
                     // Create DEFAULT group if it doesn't exist
                     $defaultGroup = CustomerGroup::create([
                         'loan_product_id' => $newProduct->id,
@@ -1422,7 +1435,7 @@ class CustomerController extends Controller
         try {
             // Check if customer has any loans
             $hasLoans = $customer->loans()->exists();
-            
+
             // Check if customer has any repayments
             $hasRepayments = \App\Models\Repayment::where('customer_id', $customer->id)->exists();
 
@@ -1453,7 +1466,7 @@ class CustomerController extends Controller
         $customer->load('loanProduct');
 
         // Only allow group assignment for products that use groups
-        if (!$customer->loanProduct || !in_array($customer->loanProduct->category, ['character', 'collateral', 'government', 'group_loans'], true)) {
+        if (! $customer->loanProduct || ! in_array($customer->loanProduct->category, ['character', 'collateral', 'government', 'group_loans'], true)) {
             return redirect()
                 ->route('admin.customers.show', $customer)
                 ->with('error', 'This product type does not use customer groups.');
@@ -1481,7 +1494,7 @@ class CustomerController extends Controller
         $customer->load('loanProduct');
 
         // Only allow group assignment for products that use groups
-        if (!$customer->loanProduct || !in_array($customer->loanProduct->category, ['character', 'collateral', 'government', 'group_loans'], true)) {
+        if (! $customer->loanProduct || ! in_array($customer->loanProduct->category, ['character', 'collateral', 'government', 'group_loans'], true)) {
             return redirect()
                 ->route('admin.customers.show', $customer)
                 ->with('error', 'This product type does not use customer groups.');
@@ -1502,7 +1515,7 @@ class CustomerController extends Controller
             ->where('loan_product_id', $customer->loan_product_id)
             ->first();
 
-        if (!$group) {
+        if (! $group) {
             return redirect()
                 ->back()
                 ->withInput()
@@ -1557,7 +1570,7 @@ class CustomerController extends Controller
                     'error' => $smsError->getMessage(),
                 ]);
             }
-            
+
             // Note: Communication logging is handled in the CustomerRegistrationNotification class
 
             return redirect()
@@ -1735,10 +1748,10 @@ class CustomerController extends Controller
     public function export(Request $request)
     {
         abort_unless(auth('admin')->user()?->can('customers.export'), 403);
-        
+
         $admin = auth('admin')->user();
         $companyFilterId = $admin->getCompanyFilterId();
-        
+
         $query = Customer::with(['company', 'loanProduct', 'customerGroup']);
 
         // Filter by company if not primary company admin
@@ -1812,9 +1825,10 @@ class CustomerController extends Controller
             ];
         });
 
-        $filename = 'customers-export-' . now()->format('Y-m-d_His') . '.xlsx';
+        $filename = 'customers-export-'.now()->format('Y-m-d_His').'.xlsx';
 
-        return Excel::download(new class($exportData) implements FromCollection, WithHeadings, WithColumnWidths, WithStyles {
+        return Excel::download(new class($exportData) implements FromCollection, WithColumnWidths, WithHeadings, WithStyles
+        {
             protected $data;
 
             public function __construct($data)
@@ -1921,13 +1935,13 @@ class CustomerController extends Controller
         $summary = [
             'total_repayments' => $allRepayments->count(),
             'total_amount' => $allRepayments->sum('total_amount'),
-            'total_principal' => $allRepayments->sum(function($repayment) {
+            'total_principal' => $allRepayments->sum(function ($repayment) {
                 return $repayment->loanRepayments->sum('principal_amount');
             }),
-            'total_interest' => $allRepayments->sum(function($repayment) {
+            'total_interest' => $allRepayments->sum(function ($repayment) {
                 return $repayment->loanRepayments->sum('interest_amount');
             }),
-            'total_fees' => $allRepayments->sum(function($repayment) {
+            'total_fees' => $allRepayments->sum(function ($repayment) {
                 return $repayment->loanRepayments->sum('processing_fee_amount');
             }),
         ];

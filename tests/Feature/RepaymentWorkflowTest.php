@@ -984,7 +984,7 @@ class RepaymentWorkflowTest extends TestCase
         $response->assertSee('Settlement Agreement', false);
     }
 
-    public function test_payroll_deduction_recovery_method_shows_on_admin_repayment_index(): void
+    public function test_payroll_deduction_recovery_method_is_not_shown_on_admin_repayment_index(): void
     {
         $suffix = Str::lower(Str::random(6));
         $company = $this->makeCompany($suffix);
@@ -1014,7 +1014,16 @@ class RepaymentWorkflowTest extends TestCase
         $response = $this->actingAs($admin, 'admin')->get(route('admin.repayments.index'));
 
         $response->assertOk();
-        $response->assertSee('Payroll Deduction', false);
+        $response->assertDontSee('>Recovery Method<', false);
+        $response->assertDontSee('Payroll Deduction', false);
+
+        $repayment = \App\Models\Repayment::query()->latest('id')->first();
+        $this->assertNotNull($repayment);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.repayments.show', $repayment))
+            ->assertOk()
+            ->assertSee('Payroll Deduction', false);
     }
 
     public function test_statement_shows_recovery_in_notes_not_as_transaction_type(): void

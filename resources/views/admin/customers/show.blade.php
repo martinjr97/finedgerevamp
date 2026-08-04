@@ -10,7 +10,7 @@
 	    $isPendingWithoutKyc = $isPendingApproval && ! $hasKycForApproval;
 	    $paymentDetail = $customer->paymentDetail;
 	@endphp
-	<div class="space-y-8">
+	<div class="space-y-8 min-w-0">
         @if($isPendingApproval)
             <div class="attention-banner {{ $isPendingWithoutKyc ? 'border border-amber-400/40 bg-amber-500/10' : '' }}">
                 <div class="flex items-start gap-3">
@@ -42,169 +42,285 @@
             </div>
         @endif
 
-        <div class="flex items-center justify-between">
-            <div class="space-y-1">
-                <p class="text-xs uppercase tracking-[0.4em] text-cyan-300">Customer Management</p>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-bold">{{ $customer->full_name }}</h1>
-                    <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold
-                        @if($customer->customer_type === 'company') bg-blue-500/20 text-blue-200
-                        @elseif($customer->customer_type === 'representative') bg-emerald-500/20 text-emerald-200
-                        @else bg-purple-500/20 text-purple-200 @endif">
-                        @if($customer->customer_type === 'company')
-                            Company Borrower
-                        @elseif($customer->customer_type === 'representative')
-                            Company Representative
-                        @else
-                            Individual
-                        @endif
-                    </span>
-                    @if($customer->customer_type === 'representative' && $customer->parentCustomer)
-                        <span class="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3 py-1 text-xs text-slate-200">
-                            Parent: {{ $customer->parentCustomer->registered_name ?? $customer->parentCustomer->full_name }}
+        @php
+            $adminUser = auth('admin')->user();
+            $canViewKyc = $adminUser?->can('kyc.view');
+            $canCreateKyc = $adminUser?->can('kyc.create');
+            $canUpdateCustomer = $adminUser?->can('customers.update');
+            $canViewLoans = $adminUser?->can('customers.loans');
+            $canCreateLoan = $adminUser?->can('loans.create') && $customer->loanProduct;
+            $canChangeGroup = $isApprovedCustomer
+                && $adminUser?->can('customers.change-group')
+                && $customer->loanProduct
+                && in_array($customer->loanProduct->category, ['character', 'collateral', 'government', 'group_loans'], true);
+            $canLoginAudit = $isApprovedCustomer && $adminUser?->can('customers.view');
+            $canResetPin = $isApprovedCustomer && $adminUser?->can('customers.reset-pin');
+            $canSendMessage = $isApprovedCustomer && $adminUser?->can('customers.send-message');
+            $canCreateRepayment = $isApprovedCustomer && $adminUser?->can('repayments.create');
+            $canViewRepayments = $isApprovedCustomer && $adminUser?->can('customers.repayments');
+            $canViewStatement = $adminUser?->can('customers.view');
+            $hasOtherActions = $canChangeGroup || $canLoginAudit || $canResetPin || $canSendMessage || $canCreateRepayment || $canViewRepayments || $canViewStatement;
+            $customerTypeLabel = match ($customer->customer_type) {
+                'company' => 'Company Borrower',
+                'representative' => 'Company Representative',
+                default => 'Individual',
+            };
+            $statusLabel = ucfirst((string) ($customer->status ?: 'unknown'));
+            $newLoanUrl = $customer->loanProduct
+                ? ($customer->loanProduct->category === 'group_loans'
+                    ? route('admin.loan-applications.group-loans.members', $customer->loanProduct)
+                    : route('admin.loan-applications.loan-details', [$customer->loanProduct, $customer]))
+                : null;
+            $hasProfileImage = ! empty($profilePictureUrl);
+        @endphp
+
+        <div class="customer-profile-header">
+            <div class="customer-profile-header__identity">
+                @if ($hasProfileImage)
+                    <button
+                        type="button"
+                        class="customer-avatar customer-avatar--photo"
+                        onclick="openCustomerProfilePhotoModal()"
+                        aria-label="View larger profile photo of {{ $customer->full_name }}"
+                    >
+                        <img
+                            src="{{ $profilePictureUrl }}"
+                            alt="Profile photo of {{ $customer->full_name }}"
+                            width="72"
+                            height="72"
+                            loading="lazy"
+                        >
+                    </button>
+                @else
+                    <div class="customer-avatar customer-avatar--initials" aria-hidden="true">
+                        <span>{{ $customer->initials() }}</span>
+                    </div>
+                @endif
+
+                <div class="customer-profile-header__copy min-w-0">
+                    <p class="customer-profile-header__eyebrow">Customer Management</p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h1 class="customer-profile-header__name">{{ $customer->full_name }}</h1>
+                        <span class="customer-profile-badge
+                            @if($customer->customer_type === 'company') customer-profile-badge--blue
+                            @elseif($customer->customer_type === 'representative') customer-profile-badge--emerald
+                            @else customer-profile-badge--purple @endif">
+                            {{ $customerTypeLabel }}
                         </span>
-                    @endif
-                    @if(isset($duplicateInfo) && $duplicateInfo['has_duplicates'])
-                        <a href="{{ route('admin.fraud-protection.show', $customer) }}" class="duplicate-warning-badge">
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                            </svg>
-                            Possible Duplicate ({{ $duplicateInfo['total_count'] }})
-                        </a>
+                        <span class="customer-profile-badge customer-profile-badge--status">{{ $statusLabel }}</span>
+                        @if(isset($duplicateInfo) && $duplicateInfo['has_duplicates'])
+                            <a href="{{ route('admin.fraud-protection.show', $customer) }}" class="duplicate-warning-badge">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                Possible Duplicate ({{ $duplicateInfo['total_count'] }})
+                            </a>
+                        @endif
+                    </div>
+                    <p class="customer-profile-header__meta">
+                        Customer #{{ $customer->id }}
+                        @if($customer->phone)
+                            <span aria-hidden="true">·</span> {{ $customer->phone }}
+                        @endif
+                        @if($customer->customerGroup)
+                            <span aria-hidden="true">·</span> {{ $customer->customerGroup->name }}
+                        @elseif($customer->loanProduct)
+                            <span aria-hidden="true">·</span> {{ $customer->loanProduct->name }}
+                        @endif
+                    </p>
+                    @if($customer->customer_type === 'representative' && $customer->parentCustomer)
+                        <p class="customer-profile-header__meta">
+                            Parent: {{ $customer->parentCustomer->registered_name ?? $customer->parentCustomer->full_name }}
+                        </p>
                     @endif
                 </div>
             </div>
-            <div class="flex items-center gap-2 flex-wrap">
-                @if ($isPendingApproval && $hasKycForApproval)
-                    @can('approvals.approve')
-                    <button type="button" onclick="showApproveModal({{ $customer->id }})" class="btn-approve-critical">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Approve Customer
-                    </button>
-                    @endcan
-                    @can('approvals.reject')
-                    <button type="button" onclick="showRejectModal({{ $customer->id }})" class="btn-reject-critical">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                        Reject Customer
-                    </button>
-                    @endcan
-                @endif
-                @if ($customer->latestKycDocument)
-                    @can('kyc.view')
-                    <a href="{{ route('admin.customers.kyc.show', $customer) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                        </svg>
-                        View KYC Documents
-                    </a>
-                    @endcan
-                @else
-                    @can('kyc.create')
-                    <a href="{{ route('admin.customers.kyc.create', $customer) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                        </svg>
-                        Upload KYC Documents
-                    </a>
-                    @endcan
-                @endif
-                @if ($isApprovedCustomer)
-                    @if ($customer->loanProduct && in_array($customer->loanProduct->category, ['character', 'collateral', 'government', 'group_loans'], true))
-                        @can('customers.change-group')
-                        <a href="{{ route('admin.customers.change-group', $customer) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+
+            <div class="customer-profile-header__actions">
+                <a href="{{ route('admin.customers.index') }}" class="customer-action-btn customer-action-btn--secondary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Back to Customers
+                </a>
+
+                <div class="customer-profile-header__primary">
+                    @if ($isPendingApproval && $hasKycForApproval)
+                        @can('approvals.approve')
+                        <button type="button" onclick="showApproveModal({{ $customer->id }})" class="btn-approve-critical">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            {{ $customer->customerGroup ? 'Change Group' : 'Link to Group' }}
-                        </a>
+                            Approve Customer
+                        </button>
+                        @endcan
+                        @can('approvals.reject')
+                        <button type="button" onclick="showRejectModal({{ $customer->id }})" class="btn-reject-critical">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Reject Customer
+                        </button>
                         @endcan
                     @endif
-                    @can('customers.view')
-                    <a href="{{ route('admin.customers.login-audit', $customer) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-purple-500/30 hover:from-purple-600 hover:to-purple-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+
+                    @if ($customer->latestKycDocument)
+                        @if ($canViewKyc)
+                        <a href="{{ route('admin.customers.kyc.show', $customer) }}" class="customer-action-btn customer-action-btn--primary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            View KYC
+                        </a>
+                        @endif
+                    @elseif ($canCreateKyc)
+                        <a href="{{ route('admin.customers.kyc.create', $customer) }}" class="customer-action-btn customer-action-btn--primary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            Upload KYC
+                        </a>
+                    @endif
+
+                    @if ($canUpdateCustomer)
+                    <a href="{{ route('admin.customers.edit', $customer) }}" class="customer-action-btn customer-action-btn--primary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
-                        Login Audit
+                        Edit Customer
                     </a>
-                    @endcan
-                @endif
-                @can('customers.update')
-                <a href="{{ route('admin.customers.edit', $customer) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
-                    Edit Customer
-                </a>
-                @endcan
-                @if ($isApprovedCustomer)
-                    @can('customers.reset-pin')
-                    <button type="button" onclick="showResetPinModal()" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    @endif
+
+                    @if ($isApprovedCustomer && $canCreateLoan && $newLoanUrl)
+                    <a href="{{ $newLoanUrl }}" class="customer-action-btn customer-action-btn--accent">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        Reset PIN
-                    </button>
-                    @endcan
-                    @can('customers.send-message')
-                    <button type="button" onclick="showSendMessageModal()" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
-                        Send Message
-                    </button>
-                    @endcan
-                    @can('customers.loans')
-                    <a href="{{ route('admin.customers.loans', $customer) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        New Loan
+                    </a>
+                    @endif
+
+                    @if ($isApprovedCustomer && $canViewLoans)
+                    <a href="{{ route('admin.customers.loans', $customer) }}" class="customer-action-btn customer-action-btn--primary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         Customer Loans
                     </a>
-                    @endcan
-                    @can('loans.create')
-                        @if ($customer->loanProduct)
-                        <a href="{{ $customer->loanProduct->category === 'group_loans'
-                            ? route('admin.loan-applications.group-loans.members', $customer->loanProduct)
-                            : route('admin.loan-applications.loan-details', [$customer->loanProduct, $customer]) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 hover:from-indigo-600 hover:to-blue-700 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    @endif
+
+                    @if ($hasOtherActions)
+                    <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                        <button
+                            type="button"
+                            class="customer-action-btn customer-action-btn--primary"
+                            @click="open = !open"
+                            :aria-expanded="open.toString()"
+                            aria-haspopup="menu"
+                        >
+                            Other Actions
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
-                            New Loan Application
-                        </a>
-                        @endif
-                    @endcan
-                    @can('repayments.create')
-                    <a href="{{ route('admin.customers.repayments.create', $customer) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8v8m0 0v1m0-1a9 9 0 100-18 9 9 0 000 18z"/>
-                        </svg>
-                        Initiate Repayment
-                    </a>
-                    @endcan
-                    @can('customers.repayments')
-                    <a href="{{ route('admin.customers.repayments', $customer) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-blue-500/30 hover:from-blue-600 hover:to-blue-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Customer Repayments
-                    </a>
-                    @endcan
-                @endif
-                @can('customers.view')
-                <a href="{{ route('admin.customers.statement', $customer) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 hover:from-indigo-600 hover:to-violet-700 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    View Statement
-                </a>
-                @endcan
-                <a href="{{ route('admin.customers.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/10 hover:border-white/30 transition">
-                    Back to List
-                </a>
+                        </button>
+                        <div
+                            x-show="open"
+                            x-cloak
+                            @click.outside="open = false"
+                            x-transition
+                            class="customer-other-actions-menu"
+                            role="menu"
+                            aria-label="Other customer actions"
+                        >
+                            @if ($canChangeGroup)
+                            <a href="{{ route('admin.customers.change-group', $customer) }}" class="customer-other-actions-item" role="menuitem" @click="open = false">
+                                {{ $customer->customerGroup ? 'Change Group' : 'Link to Group' }}
+                            </a>
+                            @endif
+                            @if ($canLoginAudit)
+                            <a href="{{ route('admin.customers.login-audit', $customer) }}" class="customer-other-actions-item" role="menuitem" @click="open = false">
+                                Login Audit
+                            </a>
+                            @endif
+                            @if ($canResetPin)
+                            <button type="button" class="customer-other-actions-item w-full text-left" role="menuitem" onclick="showResetPinModal()" @click="open = false">
+                                Reset PIN
+                            </button>
+                            @endif
+
+                            @if (($canChangeGroup || $canLoginAudit || $canResetPin) && ($canSendMessage || $canCreateRepayment || $canViewRepayments || $canViewStatement))
+                            <div class="customer-other-actions-sep" role="separator"></div>
+                            @endif
+
+                            @if ($canSendMessage)
+                            <button type="button" class="customer-other-actions-item w-full text-left" role="menuitem" onclick="showSendMessageModal()" @click="open = false">
+                                Send Message
+                            </button>
+                            @endif
+
+                            @if ($canSendMessage && ($canCreateRepayment || $canViewRepayments || $canViewStatement))
+                            <div class="customer-other-actions-sep" role="separator"></div>
+                            @endif
+
+                            @if ($canCreateRepayment)
+                            <a href="{{ route('admin.customers.repayments.create', $customer) }}" class="customer-other-actions-item" role="menuitem" @click="open = false">
+                                Initiate Repayment
+                            </a>
+                            @endif
+                            @if ($canViewRepayments)
+                            <a href="{{ route('admin.customers.repayments', $customer) }}" class="customer-other-actions-item" role="menuitem" @click="open = false">
+                                Customer Repayments
+                            </a>
+                            @endif
+                            @if ($canViewStatement)
+                            <a href="{{ route('admin.customers.statement', $customer) }}" class="customer-other-actions-item" role="menuitem" @click="open = false">
+                                View Statement
+                            </a>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
+                </div>
             </div>
         </div>
+
+        @if ($hasProfileImage)
+        <div
+            id="customerProfilePhotoModal"
+            class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            onclick="if (event.target === this) closeCustomerProfilePhotoModal()"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="customerProfilePhotoModalTitle"
+        >
+            <div class="relative w-full max-w-2xl rounded-2xl border border-[var(--brand-border)] bg-[var(--color-surface)] p-4 shadow-xl" onclick="event.stopPropagation()">
+                <div class="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                        <h2 id="customerProfilePhotoModalTitle" class="text-lg font-semibold text-[var(--color-primary)]">{{ $customer->full_name }}</h2>
+                        <p class="text-sm text-[var(--color-muted)]">KYC profile photo</p>
+                    </div>
+                    <button type="button" onclick="closeCustomerProfilePhotoModal()" class="rounded-lg border border-[var(--brand-border)] px-2 py-1 text-sm text-[var(--color-primary)] hover:bg-[var(--color-surface-alt)]" aria-label="Close profile photo preview">
+                        Close
+                    </button>
+                </div>
+                <img
+                    src="{{ $profilePictureUrl }}"
+                    alt="Enlarged profile photo of {{ $customer->full_name }}"
+                    class="mx-auto max-h-[70vh] w-auto max-w-full rounded-xl object-contain"
+                >
+                @can('kyc.view')
+                    @if ($customer->latestKycDocument)
+                    <div class="mt-4 text-right">
+                        <a href="{{ route('admin.customers.kyc.show', $customer) }}" class="text-sm font-semibold text-[var(--color-brand)] hover:underline">
+                            View all KYC documents
+                        </a>
+                    </div>
+                    @endif
+                @endcan
+            </div>
+        </div>
+        @endif
 
         <div class="grid gap-6 md:grid-cols-2">
             {{-- Bio Data --}}
@@ -878,7 +994,7 @@
                 </span>
             </div>
             @if($customer->loans->count() > 0)
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto max-w-full">
                     <table data-datatable="true" data-datatable-per-page="10" class="min-w-full w-full text-sm text-slate-300">
                         <thead>
                             <tr class="text-sm font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b border-white/10">
@@ -1458,4 +1574,28 @@
     </script>
     @endpush
     @endif
+
+    @push('scripts')
+    <script>
+        function openCustomerProfilePhotoModal() {
+            const modal = document.getElementById('customerProfilePhotoModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCustomerProfilePhotoModal() {
+            const modal = document.getElementById('customerProfilePhotoModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeCustomerProfilePhotoModal();
+            }
+        });
+    </script>
+    @endpush
 @endsection

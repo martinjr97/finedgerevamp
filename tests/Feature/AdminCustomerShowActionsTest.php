@@ -110,7 +110,10 @@ class AdminCustomerShowActionsTest extends TestCase
         $response->assertOk();
         $response->assertSeeText('Approve Customer');
         $response->assertSeeText('Reject Customer');
-        $response->assertSeeText('View KYC Documents');
+        $response->assertSeeText('View KYC');
+        $response->assertDontSeeText('View KYC Documents');
+        $response->assertSeeText('Other Actions');
+        $response->assertSeeText('Back to Customers');
         $response->assertSee(route('admin.customers.edit', $customer), false);
         $response->assertDontSee(route('admin.customers.change-group', $customer), false);
         $response->assertDontSee(route('admin.customers.login-audit', $customer), false);

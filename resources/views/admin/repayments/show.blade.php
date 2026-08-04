@@ -68,7 +68,7 @@
             <div class="flex flex-wrap items-center justify-end gap-3">
                 @if($repayment->customer && auth('admin')->user()?->can('repayments.create'))
                     <a href="{{ route('admin.customers.repayments.create', $repayment->customer) }}" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 px-4 py-3 text-sm text-emerald-200 hover:bg-emerald-500/30 transition">
-                        Initiate Repayment
+                        Create New Repayment
                     </a>
                 @endif
                 @if($showManualReconciliation)

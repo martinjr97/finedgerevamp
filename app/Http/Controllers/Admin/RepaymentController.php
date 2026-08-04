@@ -58,7 +58,7 @@ class RepaymentController extends Controller
     {
         abort_unless(auth('admin')->user()?->can('repayments.view'), 403);
 
-        $query = Repayment::with(['customer', 'channel', 'loanRepayments.loan.loanProduct']);
+        $query = Repayment::with(['customer', 'channel']);
 
         // Filters
         if ($request->has('status') && $request->status) {

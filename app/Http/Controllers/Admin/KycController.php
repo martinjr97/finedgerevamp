@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
-use App\Support\DocumentUploadRules;
 use App\Models\KycDocument;
+use App\Support\DocumentUploadRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -27,8 +27,9 @@ class KycController extends Controller
     {
         $kycDocument = $customer->latestKycDocument;
         abort_unless($kycDocument, 404, 'KYC documents not found for this customer.');
-        
+
         $kycDocument->load('verifier');
+
         return view('admin.customers.kyc.show', compact('customer', 'kycDocument'));
     }
 
@@ -81,20 +82,20 @@ class KycController extends Controller
         try {
             // Store uploaded files
             $frontImagePath = $request->file('front_image')->store('kyc/documents', 'public');
-            $backImagePath = $request->hasFile('back_image') 
-                ? $request->file('back_image')->store('kyc/documents', 'public') 
+            $backImagePath = $request->hasFile('back_image')
+                ? $request->file('back_image')->store('kyc/documents', 'public')
                 : null;
-            $profilePicturePath = $request->hasFile('profile_picture') 
-                ? $request->file('profile_picture')->store('kyc/profile-pictures', 'public') 
+            $profilePicturePath = $request->hasFile('profile_picture')
+                ? $request->file('profile_picture')->store('kyc/profile-pictures', 'public')
                 : null;
-            $bankStatementPath = $request->hasFile('bank_statement') 
-                ? $request->file('bank_statement')->store('kyc/optional', 'public') 
+            $bankStatementPath = $request->hasFile('bank_statement')
+                ? $request->file('bank_statement')->store('kyc/optional', 'public')
                 : null;
-            $payslipPath = $request->hasFile('payslip') 
-                ? $request->file('payslip')->store('kyc/optional', 'public') 
+            $payslipPath = $request->hasFile('payslip')
+                ? $request->file('payslip')->store('kyc/optional', 'public')
                 : null;
-            $standPicturePath = ($isMarketeer && $request->hasFile('stand_picture')) 
-                ? $request->file('stand_picture')->store('kyc/stand-pictures', 'public') 
+            $standPicturePath = ($isMarketeer && $request->hasFile('stand_picture'))
+                ? $request->file('stand_picture')->store('kyc/stand-pictures', 'public')
                 : null;
 
             // Create KYC document record
@@ -114,7 +115,7 @@ class KycController extends Controller
             $requiresApproval = config('approval.customers.create', false);
             $isApproved = $customer->approval_status === 'approved';
 
-            if (!$requiresApproval || $isApproved) {
+            if (! $requiresApproval || $isApproved) {
                 // Auto-verify KYC and activate customer (only if approved or approval not required)
                 $kycDocument->update([
                     'status' => 'verified',
@@ -165,5 +166,34 @@ class KycController extends Controller
                 ->withInput()
                 ->with('error', 'Failed to upload KYC documents: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Stream the customer's KYC profile picture for authorized admins.
+     */
+    public function profilePicture(Customer $customer)
+    {
+        $admin = auth('admin')->user();
+        abort_unless(
+            $admin?->can('customers.view') || $admin?->can('kyc.view'),
+            403
+        );
+
+        $kycDocument = $customer->latestKycDocument;
+        $path = $kycDocument?->profile_picture_path;
+
+        abort_unless(is_string($path) && $path !== '', 404);
+        abort_unless(! str_contains($path, '..') && ! str_starts_with($path, '/'), 404);
+
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($path), 404);
+
+        $mime = $disk->mimeType($path) ?: 'application/octet-stream';
+        abort_unless(str_starts_with($mime, 'image/'), 404);
+
+        return $disk->response($path, null, [
+            'Content-Type' => $mime,
+            'Cache-Control' => 'private, max-age=300',
+        ]);
     }
 }
