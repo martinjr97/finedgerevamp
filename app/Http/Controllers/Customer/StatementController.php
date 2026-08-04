@@ -3,213 +3,131 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Support\RepaymentRecoveryMethod;
+use App\Models\Company;
 use App\Models\Loan;
-use App\Services\LoanRepaymentLedgerService;
+use App\Services\CustomerLifetimeStatementService;
+use App\Support\Pdf\FinancialDocumentBranding;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StatementController extends Controller
 {
     public function __construct(
-        private readonly LoanRepaymentLedgerService $ledgerService
+        private readonly CustomerLifetimeStatementService $statementService,
     ) {}
 
     /**
-     * Display the customer loan statement
+     * Display the customer lifetime loan statement (same ledger as admin).
      */
     public function index(Request $request): View
     {
         $customer = auth('customer')->user();
-        
-        // Get filter parameters
-        $loanId = $request->input('loan_id');
-        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : null;
-        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : null;
-
-        // Get all loans for the customer
-        $loansQuery = $customer->loans()->with(['loanProduct', 'customerGroup', 'accruals']);
-        
-        if ($loanId) {
-            $loansQuery->where('id', $loanId);
-        }
-
-        $loans = $loansQuery->orderBy('loan_start_date', 'desc')->get();
-
-        // Build transaction history for selected loan or all loans
-        $transactions = $this->buildTransactionHistory($loans, $startDate, $endDate);
-
-        // Calculate summary statistics
-        $summary = $this->calculateSummary($customer, $loans);
+        $statement = $this->buildStatement($request, $customer);
 
         return view('customer.statement', [
-            'loans' => $customer->loans()->with(['loanProduct', 'customerGroup'])->orderBy('loan_start_date', 'desc')->get(),
-            'selectedLoan' => $loanId ? Loan::find($loanId) : null,
-            'transactions' => $transactions,
-            'summary' => $summary,
-            'startDate' => $startDate?->format('Y-m-d'),
-            'endDate' => $endDate?->format('Y-m-d'),
+            'customer' => $customer,
+            'statement' => $statement,
         ]);
     }
 
-    /**
-     * Build transaction history from accruals and payments
-     */
-    private function buildTransactionHistory($loans, ?Carbon $startDate = null, ?Carbon $endDate = null): Collection
+    public function downloadPdf(Request $request): Response|StreamedResponse|BinaryFileResponse
     {
-        $transactions = [];
+        $customer = auth('customer')->user();
+        $statement = $this->buildStatement($request, $customer, includeSchedules: false);
+        $company = $customer->company ?? Company::query()->where('is_primary', true)->first();
+        $branding = FinancialDocumentBranding::resolve($company);
 
-        foreach ($loans as $loan) {
-            // Add loan creation/approval as initial transaction
-            $loanCreatedDate = $loan->approved_at ? $loan->approved_at : $loan->created_at;
-            
-            if (!$startDate || $loanCreatedDate->gte($startDate)) {
-                if (!$endDate || $loanCreatedDate->lte($endDate)) {
-                    $transactions[] = [
-                        'date' => $loanCreatedDate,
-                        'type' => 'loan_created',
-                        'loan' => $loan,
-                        'description' => 'Loan Created',
-                        'principal' => $loan->principal_amount,
-                        'processing_fee' => $loan->processing_fee,
-                        'interest' => 0,
-                        'payment' => 0,
-                        'balance' => $loan->principal_amount + $loan->processing_fee,
-                        'outstanding_balance' => $loan->principal_amount + $loan->processing_fee,
-                    ];
-                }
-            }
+        $pdf = Pdf::loadView('pdf.customer-statement', [
+            'customer' => $customer,
+            'statement' => $statement,
+            'company' => $company,
+            'branding' => $branding,
+        ])
+            ->setPaper('a4', 'portrait')
+            ->setOption('isPhpEnabled', true);
 
-            // Add accruals
-            foreach ($loan->accruals as $accrual) {
-                $accrualDate = Carbon::parse($accrual->accrual_date);
-                
-                if ($startDate && $accrualDate->lt($startDate)) continue;
-                if ($endDate && $accrualDate->gt($endDate)) continue;
+        return $pdf->download($this->buildPdfFilename($customer, $statement));
+    }
 
-                $transactions[] = [
-                    'date' => $accrualDate,
-                    'type' => 'accrual',
-                    'loan' => $loan,
-                    'description' => 'Interest Accrued (' . ucfirst($accrual->accrual_period) . ')',
-                    'principal' => 0,
-                    'processing_fee' => 0,
-                    'interest' => $accrual->interest_amount,
-                    'payment' => 0,
-                    'balance' => $accrual->total_balance,
-                    'outstanding_balance' => $accrual->total_balance,
-                    'rate_used' => $accrual->rate_used,
-                ];
-            }
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildStatement(Request $request, $customer, bool $includeSchedules = true): array
+    {
+        $validated = $request->validate([
+            'from_date' => ['nullable', 'date'],
+            'to_date' => ['nullable', 'date', 'after_or_equal:from_date'],
+            'loan_id' => ['nullable', 'integer'],
+            // Backward-compatible aliases from the previous customer statement filters.
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
 
-            $expectedSettlement = $this->ledgerService->getExpectedSettlementAmount($loan);
-            $runningNetPaid = 0.0;
+        $fromInput = $validated['from_date'] ?? $validated['start_date'] ?? null;
+        $toInput = $validated['to_date'] ?? $validated['end_date'] ?? null;
 
-            foreach ($loan->loanRepayments()->with(['repayment', 'refundOf.repayment'])->orderBy('created_at')->orderBy('id')->get() as $loanRepayment) {
-                $repayment = $loanRepayment->repayment;
-                $repaymentDate = $repayment->processed_at ?? $repayment->created_at;
-                
-                if ($startDate && $repaymentDate->lt($startDate)) continue;
-                if ($endDate && $repaymentDate->gt($endDate)) continue;
+        $fromDate = filled($fromInput) ? Carbon::parse($fromInput)->startOfDay() : null;
+        $toDate = filled($toInput) ? Carbon::parse($toInput)->endOfDay() : null;
+        $loanId = isset($validated['loan_id']) ? (int) $validated['loan_id'] : null;
 
-                $runningNetPaid = round($runningNetPaid + (float) $loanRepayment->amount, 2);
-                $runningOutstanding = $this->ledgerService->calculateOutstandingBalance($loan, $runningNetPaid);
-                $runningSuspense = $this->ledgerService->calculateSuspenseAmount($loan, $runningNetPaid);
+        if ($loanId) {
+            $belongsToCustomer = Loan::query()
+                ->where('customer_id', $customer->id)
+                ->whereKey($loanId)
+                ->exists();
 
-                $isRefund = $loanRepayment->isRefund();
-                $originalReference = $loanRepayment->refundOf?->repayment?->repayment_number;
-
-                $statementNotes = $isRefund
-                    ? ($loanRepayment->notes ?: null)
-                    : $this->recoveryMethodStatementNote($repayment->recovery_method, $loanRepayment->notes);
-
-                $transactions[] = [
-                    'date' => $repaymentDate,
-                    'type' => $isRefund ? 'refund' : 'payment',
-                    'loan' => $loan,
-                    'description' => $isRefund
-                        ? 'Refund issued'.($originalReference ? ' (against '.$originalReference.')' : '').' - '.$repayment->repayment_number
-                        : 'Payment Received - '.$repayment->repayment_number,
-                    'notes' => $statementNotes,
-                    'principal' => 0,
-                    'processing_fee' => 0,
-                    'interest' => 0,
-                    'payment' => (float) $loanRepayment->amount,
-                    'net_paid' => $runningNetPaid,
-                    'suspense_amount' => $runningSuspense,
-                    'expected_settlement' => $expectedSettlement,
-                    'balance' => $runningOutstanding,
-                    'outstanding_balance' => $runningOutstanding,
-                    'repayment' => $repayment,
-                    'loan_repayment' => $loanRepayment,
-                ];
-            }
-
-            // Add loan settlement if settled
-            if (in_array($loan->status, ['completed', 'settled']) && $loan->loan_settled_date) {
-                $settledDate = Carbon::parse($loan->loan_settled_date);
-                
-                if (!$startDate || $settledDate->gte($startDate)) {
-                    if (!$endDate || $settledDate->lte($endDate)) {
-                        $transactions[] = [
-                            'date' => $settledDate,
-                            'type' => 'loan_settled',
-                            'loan' => $loan,
-                            'description' => 'Loan Fully Settled',
-                            'principal' => 0,
-                            'processing_fee' => 0,
-                            'interest' => 0,
-                            'payment' => 0,
-                            'balance' => 0,
-                            'outstanding_balance' => 0,
-                        ];
-                    }
-                }
+            if (! $belongsToCustomer) {
+                throw ValidationException::withMessages([
+                    'loan_id' => 'The selected loan does not belong to your account.',
+                ]);
             }
         }
 
-        // Sort transactions by date and convert to Collection
-        usort($transactions, function ($a, $b) {
-            return $a['date'] <=> $b['date'];
-        });
-
-        return collect($transactions);
+        return $this->statementService->build(
+            $customer,
+            $fromDate,
+            $toDate,
+            $loanId,
+            includeSchedules: $includeSchedules,
+        );
     }
 
     /**
-     * Calculate summary statistics
+     * @param  array<string, mixed>  $statement
      */
-    private function calculateSummary($customer, $loans): array
+    private function buildPdfFilename($customer, array $statement): string
     {
-        $totalLoans = $loans->count();
-        $activeLoans = $loans->whereIn('status', ['approved', 'active'])->count();
-        $completedLoans = $loans->whereIn('status', ['completed', 'settled'])->count();
-        
-        $totalBorrowed = $loans->sum('principal_amount');
-        $totalInterest = $loans->sum('interest_accrued');
-        $totalPaid = $loans->sum('amount_paid');
-        $totalOutstanding = $loans->sum('outstanding_balance');
+        $customerNumber = $customer->customer_number
+            ?? $customer->account_number
+            ?? ('CUST-'.str_pad((string) $customer->id, 4, '0', STR_PAD_LEFT));
 
-        return [
-            'total_loans' => $totalLoans,
-            'active_loans' => $activeLoans,
-            'completed_loans' => $completedLoans,
-            'total_borrowed' => $totalBorrowed,
-            'total_interest' => $totalInterest,
-            'total_paid' => $totalPaid,
-            'total_outstanding' => $totalOutstanding,
-        ];
+        $safeCustomer = $this->safeFilenamePart((string) $customerNumber);
+        $filters = $statement['filters'];
+        $from = $filters['from_date'] ?? null;
+        $to = $filters['to_date'] ?? now()->toDateString();
+        $loanId = $filters['loan_id'] ?? null;
+
+        if ($loanId) {
+            /** @var Loan|null $loan */
+            $loan = collect($statement['loans'])->firstWhere('id', (int) $loanId);
+            $safeLoan = $this->safeFilenamePart((string) ($loan?->loan_number ?: 'loan-'.$loanId));
+
+            return "customer-statement-{$safeCustomer}-{$safeLoan}-{$from}-{$to}.pdf";
+        }
+
+        return "customer-statement-{$safeCustomer}-all-loans-{$from}-{$to}.pdf";
     }
 
-    private function recoveryMethodStatementNote(?string $recoveryMethod, ?string $loanRepaymentNotes): ?string
+    private function safeFilenamePart(string $value): string
     {
-        $recoveryLabel = RepaymentRecoveryMethod::label($recoveryMethod);
-        $recoveryNote = $recoveryLabel !== RepaymentRecoveryMethod::label(RepaymentRecoveryMethod::NORMAL)
-            ? 'Recovery method: '.$recoveryLabel
-            : null;
+        $safe = preg_replace('/[^A-Za-z0-9._-]+/', '-', $value) ?? 'x';
 
-        return trim(collect([$loanRepaymentNotes, $recoveryNote])->filter()->implode(' | ')) ?: null;
+        return trim($safe, '-') ?: 'x';
     }
 }

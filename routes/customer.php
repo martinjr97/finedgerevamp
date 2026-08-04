@@ -47,6 +47,7 @@ Route::middleware('guest:customer')->group(function (): void {
 	Route::middleware(['auth:customer', 'customer.security-question'])->group(function (): void {
 	    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 	    Route::get('statement', [StatementController::class, 'index'])->name('statement');
+	    Route::get('statement/pdf', [StatementController::class, 'downloadPdf'])->name('statement.pdf');
 	    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications');
 	    Route::get('profile', fn () => view('customer.profile'))->name('profile');
 	    Route::get('payment-details/edit', [PaymentDetailsController::class, 'edit'])->name('payment-details.edit');
