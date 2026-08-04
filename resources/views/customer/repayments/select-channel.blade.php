@@ -108,7 +108,7 @@
                            inputmode="numeric"
                            pattern="260[0-9]{9}"
                            class="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition zambian-phone-input"
-                           placeholder="260978232334">
+                           placeholder="260970000000">
                     <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" id="repaymentPhoneHelp">
                         For mobile money repayments, enter the number that will approve the payment prompt. Leave blank to use your profile number where applicable.
                     </p>

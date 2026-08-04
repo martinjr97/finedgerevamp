@@ -110,7 +110,7 @@ class DisbursementDestinationPhaseFTest extends TestCase
             'is_active' => true,
         ]);
 
-        $customer = Customer::create([
+        $customer = $this->withCustomerSecurityQuestion(Customer::create([
             'company_id' => $company->id,
             'loan_product_id' => $product->id,
             'customer_group_id' => $group->id,
@@ -123,7 +123,7 @@ class DisbursementDestinationPhaseFTest extends TestCase
             'maximum_loan_take' => 50000,
             'status' => 'active',
             'approval_status' => 'approved',
-        ]);
+        ]));
 
         return Loan::create(array_merge([
             'customer_id' => $customer->id,
@@ -166,7 +166,7 @@ class DisbursementDestinationPhaseFTest extends TestCase
         $channel = $this->channel(Channel::TYPE_MOBILE_WALLET, 'EXP');
         $loan = $this->makeLoan($admin->company, $channel, [
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
         $this->actingAs($admin, 'admin')
@@ -177,7 +177,7 @@ class DisbursementDestinationPhaseFTest extends TestCase
             $row = $this->firstExportRowMap($export);
 
             return ($row['Channel Type'] ?? null) === 'Mobile Money'
-                && str_contains((string) ($row['Disbursement Destination'] ?? ''), '260978232334')
+                && str_contains((string) ($row['Disbursement Destination'] ?? ''), '260970000000')
                 && ($row['Loan Number'] ?? null) === $loan->loan_number;
         });
     }
@@ -306,7 +306,7 @@ class DisbursementDestinationPhaseFTest extends TestCase
         });
     }
 
-    public function test_customer_repayment_select_channel_does_not_mislead_cash_phone_copy(): void
+    public function test_customer_repayment_select_channel_hides_cash_option(): void
     {
         $suffix = Str::lower(Str::random(6));
         $company = Company::create([
@@ -326,7 +326,7 @@ class DisbursementDestinationPhaseFTest extends TestCase
             'is_active' => true,
         ]);
 
-        $customer = Customer::create([
+        $customer = $this->withCustomerSecurityQuestion(Customer::create([
             'company_id' => $company->id,
             'loan_product_id' => $product->id,
             'first_name' => 'Repay',
@@ -337,7 +337,7 @@ class DisbursementDestinationPhaseFTest extends TestCase
             'tpin' => (string) random_int(10000000, 99999999),
             'status' => 'active',
             'approval_status' => 'approved',
-        ]);
+        ]));
 
         $walletChannel = $this->channel(Channel::TYPE_MOBILE_WALLET, 'RW');
         $cashChannel = $this->channel(Channel::TYPE_CASH, 'RC');
@@ -357,7 +357,9 @@ class DisbursementDestinationPhaseFTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Mobile money number (optional)', false);
-        $response->assertSee('data-channel-type="cash"', false);
+        $response->assertSee($walletChannel->name);
+        $response->assertDontSee('data-channel-type="cash"', false);
+        $response->assertDontSee($cashChannel->name);
         $response->assertSee('repaymentPhoneSection', false);
         $response->assertDontSee('Mobile money number (required)', false);
     }
@@ -408,7 +410,7 @@ class DisbursementDestinationPhaseFTest extends TestCase
             'status' => 'approved',
             'disbursement_status' => 'pending',
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
         $treasuryWallet = Wallet::create([
@@ -432,7 +434,7 @@ class DisbursementDestinationPhaseFTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Destination Summary', false);
-        $response->assertSee('260978232334', false);
+        $response->assertSee('260970000000', false);
         $response->assertSee('Disbursed From (treasury)', false);
         $response->assertSee('Wallet', false);
     }

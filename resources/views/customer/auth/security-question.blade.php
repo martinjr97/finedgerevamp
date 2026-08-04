@@ -8,7 +8,7 @@
     <form method="POST" action="{{ route('customer.password.security-question.store') }}" class="space-y-5">
         @csrf
 
-        <input type="text" name="phone" value="{{ $phone }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260978232334">
+        <input type="text" name="phone" value="{{ $phone }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260970000000">
         <input type="hidden" name="national_id" value="{{ $national_id }}">
 
         <div class="space-y-2">

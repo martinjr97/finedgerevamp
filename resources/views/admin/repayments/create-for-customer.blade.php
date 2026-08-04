@@ -206,7 +206,7 @@
 
                 <div id="phone_number_group" class="hidden">
                     <label for="phone_number" class="block text-sm font-medium text-slate-200">Mobile money number <span class="text-slate-500 font-normal">(for payment prompt)</span></label>
-                    <input type="text" name="phone_number" id="phone_number" value="{{ old('phone_number', $customer->phone) }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260978232334">
+                    <input type="text" name="phone_number" id="phone_number" value="{{ old('phone_number', $customer->phone) }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260970000000">
                     <p class="mt-1 text-xs text-slate-400">Number that will receive the integrated channel payment request (USSD/app prompt). Defaults to the customer profile number.</p>
                     @error('phone_number')
                         <p class="mt-1 text-xs text-rose-300">{{ $message }}</p>

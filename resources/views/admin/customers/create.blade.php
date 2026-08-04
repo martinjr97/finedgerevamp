@@ -256,7 +256,7 @@
                 input.setAttribute('maxlength', '12');
                 input.setAttribute('pattern', '260[0-9]{9}');
                 if (!input.placeholder) {
-                    input.placeholder = '260978232334';
+                    input.placeholder = '260970000000';
                 }
                 input.addEventListener('input', () => {
                     input.value = input.value.replace(/\D/g, '').slice(0, 12);

@@ -35,16 +35,16 @@ class ZambianPhoneNumberTest extends TestCase
 
     public function test_diagnose_gives_actionable_hint_for_local_format(): void
     {
-        $message = PhoneNumberFormatter::diagnose('0978232334');
+        $message = PhoneNumberFormatter::diagnose('0970000000');
 
-        $this->assertStringContainsString('260978232334', $message);
+        $this->assertStringContainsString('260970000000', $message);
         $this->assertStringContainsString('0', $message);
     }
 
     public static function validNumbersProvider(): array
     {
         return [
-            ['260978232334'],
+            ['260970000000'],
             ['260752334544'],
             ['260961234567'],
             ['260771234567'],
@@ -54,12 +54,12 @@ class ZambianPhoneNumberTest extends TestCase
     public static function invalidNumbersProvider(): array
     {
         return [
-            ['0978232334'],
-            ['+260978232334'],
-            ['26097823233'],
-            ['2609782323344'],
+            ['0970000000'],
+            ['+260970000000'],
+            ['26097000000'],
+            ['2609700000004'],
             ['260118232334'],
-            ['26097823ABCD'],
+            ['26097000ABCD'],
             [''],
             [null],
         ];

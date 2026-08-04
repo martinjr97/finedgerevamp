@@ -87,7 +87,7 @@ class CustomerSmeLoanFlowTest extends TestCase
             'is_active' => true,
         ]);
 
-        $customer = Customer::create([
+        $customer = $this->withCustomerSecurityQuestion(Customer::create([
             'company_id' => $company->id,
             'loan_product_id' => $loanProduct->id,
             'customer_type' => 'company',
@@ -103,7 +103,7 @@ class CustomerSmeLoanFlowTest extends TestCase
             'net_salary' => 20000,
             'maximum_loan_take' => 50000,
             'must_change_pin' => false,
-        ]);
+        ]));
 
         return [
             'customer' => $customer,

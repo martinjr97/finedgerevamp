@@ -44,7 +44,7 @@ Route::middleware('guest:customer')->group(function (): void {
     Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.update');
 });
 
-	Route::middleware('auth:customer')->group(function (): void {
+	Route::middleware(['auth:customer', 'customer.security-question'])->group(function (): void {
 	    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 	    Route::get('statement', [StatementController::class, 'index'])->name('statement');
 	    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications');

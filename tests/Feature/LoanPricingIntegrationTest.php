@@ -332,7 +332,7 @@ class LoanPricingIntegrationTest extends TestCase
             'allow_multiple_loans' => true,
         ]);
 
-        $customer = Customer::create([
+        $customer = $this->withCustomerSecurityQuestion(Customer::create([
             'company_id' => $company->id,
             'loan_product_id' => $product->id,
             'customer_group_id' => $group->id,
@@ -345,7 +345,7 @@ class LoanPricingIntegrationTest extends TestCase
             'status' => 'active',
             'approval_status' => 'approved',
             'maximum_loan_take' => 50000,
-        ]);
+        ]));
 
         $channel = Channel::create([
             'name' => 'Test Channel '.$suffix,

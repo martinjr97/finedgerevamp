@@ -117,7 +117,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
             'first_name' => 'Borrower',
             'last_name' => 'One',
             'email' => 'borrower-'.$suffix.'@example.com',
-            'phone' => '260978232334',
+            'phone' => '260970000000',
             'password' => '1234',
             'tpin' => (string) random_int(10000000, 99999999),
             'maximum_loan_take' => 50000,
@@ -188,7 +188,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
 
         $session = $this->sessionForContext($context, $channel, [
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
         $response = $this->actingAs($context['admin'], 'admin')
@@ -200,7 +200,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
         $loan = Loan::query()->latest('id')->first();
         $this->assertNotNull($loan);
         $this->assertTrue($loan->hasMobileWalletDestination());
-        $this->assertSame('260978232334', $loan->disbursement_phone_number);
+        $this->assertSame('260970000000', $loan->disbursement_phone_number);
         $this->assertNull($loan->disbursement_financial_institution_id);
     }
 
@@ -328,11 +328,11 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
             'status' => 'pending_approval',
             'disbursement_status' => 'pending',
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
             'disbursement_destination_snapshot' => [
                 'channel_name' => $channel->name,
                 'channel_type' => Channel::TYPE_MOBILE_WALLET,
-                'disbursement_phone_number' => '260978232334',
+                'disbursement_phone_number' => '260970000000',
             ],
         ]);
 
@@ -340,7 +340,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Destination Summary');
-        $response->assertSee('260978232334');
+        $response->assertSee('260970000000');
     }
 
     public function test_payment_detail_update_can_switch_from_mobile_wallet_to_bank(): void
@@ -350,7 +350,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
         $bankChannel = $this->channel(Channel::TYPE_BANK, 'B1');
         $loan = $this->loanForPaymentChange($walletChannel, [
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
         $admin = $this->adminWithPermissions(['loans.update-payment-details']);
@@ -413,7 +413,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
         $cashChannel = $this->channel(Channel::TYPE_CASH, 'C3');
         $loan = $this->loanForPaymentChange($walletChannel, [
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
         $admin = $this->adminWithPermissions(['loans.update-payment-details']);
@@ -437,7 +437,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
         $channel = $this->channel(Channel::TYPE_MOBILE_WALLET, 'LEG');
 
         $session = $this->sessionForContext($context, $channel, [
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
         $response = $this->actingAs($context['admin'], 'admin')
@@ -446,7 +446,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
 
         $response->assertRedirect();
         $loan = Loan::query()->latest('id')->first();
-        $this->assertSame('260978232334', $loan->disbursement_phone_number);
+        $this->assertSame('260970000000', $loan->disbursement_phone_number);
         $this->assertTrue($loan->hasMobileWalletDestination());
     }
 
@@ -458,7 +458,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
         $loan = $this->loanForPaymentChange($walletChannel, [
             'status' => 'approved',
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
         $treasuryWallet = Wallet::create([
@@ -480,7 +480,7 @@ class AdminDisbursementDestinationPhaseDTest extends TestCase
         $loan->refresh();
         $this->assertSame('wallet', $loan->disbursed_via_type);
         $this->assertSame($treasuryWallet->id, (int) $loan->disbursed_via_id);
-        $this->assertSame('260978232334', $loan->disbursement_phone_number);
+        $this->assertSame('260970000000', $loan->disbursement_phone_number);
         $this->assertSame('completed', $loan->disbursement_status);
     }
 

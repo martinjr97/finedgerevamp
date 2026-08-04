@@ -412,6 +412,35 @@ class Customer extends Authenticatable
         return false;
     }
 
+    /**
+     * Whether the customer has configured a security question + answer for PIN recovery.
+     */
+    public function hasSecurityQuestionConfigured(): bool
+    {
+        return filled($this->security_question_id) && filled($this->security_answer);
+    }
+
+    /**
+     * Normalize a security answer for storage and comparison (trim + case-insensitive).
+     */
+    public static function normalizeSecurityAnswer(?string $answer): string
+    {
+        return mb_strtolower(trim((string) $answer), 'UTF-8');
+    }
+
+    /**
+     * Case-insensitive match against the stored security answer.
+     */
+    public function matchesSecurityAnswer(?string $attempt): bool
+    {
+        if (! filled($this->security_answer)) {
+            return false;
+        }
+
+        return self::normalizeSecurityAnswer($this->security_answer)
+            === self::normalizeSecurityAnswer($attempt);
+    }
+
     public function repayments(): HasMany
     {
         return $this->hasMany(Repayment::class)->orderBy('created_at', 'desc');

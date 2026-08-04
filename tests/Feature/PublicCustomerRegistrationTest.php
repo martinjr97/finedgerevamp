@@ -25,7 +25,7 @@ class PublicCustomerRegistrationTest extends TestCase
 
     private const VALID_NRC = '123456/78/1';
 
-    private const VALID_PHONE = '260978232334';
+    private const VALID_PHONE = '260970000000';
 
     private const VALID_EMAIL = 'applicant@example.com';
 

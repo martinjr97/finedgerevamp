@@ -83,7 +83,7 @@
                             </div>
                             <div class="sm:col-span-2">
                                 <label for="phone" class="block text-sm font-medium text-slate-200">Phone</label>
-                                <input type="text" id="phone" name="phone" x-model="phone" maxlength="12" placeholder="260978232334"
+                                <input type="text" id="phone" name="phone" x-model="phone" maxlength="12" placeholder="260970000000"
                                     class="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-2.5 text-sm text-slate-100 focus:border-cyan-400 focus:outline-none zambian-phone-input">
                                 @error('phone')<p class="mt-1 text-sm text-rose-400">{{ $message }}</p>@enderror
                             </div>

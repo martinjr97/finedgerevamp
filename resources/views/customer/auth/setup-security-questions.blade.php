@@ -5,6 +5,12 @@
 @section('subheading', 'Choose a security question for password recovery')
 
 @section('content')
+    @if (session('status'))
+        <div class="mb-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {{ session('status') }}
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('customer.security-questions.store') }}" class="space-y-5">
         @csrf
 

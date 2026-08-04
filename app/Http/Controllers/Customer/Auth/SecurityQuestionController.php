@@ -22,7 +22,7 @@ class SecurityQuestionController extends Controller
 
         return view('customer.auth.setup-security-questions', [
             'securityQuestions' => $securityQuestions,
-            'authSideImage' => 'homepage.png',
+            'authSideImage' => 'customer-view.png',
             'brandColor' => 'text-emerald-600',
         ]);
     }
@@ -55,10 +55,10 @@ class SecurityQuestionController extends Controller
                 ->with('error', 'Invalid security question selected.');
         }
 
-        // Update customer security question
+        // Update customer security question (answer stored normalized for case-insensitive matching)
         $customer->forceFill([
             'security_question_id' => $request->security_question_id,
-            'security_answer' => trim($request->security_answer),
+            'security_answer' => Customer::normalizeSecurityAnswer($request->security_answer),
         ])->save();
 
         return redirect()->route('customer.dashboard')

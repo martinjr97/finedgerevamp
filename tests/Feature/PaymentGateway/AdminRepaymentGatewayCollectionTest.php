@@ -354,7 +354,7 @@ class AdminRepaymentGatewayCollectionTest extends TestCase
      */
     private function makeAdminRepaymentContext(
         ?string $channelType = Channel::TYPE_MOBILE_WALLET,
-        ?string $customerPhone = '260978232334',
+        ?string $customerPhone = '260970000000',
         bool $clearCustomerPhone = false,
     ): array {
         $suffix = Str::lower(Str::random(6));

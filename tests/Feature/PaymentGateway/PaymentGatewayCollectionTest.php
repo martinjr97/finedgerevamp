@@ -182,7 +182,7 @@ class PaymentGatewayCollectionTest extends TestCase
             'status' => 'approved',
             'disbursement_status' => 'pending',
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
         $wallet = Wallet::create([

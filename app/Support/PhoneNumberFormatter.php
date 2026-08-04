@@ -6,13 +6,13 @@ class PhoneNumberFormatter
 {
     public const PATTERN = '/^260(95|96|97|75|76|77)\d{7}$/';
 
-    public const PLACEHOLDER = '260978232334';
+    public const PLACEHOLDER = '260970000000';
 
     public const HTML_PATTERN = '260(95|96|97|75|76|77)[0-9]{7}';
 
-    public const HELP_TEXT = 'Enter 12 digits starting with 260 (e.g. 260900000000).';
+    public const HELP_TEXT = 'Enter 12 digits starting with 260 (e.g. 260970000000).';
 
-    public const EXAMPLE_CONVERSION = '';
+    public const EXAMPLE_CONVERSION = '0970000000 → 260970000000';
 
     public static function isValid(?string $value): bool
     {

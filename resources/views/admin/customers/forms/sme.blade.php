@@ -69,7 +69,7 @@
             </div>
             <div>
                 <label class="block text-sm font-semibold text-primary">Phone</label>
-                                                <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary zambian-phone-input" placeholder="260978232334">
+                                                <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary zambian-phone-input" placeholder="260970000000">
                 @error('phone') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
         </div>
@@ -133,7 +133,7 @@
             </div>
             <div>
                 <label class="block text-sm font-semibold text-primary">Phone</label>
-                                                <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary zambian-phone-input" placeholder="260978232334">
+                                                <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary zambian-phone-input" placeholder="260970000000">
                 @error('phone') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
         </div>

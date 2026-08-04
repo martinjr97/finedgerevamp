@@ -46,7 +46,7 @@ class SupportTicketWorkflowTest extends TestCase
             'is_active' => true,
         ]);
 
-        return Customer::create([
+        return $this->withCustomerSecurityQuestion(Customer::create([
             'company_id' => $company->id,
             'loan_product_id' => $loanProduct->id,
             'first_name' => 'Support',
@@ -56,7 +56,7 @@ class SupportTicketWorkflowTest extends TestCase
             'password' => '1234',
             'status' => 'active',
             'approval_status' => 'approved',
-        ]);
+        ]));
     }
 
     private function admin(Company $company, string $role = 'support-analyst'): Admin

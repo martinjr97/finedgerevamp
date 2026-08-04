@@ -37,7 +37,6 @@
     />
     <p id="{{ $name }}-help" class="{{ $helpClass }}">
         {{ PhoneNumberFormatter::HELP_TEXT }}
-        <span class="block text-slate-500">Example: {{ PhoneNumberFormatter::EXAMPLE_CONVERSION }}</span>
     </p>
     @error($name)
         <p id="{{ $name }}-error" class="{{ $errorClass }} font-medium" role="alert">{{ $message }}</p>

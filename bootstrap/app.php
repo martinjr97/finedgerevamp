@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.admin' => \App\Http\Middleware\EnsureApiAdmin::class,
             'api.customer' => \App\Http\Middleware\EnsureApiCustomer::class,
             'customer.self-service-loans' => \App\Http\Middleware\EnsureCustomerCanRequestSelfServiceLoan::class,
+            'customer.security-question' => \App\Http\Middleware\EnsureCustomerHasSecurityQuestion::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {

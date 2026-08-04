@@ -75,7 +75,7 @@
             </div>
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">Phone</label>
-                                <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }} zambian-phone-input" placeholder="260978232334">
+                                <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }} zambian-phone-input" placeholder="260970000000">
                 @error('phone')
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
@@ -193,7 +193,7 @@
             </div>
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">Phone <span class="{{ $requiredClass }}">*</span></label>
-                                <input type="text" name="next_of_kin_phone" value="{{ old('next_of_kin_phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }} zambian-phone-input" placeholder="260978232334" required>
+                                <input type="text" name="next_of_kin_phone" value="{{ old('next_of_kin_phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }} zambian-phone-input" placeholder="260970000000" required>
                 @error('next_of_kin_phone')
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror

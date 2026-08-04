@@ -477,7 +477,7 @@ class RepaymentShowGatewayCollectionTest extends TestCase
             'first_name' => 'Gateway',
             'last_name' => 'Borrower',
             'email' => 'gw-borrower-'.$suffix.'@example.com',
-            'phone' => '260978232334',
+            'phone' => '260970000000',
             'password' => '1234',
             'status' => 'active',
             'approval_status' => 'approved',

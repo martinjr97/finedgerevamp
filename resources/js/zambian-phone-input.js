@@ -1,7 +1,7 @@
 const ZAMBIAN_MOBILE_PATTERN = /^260(95|96|97|75|76|77)\d{7}$/;
 
 const INVALID_PHONE_MESSAGE =
-    'Enter a valid Zambian mobile number in 260XXXXXXXXX format (e.g. 260978232334).';
+    'Enter a valid Zambian mobile number in 260XXXXXXXXX format (e.g. 260970000000).';
 
 function normalizePhoneValue(value) {
     const trimmed = (value || '').trim();

@@ -90,20 +90,20 @@ class LoanConcurrencyAndExposureTest extends TestCase
             'is_active' => true,
         ], $groupOverrides));
 
-        $customer = Customer::create(array_merge([
+        $customer = $this->withCustomerSecurityQuestion(Customer::create(array_merge([
             'company_id' => $company->id,
             'loan_product_id' => $product->id,
             'customer_group_id' => $group->id,
             'first_name' => 'Jane',
             'last_name' => 'Banda',
             'email' => 'jane.'.$suffix.'@example.com',
-            'phone' => '260978232334',
+            'phone' => '260970000000',
             'password' => '1234',
             'tpin' => (string) random_int(10000000, 99999999),
             'maximum_loan_take' => 6000,
             'status' => 'active',
             'approval_status' => 'approved',
-        ], $customerOverrides));
+        ], $customerOverrides)));
 
         $channel = Channel::create([
             'name' => 'MTN Money '.$suffix,

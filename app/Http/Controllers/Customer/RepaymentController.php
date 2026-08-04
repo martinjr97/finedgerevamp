@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Channel;
 use App\Models\Loan;
 use App\Models\Repayment;
-use App\Services\RepaymentProcessingService;
+use App\Services\Repayments\AdminRepaymentGatewayCollectionService;
+use App\Services\Repayments\Enums\RepaymentGatewayCollectionStatus;
 use App\Support\ZambianPhoneRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,9 @@ use Illuminate\View\View;
 
 class RepaymentController extends Controller
 {
-    public function __construct(private readonly RepaymentProcessingService $repaymentProcessingService) {}
+    public function __construct(
+        private readonly AdminRepaymentGatewayCollectionService $gatewayCollectionService,
+    ) {}
 
     /**
      * Show repayment type selection page (Step 1)
@@ -98,6 +101,7 @@ class RepaymentController extends Controller
 
         $channels = Channel::where('is_active', true)
             ->where('can_repay', true)
+            ->where('type', '!=', Channel::TYPE_CASH)
             ->orderBy('name')
             ->get();
 
@@ -127,6 +131,7 @@ class RepaymentController extends Controller
         Channel::where('id', $validated['channel_id'])
             ->where('is_active', true)
             ->where('can_repay', true)
+            ->where('type', '!=', Channel::TYPE_CASH)
             ->firstOrFail();
 
         session([
@@ -193,56 +198,96 @@ class RepaymentController extends Controller
         try {
             DB::beginTransaction();
 
+            $phoneNumber = session('repayment.phone_number');
+            $collectionPreview = $this->gatewayCollectionService->previewForChannel(
+                $channel,
+                $repaymentAmount,
+                $phoneNumber,
+            );
+
             $metadata = [
                 'repayment_type' => $repaymentType,
                 'loan_id' => $loanId,
-                'submission_mode' => 'customer_portal',
+                'submission_mode' => $collectionPreview->ready ? 'gateway_collection' : 'customer_portal',
                 'submitted_from' => 'customer_portal',
                 'submitted_at' => now()->toIso8601String(),
+                'gateway_collection_preview' => $collectionPreview->toArray(),
             ];
 
-            $isIntegratedFlow = (bool) $channel->is_repayment_integrated;
+            if ($collectionPreview->ready) {
+                $repayment = Repayment::create([
+                    'customer_id' => $customer->id,
+                    'channel_id' => $channel->id,
+                    'repayment_number' => Repayment::generateRepaymentNumber(),
+                    'total_amount' => $repaymentAmount,
+                    'phone_number' => $phoneNumber,
+                    'status' => 'processing',
+                    'status_message' => 'Repayment submitted for gateway collection.',
+                    'metadata' => $metadata,
+                ]);
 
-            $repayment = Repayment::create([
-                'customer_id' => $customer->id,
-                'channel_id' => $channel->id,
-                'repayment_number' => Repayment::generateRepaymentNumber(),
-                'total_amount' => $repaymentAmount,
-                'phone_number' => session('repayment.phone_number'),
-                'status' => $isIntegratedFlow ? 'processing' : 'pending',
-                'status_message' => $isIntegratedFlow
-                    ? 'Repayment submitted for automated processing.'
-                    : 'Repayment submitted and awaiting manual approval.',
-                'metadata' => $metadata,
-            ]);
+                $collectionResult = $this->gatewayCollectionService->initiateForRepayment(
+                    $repayment,
+                    $channel,
+                    $phoneNumber,
+                );
 
-            if (! $isIntegratedFlow) {
-                DB::commit();
-                session()->forget(['repayment.type', 'repayment.loan_id', 'repayment.amount', 'repayment.channel_id', 'repayment.phone_number']);
-
-                return redirect()->route('customer.repayments.success')
-                    ->with('repayment_success', [
-                        'state' => 'manual_pending',
-                        'title' => 'Repayment Submitted',
-                        'subtitle' => 'Your repayment has been submitted for processing.',
-                        'detail' => 'Our team will verify and approve the repayment before balances are updated.',
-                        'repayment_number' => $repayment->repayment_number,
+                if ($collectionResult->status === RepaymentGatewayCollectionStatus::Initiated) {
+                    $repayment->update([
+                        'external_reference' => $collectionResult->reference ?? $repayment->external_reference,
+                        'external_transaction_id' => $collectionResult->transactionId ?? $repayment->external_transaction_id,
+                        'status' => 'processing',
+                        'status_message' => $collectionResult->message,
+                        'metadata' => array_merge($metadata, $collectionResult->gatewayMetadata, [
+                            'gateway_reference' => $collectionResult->reference,
+                            'gateway_transaction_id' => $collectionResult->transactionId,
+                            'gateway_initiated_at' => now()->toIso8601String(),
+                        ]),
                     ]);
-            }
 
-            $paymentResult = $this->repaymentProcessingService->processPayment(
-                $repaymentAmount,
-                $channel,
-                session('repayment.phone_number'),
-                $repayment
-            );
+                    DB::commit();
+                    session()->forget(['repayment.type', 'repayment.loan_id', 'repayment.amount', 'repayment.channel_id', 'repayment.phone_number']);
 
-            if (! $paymentResult['success']) {
+                    return redirect()->route('customer.repayments.success')
+                        ->with('repayment_success', [
+                            'state' => 'provider_prompt',
+                            'title' => 'Payment Prompt Sent',
+                            'subtitle' => 'Approve the payment prompt on your phone to complete this repayment.',
+                            'detail' => 'After provider confirmation, we will update your repayment status and notify you by SMS and email.',
+                            'repayment_number' => $repayment->repayment_number,
+                        ]);
+                }
+
+                if ($collectionResult->status === RepaymentGatewayCollectionStatus::FallbackManual) {
+                    $repayment->update([
+                        'status' => 'pending',
+                        'status_message' => 'Repayment awaiting manual processing after gateway collection could not be initiated.',
+                        'metadata' => array_merge($metadata, [
+                            'submission_mode' => 'customer_portal',
+                            'gateway_collection_fallback' => true,
+                            'gateway_collection_failure' => $collectionResult->message,
+                            'gateway_fallback_at' => now()->toIso8601String(),
+                        ]),
+                    ]);
+
+                    DB::commit();
+                    session()->forget(['repayment.type', 'repayment.loan_id', 'repayment.amount', 'repayment.channel_id', 'repayment.phone_number']);
+
+                    return redirect()->route('customer.repayments.success')
+                        ->with('repayment_success', [
+                            'state' => 'manual_pending',
+                            'title' => 'Repayment Submitted',
+                            'subtitle' => 'Your repayment has been submitted for processing.',
+                            'detail' => $collectionResult->message,
+                            'repayment_number' => $repayment->repayment_number,
+                        ]);
+                }
+
                 $repayment->update([
                     'status' => 'failed',
-                    'status_message' => $paymentResult['message'] ?? 'Payment processing failed',
+                    'status_message' => $collectionResult->message,
                     'metadata' => array_merge($metadata, [
-                        'gateway_response' => $paymentResult,
+                        'gateway_response' => ['message' => $collectionResult->message],
                         'failed_at' => now()->toIso8601String(),
                     ]),
                 ]);
@@ -250,18 +295,18 @@ class RepaymentController extends Controller
                 DB::commit();
 
                 return redirect()->route('customer.repayments.confirm')
-                    ->with('error', $paymentResult['message'] ?? 'Payment processing failed. Please try again or contact support.');
+                    ->with('error', $collectionResult->message);
             }
 
-            $repayment->update([
-                'external_reference' => $paymentResult['reference'] ?? null,
-                'external_transaction_id' => $paymentResult['transaction_id'] ?? null,
-                'status' => 'processing',
-                'status_message' => $paymentResult['message'] ?? 'Payment prompt sent. Please approve to complete processing.',
-                'metadata' => array_merge($metadata, $paymentResult['metadata'] ?? [], [
-                    'gateway_reference' => $paymentResult['reference'] ?? null,
-                    'gateway_transaction_id' => $paymentResult['transaction_id'] ?? null,
-                ]),
+            $repayment = Repayment::create([
+                'customer_id' => $customer->id,
+                'channel_id' => $channel->id,
+                'repayment_number' => Repayment::generateRepaymentNumber(),
+                'total_amount' => $repaymentAmount,
+                'phone_number' => $phoneNumber,
+                'status' => 'pending',
+                'status_message' => 'Repayment submitted and awaiting manual approval.',
+                'metadata' => $metadata,
             ]);
 
             DB::commit();
@@ -269,10 +314,10 @@ class RepaymentController extends Controller
 
             return redirect()->route('customer.repayments.success')
                 ->with('repayment_success', [
-                    'state' => 'provider_prompt',
-                    'title' => 'Payment Prompt Sent',
-                    'subtitle' => 'Approve the payment prompt on your phone to complete this repayment.',
-                    'detail' => 'After provider confirmation, we will update your repayment status and notify you by SMS and email.',
+                    'state' => 'manual_pending',
+                    'title' => 'Repayment Submitted',
+                    'subtitle' => 'Your repayment has been submitted for processing.',
+                    'detail' => 'Our team will verify and approve the repayment before balances are updated.',
                     'repayment_number' => $repayment->repayment_number,
                 ]);
         } catch (\Throwable $e) {

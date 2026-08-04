@@ -219,7 +219,7 @@ class PasswordResetController extends Controller
         }
 
         // Verify security answer (case-insensitive)
-        if (strtolower(trim($customer->security_answer)) !== strtolower(trim($validated['security_answer']))) {
+        if (! $customer->matchesSecurityAnswer($validated['security_answer'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Incorrect security answer. Please try again.',

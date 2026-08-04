@@ -103,10 +103,10 @@ class DisbursementDestinationServiceTest extends TestCase
 
         $validated = $this->service->validate([
             'channel_id' => $channel->id,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
-        $this->assertSame('260978232334', $validated['disbursement_phone_number']);
+        $this->assertSame('260970000000', $validated['disbursement_phone_number']);
     }
 
     public function test_mobile_wallet_validation_rejects_invalid_phone(): void
@@ -205,12 +205,12 @@ class DisbursementDestinationServiceTest extends TestCase
         $walletNormalized = $this->service->normalize(
             $this->service->validate([
                 'channel_id' => $wallet->id,
-                'disbursement_phone_number' => '260978232334',
+                'disbursement_phone_number' => '260970000000',
             ]),
             $wallet
         );
 
-        $this->assertSame('260978232334', $walletNormalized['disbursement_phone_number']);
+        $this->assertSame('260970000000', $walletNormalized['disbursement_phone_number']);
         $this->assertNull($walletNormalized['disbursement_financial_institution_id']);
         $this->assertNull($walletNormalized['disbursement_account_number']);
 
@@ -270,17 +270,17 @@ class DisbursementDestinationServiceTest extends TestCase
     {
         $loan = $this->makeLoan($this->mobileWalletChannel(), [
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
             'disbursement_destination_snapshot' => [
                 'channel_name' => 'MTN Money',
                 'channel_type' => Channel::TYPE_MOBILE_WALLET,
-                'disbursement_phone_number' => '260978232334',
+                'disbursement_phone_number' => '260970000000',
             ],
         ]);
 
         $this->assertTrue($loan->hasMobileWalletDestination());
-        $this->assertSame('MTN Money · 260978232334', $loan->disbursementDestinationLabel());
-        $this->assertStringContainsString('260978232334', $loan->disbursementDestinationSummary());
+        $this->assertSame('MTN Money · 260970000000', $loan->disbursementDestinationLabel());
+        $this->assertStringContainsString('260970000000', $loan->disbursementDestinationSummary());
     }
 
     public function test_loan_helper_summary_works_for_bank_with_masked_account(): void

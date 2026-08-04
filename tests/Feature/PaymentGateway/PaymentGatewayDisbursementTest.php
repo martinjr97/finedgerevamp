@@ -540,7 +540,7 @@ class PaymentGatewayDisbursementTest extends TestCase
             'first_name' => 'Test',
             'last_name' => 'Borrower',
             'email' => 'bor-'.$suffix.'@example.com',
-            'phone' => '260978232334',
+            'phone' => '260970000000',
             'password' => '1234',
             'status' => 'active',
             'approval_status' => 'approved',
@@ -566,7 +566,7 @@ class PaymentGatewayDisbursementTest extends TestCase
         ];
 
         if ($channelType === Channel::TYPE_MOBILE_WALLET) {
-            $loanData['disbursement_phone_number'] = '260978232334';
+            $loanData['disbursement_phone_number'] = '260970000000';
         }
 
         $loan = Loan::create($loanData);

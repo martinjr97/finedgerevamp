@@ -5,7 +5,6 @@
     $maximumLoanTake = $customer->maximum_loan_take ?? 0;
     $hasActiveLoans = $activeLoans->count() > 0;
     $isGroupLoanCustomer = $isGroupLoanCustomer ?? ((string) ($loanProduct?->category ?? '') === 'group_loans');
-    $relationshipManager = $customer->customerGroup?->relationshipManager;
     $primaryCtaClass = 'mt-5 inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-green-300 via-emerald-400 to-teal-400 hover:from-green-400 hover:via-emerald-500 hover:to-teal-500 text-emerald-950 font-bold text-base sm:text-lg px-8 py-4 shadow-[0_10px_28px_rgba(74,222,128,0.45)] hover:shadow-[0_14px_32px_rgba(52,211,153,0.55)] ring-2 ring-white ring-offset-2 ring-offset-purple-700 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]';
 @endphp
 
@@ -124,11 +123,6 @@
                             <p class="text-xs uppercase tracking-wider text-green-700 dark:text-green-300 mb-1 font-semibold">Available for New Loan</p>
                             <p class="text-lg font-bold text-slate-900 dark:text-white">ZMW {{ number_format($availableLoanAmount, 2) }}</p>
                         </div>
-                    @elseif(!empty($loanEligibilityBlockingMessage) && !($isGroupLoanCustomer ?? false))
-                        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
-                            <p class="text-xs uppercase tracking-wider text-amber-700 dark:text-amber-300 mb-1 font-semibold">New loan unavailable</p>
-                            <p class="text-sm text-slate-700 dark:text-slate-200">{{ $loanEligibilityBlockingMessage }}</p>
-                        </div>
                     @endif
                 </div>
             </div>
@@ -151,11 +145,6 @@
                         <p class="text-sm text-slate-600 dark:text-slate-400 mb-1">Maximum Loan Amount</p>
                         <p class="text-3xl font-bold text-blue-700 dark:text-blue-300">ZMW {{ number_format($maximumLoanTake, 2) }}</p>
                     </div>
-                    @if(!empty($loanEligibilityBlockingMessage) && !($isGroupLoanCustomer ?? false))
-                        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
-                            <p class="text-sm text-amber-800 dark:text-amber-200">{{ $loanEligibilityBlockingMessage }}</p>
-                        </div>
-                    @endif
                     @if($loanProduct)
                         <div class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-600 shadow-sm">
                             <p class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 font-semibold">Product Type</p>
@@ -173,61 +162,9 @@
         
         </section>
 
-        {{-- Section: Status + Account in a neat grid --}}
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 pt-0">
-            {{-- Status cards row --}}
-            <div class="grid grid-cols-2 gap-3 md:col-span-2">
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow border border-slate-200 dark:border-slate-600">
-                    <p class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 font-semibold">Status</p>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700">
-                        {{ $customer->status ?? 'Pending' }}
-                    </span>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow border border-slate-200 dark:border-slate-600">
-                    <p class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 font-semibold">KYC Status</p>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200 border border-green-200 dark:border-green-700">
-                        {{ $customer->kyc_status ?? 'Unverified' }}
-                    </span>
-                </div>
-            </div>
-
-            {{-- Account Information --}}
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow border border-slate-200 dark:border-slate-600 md:col-span-2 lg:col-span-1">
-                <h3 class="text-base font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    Account Information
-                </h3>
-                <dl class="space-y-2.5 text-sm">
-                    <div class="flex justify-between gap-2">
-                        <dt class="text-slate-500 dark:text-slate-400">Email</dt>
-                        <dd class="font-medium text-slate-900 dark:text-white truncate" title="{{ $customer->email }}">{{ $customer->email }}</dd>
-                    </div>
-                    <div class="flex justify-between gap-2 border-t border-slate-100 dark:border-slate-700 pt-2.5">
-                        <dt class="text-slate-500 dark:text-slate-400">Phone</dt>
-                        <dd class="font-medium text-slate-900 dark:text-white">{{ $customer->phone ?? '—' }}</dd>
-                    </div>
-                    @if($customer->company)
-                        <div class="flex justify-between gap-2 border-t border-slate-100 dark:border-slate-700 pt-2.5">
-                            <dt class="text-slate-500 dark:text-slate-400">Company</dt>
-                            <dd class="font-medium text-slate-900 dark:text-white">{{ $customer->company->name }}</dd>
-                        </div>
-                    @endif
-                    @if($isGroupLoanCustomer)
-                        <div class="flex justify-between gap-2 border-t border-slate-100 dark:border-slate-700 pt-2.5">
-                            <dt class="text-slate-500 dark:text-slate-400">Relationship Manager</dt>
-                            <dd class="font-medium text-slate-900 dark:text-white text-right">
-                                {{ $relationshipManager?->full_name ?? 'Not assigned' }}
-                                @if($relationshipManager?->phone)
-                                    <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $relationshipManager->phone }}</span>
-                                @endif
-                            </dd>
-                        </div>
-                    @endif
-                </dl>
-            </div>
-
-            {{-- Need Help --}}
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow border border-slate-200 dark:border-slate-600 md:col-span-2 lg:col-span-1 flex flex-col">
+        {{-- Need Help --}}
+        <section class="pt-0">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow border border-slate-200 dark:border-slate-600 flex flex-col">
                 <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
                     <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636A9 9 0 105.636 18.364 9 9 0 0018.364 5.636zM12 8v4m0 4h.01"/></svg>
                     Need Help?

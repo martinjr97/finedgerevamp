@@ -148,8 +148,10 @@ class AuthenticatedSessionController extends Controller
         }
 
         // Redirect to security questions setup if not set
-        if (!$customer->security_question_id || !$customer->security_answer) {
-            return redirect()->route('customer.security-questions.setup');
+        if (! $customer->hasSecurityQuestionConfigured()) {
+            return redirect()
+                ->route('customer.security-questions.setup')
+                ->with('status', 'Please set a security question before continuing.');
         }
 
         return redirect()->intended(route('customer.dashboard'));

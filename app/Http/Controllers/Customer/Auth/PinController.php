@@ -74,6 +74,12 @@ class PinController extends Controller
             'must_change_pin' => false,
         ]);
 
+        if (! $customer->fresh()->hasSecurityQuestionConfigured()) {
+            return redirect()
+                ->route('customer.security-questions.setup')
+                ->with('status', 'Your PIN has been changed successfully. Please set a security question before continuing.');
+        }
+
         return redirect()
             ->route('customer.dashboard')
             ->with('status', 'Your PIN has been changed successfully.');

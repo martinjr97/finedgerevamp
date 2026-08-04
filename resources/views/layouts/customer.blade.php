@@ -66,18 +66,14 @@
                         {{-- Right: FAQ Link, Theme Toggle and Profile Menu --}}
                         <div class="topbar-controls">
                             <div class="topbar-primary-actions">
-                                <a href="{{ route('customer.dashboard') }}" class="topbar-action-link" data-dashboard-link aria-label="Dashboard">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5l9-7 9 7M5.25 9.75V20.25a.75.75 0 00.75.75h4.5a.75.75 0 00.75-.75v-4.5a.75.75 0 01.75-.75h0a.75.75 0 01.75.75v4.5a.75.75 0 00.75.75H18a.75.75 0 00.75-.75V9.75"/>
-                                    </svg>
-                                    <span class="topbar-label">Dashboard</span>
-                                </a>
-                                <a href="{{ route('help.index') }}" class="topbar-action-link" data-help-link aria-label="Help">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10a4 4 0 118 0c0 1.657-1.343 3-3 3h-1v2m0 4h.01"/>
-                                    </svg>
-                                    <span class="topbar-label">Help</span>
-                                </a>
+                                @unless(request()->routeIs('customer.dashboard'))
+                                    <a href="{{ route('customer.dashboard') }}" class="topbar-action-link" data-dashboard-link aria-label="Dashboard">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5l9-7 9 7M5.25 9.75V20.25a.75.75 0 00.75.75h4.5a.75.75 0 00.75-.75v-4.5a.75.75 0 01.75-.75h0a.75.75 0 01.75.75v4.5a.75.75 0 00.75.75H18a.75.75 0 00.75-.75V9.75"/>
+                                        </svg>
+                                        <span class="topbar-label">Dashboard</span>
+                                    </a>
+                                @endunless
                                 <a href="{{ route('customer.notifications') }}" class="topbar-action-link" aria-label="Notifications">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0H9"/>
@@ -266,7 +262,7 @@
                     });
                 }
 
-                const helpButton = document.querySelector('[data-help-link]');
+                const helpButton = document.querySelector('.floating-help-button');
                 if (helpButton) {
                     steps.push({
                         element: helpButton,

@@ -58,7 +58,7 @@ class RepaymentWorkflowTest extends TestCase
 
     private function makeCustomer(Company $company, LoanProduct $loanProduct, string $suffix): Customer
     {
-        return Customer::create([
+        return $this->withCustomerSecurityQuestion(Customer::create([
             'company_id' => $company->id,
             'loan_product_id' => $loanProduct->id,
             'first_name' => 'Repayment',
@@ -69,7 +69,7 @@ class RepaymentWorkflowTest extends TestCase
             'status' => 'active',
             'approval_status' => 'approved',
             'must_change_pin' => false,
-        ]);
+        ]));
     }
 
     private function makeLoan(
@@ -170,6 +170,72 @@ class RepaymentWorkflowTest extends TestCase
         $this->assertNotNull($repayment);
         $this->assertSame('pending', $repayment->status);
         $this->assertDatabaseCount('loan_repayments', 0);
+
+        $loan->refresh();
+        $this->assertSame(1500.0, (float) $loan->outstanding_balance);
+        $this->assertSame(0.0, (float) $loan->amount_paid);
+    }
+
+    public function test_customer_submission_initiates_gateway_collection_when_wallet_route_ready(): void
+    {
+        $suffix = Str::lower(Str::random(6));
+        $company = $this->makeCompany($suffix);
+        $loanProduct = $this->makeLoanProduct($company, $suffix);
+
+        $channel = Channel::create([
+            'name' => 'Airtel Portal '.$suffix,
+            'code' => 'AIRTEL-P-'.$suffix,
+            'type' => Channel::TYPE_MOBILE_WALLET,
+            'can_disburse' => true,
+            'can_repay' => true,
+            'is_repayment_integrated' => false,
+            'is_active' => true,
+        ]);
+
+        $this->seed(CGratePaymentGatewaySeeder::class);
+        $this->seedPaymentGatewayRoutes();
+        config(['cgrate.enabled' => true]);
+
+        $wallet = Wallet::create([
+            'name' => 'cGrate Wallet '.$suffix,
+            'wallet_number' => '260955'.random_int(100000, 999999),
+            'provider' => 'other',
+            'currency' => 'ZMW',
+            'opening_balance' => 0,
+            'current_balance' => 0,
+            'is_active' => true,
+        ]);
+
+        $gateway = PaymentGateway::query()->where('code', 'cgrate')->firstOrFail();
+        $gateway->update([
+            'status' => PaymentGatewayStatus::Active,
+            'financial_account_type' => FinancialAccountType::Wallet,
+            'financial_account_id' => $wallet->id,
+        ]);
+        $this->enablePaymentGatewayRoute(GatewayRouteKey::WalletCollection, $gateway->id);
+
+        $customer = $this->makeCustomer($company, $loanProduct, $suffix);
+        $loan = $this->makeLoan($customer, $loanProduct, $channel, 1500);
+
+        $response = $this->actingAs($customer, 'customer')
+            ->withSession([
+                'repayment.type' => 'full',
+                'repayment.channel_id' => $channel->id,
+                'repayment.phone_number' => $customer->phone,
+            ])
+            ->post(route('customer.repayments.process'));
+
+        $response->assertRedirect(route('customer.repayments.success'));
+        $response->assertSessionHas('repayment_success.state', 'provider_prompt');
+
+        $repayment = Repayment::query()->latest('id')->first();
+        $this->assertNotNull($repayment);
+        $this->assertSame('processing', $repayment->status);
+        $this->assertSame('gateway_collection', $repayment->metadata['submission_mode'] ?? null);
+        $this->assertDatabaseHas('payment_gateway_attempts', [
+            'attemptable_type' => Repayment::class,
+            'attemptable_id' => $repayment->id,
+        ]);
 
         $loan->refresh();
         $this->assertSame(1500.0, (float) $loan->outstanding_balance);

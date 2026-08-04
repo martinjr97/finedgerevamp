@@ -25,7 +25,7 @@ class DevRepaymentResumeSeeder extends Seeder
 {
     public const CUSTOMER_EMAIL = 'dev.repayment@finedge.co.zm';
 
-    public const CUSTOMER_PHONE = '260978232334';
+    public const CUSTOMER_PHONE = '260970000000';
 
     public const CUSTOMER_PIN = '1234';
 

@@ -74,21 +74,21 @@ class CustomerDisbursementDestinationPhaseETest extends TestCase
             'allow_multiple_loans' => true,
         ]);
 
-        $customer = Customer::create([
+        $customer = $this->withCustomerSecurityQuestion(Customer::create([
             'company_id' => $company->id,
             'loan_product_id' => $product->id,
             'customer_group_id' => $group->id,
             'first_name' => 'Borrower',
             'last_name' => 'Test',
             'email' => 'cust-phase-e-'.$suffix.'@example.com',
-            'phone' => '260978232334',
+            'phone' => '260970000000',
             'password' => '1234',
             'tpin' => (string) random_int(10000000, 99999999),
             'maximum_loan_take' => 50000,
             'net_salary' => 20000,
             'status' => 'active',
             'approval_status' => 'approved',
-        ]);
+        ]));
 
         return compact('customer', 'product', 'loanRate', 'group');
     }
@@ -180,7 +180,7 @@ class CustomerDisbursementDestinationPhaseETest extends TestCase
 
         $response->assertRedirect(route('customer.loans.calculate'));
         $this->assertTrue(session('loan_application.destination_validated'));
-        $this->assertSame('260978232334', session('loan_application.disbursement_phone_number'));
+        $this->assertSame('260970000000', session('loan_application.disbursement_phone_number'));
     }
 
     public function test_bank_requires_institution_branch_holder_and_account(): void
@@ -309,7 +309,7 @@ class CustomerDisbursementDestinationPhaseETest extends TestCase
         $channel = $this->channel(Channel::TYPE_MOBILE_WALLET, Str::upper(Str::random(4)));
 
         $session = $this->loanApplicationSession($context, $channel, [
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ], [
             'loan_application.tenure_months' => 3,
             'loan_application.loan_rate_id' => $context['loanRate']->id,
@@ -321,7 +321,7 @@ class CustomerDisbursementDestinationPhaseETest extends TestCase
 
         $loan = Loan::query()->latest('id')->first();
         $this->assertIsArray($loan->disbursement_destination_snapshot);
-        $this->assertSame('260978232334', $loan->disbursement_destination_snapshot['disbursement_phone_number'] ?? null);
+        $this->assertSame('260970000000', $loan->disbursement_destination_snapshot['disbursement_phone_number'] ?? null);
     }
 
     public function test_legacy_mobile_wallet_only_loan_still_renders_summary(): void
@@ -346,10 +346,10 @@ class CustomerDisbursementDestinationPhaseETest extends TestCase
             'accrual_type' => 'daily',
             'status' => 'pending_approval',
             'disbursement_status' => 'pending',
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
 
-        $this->assertStringContainsString('260978232334', $loan->disbursementDestinationSummary());
+        $this->assertStringContainsString('260970000000', $loan->disbursementDestinationSummary());
         $this->assertTrue($loan->hasMobileWalletDestination());
     }
 
@@ -453,20 +453,20 @@ class CustomerDisbursementDestinationPhaseETest extends TestCase
             'allow_multiple_loans' => true,
         ]);
 
-        $customer = Customer::create([
+        $customer = $this->withCustomerSecurityQuestion(Customer::create([
             'company_id' => $company->id,
             'loan_product_id' => $product->id,
             'customer_group_id' => $group->id,
             'first_name' => 'Collateral',
             'last_name' => 'Borrower',
             'email' => 'coll-borrower-'.$suffix.'@example.com',
-            'phone' => '260978232334',
+            'phone' => '260970000000',
             'password' => '1234',
             'tpin' => (string) random_int(10000000, 99999999),
             'maximum_loan_take' => 50000,
             'status' => 'active',
             'approval_status' => 'approved',
-        ]);
+        ]));
 
         $collateralType = \App\Models\CollateralType::create([
             'loan_product_id' => $product->id,

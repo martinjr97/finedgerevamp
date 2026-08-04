@@ -79,7 +79,7 @@ class SharedPaymentDetailsDetectionTest extends TestCase
             'first_name' => 'Alice',
             'last_name' => 'One',
             'email' => 'alice.'.$suffix.'@example.com',
-            'phone' => '260978232334',
+            'phone' => '260970000000',
             'password' => '1234',
             'tpin' => (string) random_int(10000000, 99999999),
             'maximum_loan_take' => 50000,

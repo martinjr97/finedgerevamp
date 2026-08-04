@@ -22,7 +22,8 @@
                 : asset('img/' . ltrim($authSideImage, '/')));
     }
     $authUseSidePanel = filled($authSideImageUrl);
-    $authBackgroundImage = $backgroundImage ?? ($authUseSidePanel ? null : 'login.jpg');
+    // Keep the same photo backdrop as customer login; side panel is additive, not a solid-blue swap.
+    $authBackgroundImage = $backgroundImage ?? 'login.jpg';
     $authBackgroundUrl = filled($authBackgroundImage)
         ? (Str::startsWith($authBackgroundImage, ['http://', 'https://', '//'])
             ? $authBackgroundImage
@@ -33,6 +34,7 @@
     $authOverlayClass = $authOverlayClass ?? 'bg-white/20';
     $authHeaderClass = $authHeaderClass ?? 'from-[#151B54] via-[#151B54] to-[#151B54] border-white/10';
     $isRegistrationFlow = request()->routeIs('customer.register-request*');
+    $authContainerClassProvided = isset($authContainerClass);
     $authContainerClass = $authContainerClass ?? (
         $isRegistrationFlow
             ? 'w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl'
@@ -44,14 +46,8 @@
     $authHeadingClass = $authHeadingClass ?? 'text-slate-900';
     $authSubheadingClass = $authSubheadingClass ?? 'text-slate-600';
     $authPageClass = $authPageClass ?? 'auth-page';
-    if ($authUseSidePanel && ! str_contains($authPageClass, 'customer-auth-page')) {
-        $authPageClass .= ' customer-auth-page';
-    }
-    if ($authUseSidePanel) {
-        $authOverlayClass = $authOverlayClass ?? 'bg-transparent';
-        if (! $isRegistrationFlow) {
-            $authContainerClass = $authContainerClass ?? 'max-w-6xl';
-        }
+    if ($authUseSidePanel && ! $isRegistrationFlow && ! $authContainerClassProvided) {
+        $authContainerClass = 'max-w-6xl';
     }
     $authBackgroundStyle = $authBackgroundStyle ?? 'background-position: center; background-size: cover; background-repeat: no-repeat;';
 @endphp
@@ -120,7 +116,7 @@
                     </div>
                 @endif
 
-                <div class="w-full @if($authUseSidePanel && ! $isRegistrationFlow) lg:max-w-md lg:justify-self-end xl:justify-self-center @endif">
+                <div class="w-full @if($authUseSidePanel && ! $isRegistrationFlow) lg:max-w-lg xl:max-w-xl lg:justify-self-end xl:justify-self-center @endif">
                 @hasSection('auth_top')
                     <div class="mb-4 sm:mb-5">
                         @yield('auth_top')

@@ -23,7 +23,7 @@ class PasswordResetController extends Controller
     public function showForgotPasswordForm(): View
     {
         return view('customer.auth.forgot-password', [
-            'authSideImage' => 'homepage.png',
+            'authSideImage' => 'customer-view.png',
             'brandColor' => 'text-emerald-600',
         ]);
     }
@@ -135,7 +135,7 @@ class PasswordResetController extends Controller
         return view('customer.auth.verify-otp', [
             'phone' => $phone,
             'national_id' => $nationalId,
-            'authSideImage' => 'homepage.png',
+            'authSideImage' => 'customer-view.png',
             'brandColor' => 'text-emerald-600',
         ]);
     }
@@ -238,7 +238,7 @@ class PasswordResetController extends Controller
             'national_id' => $nationalId,
             'customer' => $customer,
             'securityQuestion' => $customer->securityQuestion,
-            'authSideImage' => 'homepage.png',
+            'authSideImage' => 'customer-view.png',
             'brandColor' => 'text-emerald-600',
         ]);
     }
@@ -279,7 +279,7 @@ class PasswordResetController extends Controller
         }
 
         // Verify security answer (case-insensitive)
-        if (strtolower(trim($customer->security_answer)) !== strtolower(trim($request->security_answer))) {
+        if (! $customer->matchesSecurityAnswer($request->security_answer)) {
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Incorrect security answer. Please try again.');
@@ -319,7 +319,7 @@ class PasswordResetController extends Controller
             'token' => $token,
             'phone' => $phone,
             'national_id' => $nationalId,
-            'authSideImage' => 'homepage.png',
+            'authSideImage' => 'customer-view.png',
             'brandColor' => 'text-emerald-600',
         ]);
     }

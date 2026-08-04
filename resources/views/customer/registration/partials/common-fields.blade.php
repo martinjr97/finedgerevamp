@@ -21,7 +21,7 @@
             <label for="phone" class="block text-sm font-medium text-slate-800">Mobile number <span class="text-red-500">*</span></label>
             <input type="text" name="phone" id="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" required
                 class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500/25 zambian-phone-input"
-                placeholder="260978232334">
+                placeholder="260970000000">
             @error('phone')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
         </div>
         <div>

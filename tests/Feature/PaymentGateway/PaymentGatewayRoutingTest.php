@@ -315,7 +315,7 @@ class PaymentGatewayRoutingTest extends TestCase
             'first_name' => 'Test',
             'last_name' => 'Borrower',
             'email' => 'bor-'.$suffix.'@example.com',
-            'phone' => '260978232334',
+            'phone' => '260970000000',
             'password' => '1234',
             'status' => 'active',
             'approval_status' => 'approved',
@@ -338,7 +338,7 @@ class PaymentGatewayRoutingTest extends TestCase
             'status' => 'approved',
             'disbursement_status' => 'pending',
             'disbursement_channel_type' => Channel::TYPE_MOBILE_WALLET,
-            'disbursement_phone_number' => '260978232334',
+            'disbursement_phone_number' => '260970000000',
         ]);
     }
 

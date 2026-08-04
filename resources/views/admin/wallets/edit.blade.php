@@ -24,7 +24,8 @@
 
                 <div>
                     <label class="text-sm font-medium text-slate-300">Wallet Number <span class="text-rose-400">*</span></label>
-                    <input type="text" name="wallet_number" value="{{ old('wallet_number', $wallet->wallet_number) }}" required placeholder="e.g., MTN-26000936165" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
+                    <input type="text" name="wallet_number" value="{{ old('wallet_number', $wallet->wallet_number) }}" required maxlength="100" placeholder="e.g., 56654651 or 543-1223234M" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
+                    <p class="mt-1 text-xs text-slate-400">Accepts gateway wallet IDs or mobile numbers (letters, digits, and - _ / .).</p>
                     @error('wallet_number')
                         <p class="mt-1 text-sm text-rose-400">{{ $message }}</p>
                     @enderror

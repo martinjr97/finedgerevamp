@@ -20,7 +20,7 @@ class ZambianPhoneValidationTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const VALID_PHONE = '260978232334';
+    private const VALID_PHONE = '260970000000';
 
     private function admin(array $permissions): Admin
     {

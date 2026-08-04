@@ -123,8 +123,8 @@
                                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                         Select Loan
                                     </label>
-                                    <select name="loan_id" class="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition">
-                                        <option value="">All Loans (Nearest Due First)</option>
+                                    <select name="loan_id" id="loan_id" class="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition">
+                                        <option value="" data-balance="{{ number_format((float) $totalOutstandingBalance, 2, '.', '') }}">All Loans (Nearest Due First)</option>
                                         @foreach($activeLoans as $loan)
                                             <option value="{{ $loan->id }}" data-balance="{{ number_format((float) $loan->outstanding_balance, 2, '.', '') }}" @if(old('loan_id') == $loan->id) selected @endif>
                                                 {{ $loan->loan_number }} - ZMW {{ number_format($loan->outstanding_balance, 2) }}
@@ -141,7 +141,7 @@
                                         <input type="number" 
                                                name="amount" 
                                                id="amount"
-                                               value="{{ old('amount') }}"
+                                               value="{{ old('amount', old('repayment_type') === 'partial' ? number_format($partialMaxAmount, 2, '.', '') : '') }}"
                                                min="0.01" 
                                                max="{{ number_format($partialMaxAmount, 2, '.', '') }}"
                                                step="0.01"
@@ -234,24 +234,37 @@
             const repaymentTypeRadios = document.querySelectorAll('input[name="repayment_type"]');
             const partialPaymentFields = document.getElementById('partialPaymentFields');
             const amountInput = document.getElementById('amount');
-            const loanSelect = document.querySelector('select[name="loan_id"]');
+            const loanSelect = document.getElementById('loan_id') || document.querySelector('select[name="loan_id"]');
             const amountMaxText = document.getElementById('amountMaxText');
             const overallOutstanding = {{ (float) $totalOutstandingBalance }};
+            const hadOldAmount = @json(old('amount') !== null && old('amount') !== '');
 
-            function updateAmountLimit() {
-                if (!amountInput || !loanSelect) {
-                    return;
+            function resolveSelectedBalance() {
+                if (!loanSelect) {
+                    return overallOutstanding;
                 }
 
                 const selectedOption = loanSelect.options[loanSelect.selectedIndex];
                 const selectedBalance = parseFloat(selectedOption?.dataset?.balance ?? '');
-                const maxAllowed = Number.isFinite(selectedBalance) ? selectedBalance : overallOutstanding;
 
+                return Number.isFinite(selectedBalance) ? selectedBalance : overallOutstanding;
+            }
+
+            function updateAmountLimit({ autofill = false } = {}) {
+                if (!amountInput) {
+                    return;
+                }
+
+                const maxAllowed = resolveSelectedBalance();
                 amountInput.max = maxAllowed.toFixed(2);
 
-                const currentValue = parseFloat(amountInput.value);
-                if (Number.isFinite(currentValue) && currentValue > maxAllowed) {
+                if (autofill) {
                     amountInput.value = maxAllowed.toFixed(2);
+                } else {
+                    const currentValue = parseFloat(amountInput.value);
+                    if (Number.isFinite(currentValue) && currentValue > maxAllowed) {
+                        amountInput.value = maxAllowed.toFixed(2);
+                    }
                 }
 
                 if (amountMaxText) {
@@ -267,7 +280,7 @@
                     if (this.value === 'partial') {
                         partialPaymentFields.classList.remove('hidden');
                         amountInput.required = true;
-                        updateAmountLimit();
+                        updateAmountLimit({ autofill: true });
                     } else {
                         partialPaymentFields.classList.add('hidden');
                         amountInput.required = false;
@@ -276,16 +289,25 @@
                 });
             });
 
-            loanSelect?.addEventListener('change', updateAmountLimit);
-            updateAmountLimit();
+            loanSelect?.addEventListener('change', function() {
+                updateAmountLimit({ autofill: true });
+            });
 
-            // Validate amount input
+            const partialSelected = document.querySelector('input[name="repayment_type"][value="partial"]')?.checked;
+            if (partialSelected) {
+                amountInput.required = true;
+                updateAmountLimit({ autofill: !hadOldAmount });
+            } else {
+                updateAmountLimit({ autofill: false });
+            }
+
+            // Keep typed amount within the selected loan/total maximum
             if (amountInput) {
                 amountInput.addEventListener('input', function(e) {
-                    const maxAmount = parseFloat(e.target.max || '{{ number_format((float) $totalOutstandingBalance, 2, '.', '') }}');
+                    const maxAmount = parseFloat(e.target.max || String(overallOutstanding));
                     const value = parseFloat(e.target.value);
-                    if (value > maxAmount) {
-                        e.target.value = maxAmount;
+                    if (Number.isFinite(value) && value > maxAmount) {
+                        e.target.value = maxAmount.toFixed(2);
                     }
                 });
             }

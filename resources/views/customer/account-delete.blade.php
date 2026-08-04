@@ -104,7 +104,7 @@
 
             <div class="space-y-1.5">
                 <label class="text-sm font-medium text-slate-800" for="phone">Phone number</label>
-                <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260978232334" required>
+                <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260970000000" required>
                 @error('phone')
                     <p class="text-xs text-red-600">{{ $message }}</p>
                 @enderror

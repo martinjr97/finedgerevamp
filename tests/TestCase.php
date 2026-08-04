@@ -2,11 +2,33 @@
 
 namespace Tests;
 
+use App\Models\Customer;
+use App\Models\SecurityQuestion;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
 {
+    /**
+     * Attach an active security question so customer portal middleware allows access.
+     */
+    protected function withCustomerSecurityQuestion(Customer $customer, string $answer = 'test-answer'): Customer
+    {
+        $question = SecurityQuestion::query()->where('is_active', true)->first()
+            ?? SecurityQuestion::query()->create([
+                'question' => 'What is your favorite meal?',
+                'is_active' => true,
+                'sort_order' => 1,
+            ]);
+
+        $customer->forceFill([
+            'security_question_id' => $question->id,
+            'security_answer' => $answer,
+        ])->save();
+
+        return $customer->fresh();
+    }
+
     protected function setUp(): void
     {
         $this->assertUsesDedicatedTestDatabaseFromEnv();

@@ -68,7 +68,7 @@ class CustomerGroupLoanPortalAccessTest extends TestCase
             'allow_multiple_loans' => false,
         ]);
 
-        $customer = Customer::create([
+        $customer = $this->withCustomerSecurityQuestion(Customer::create([
             'company_id' => $company->id,
             'loan_product_id' => $loanProduct->id,
             'customer_group_id' => $customerGroup->id,
@@ -81,7 +81,7 @@ class CustomerGroupLoanPortalAccessTest extends TestCase
             'approval_status' => 'approved',
             'maximum_loan_take' => 30000,
             'must_change_pin' => false,
-        ]);
+        ]));
 
         return [
             'customer' => $customer,
