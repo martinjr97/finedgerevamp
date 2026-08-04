@@ -91,6 +91,28 @@ class FinancialInstitutionController extends Controller
         }
     }
 
+    public function bulkStatus(Request $request): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('financial-institutions.update'), 403);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:financial_institutions,id'],
+            'action' => ['required', 'in:activate,deactivate'],
+        ]);
+
+        $isActive = $data['action'] === 'activate';
+        $updated = FinancialInstitution::query()
+            ->whereIn('id', $data['ids'])
+            ->update(['is_active' => $isActive]);
+
+        $label = $isActive ? 'activated' : 'deactivated';
+
+        return redirect()
+            ->route('admin.financial-institutions.index')
+            ->with('status', "{$updated} financial institution(s) {$label}.");
+    }
+
     public function branches(FinancialInstitution $financialInstitution): View
     {
         abort_unless(auth('admin')->user()?->can('financial-institutions.view'), 403);

@@ -62,6 +62,30 @@ class AdminFinancialInstitutionManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Financial Institutions');
         $response->assertSee('Test Bank');
+        $response->assertDontSee('name="ids[]"', false);
+        $response->assertDontSee('Activate selected', false);
+    }
+
+    public function test_index_shows_bulk_controls_when_user_can_update(): void
+    {
+        $admin = $this->adminWithPermissions([
+            'financial-institutions.view',
+            'financial-institutions.update',
+        ]);
+
+        FinancialInstitution::create([
+            'name' => 'Selectable Bank',
+            'code' => 'SEL',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.financial-institutions.index'))
+            ->assertOk()
+            ->assertSee('Activate selected', false)
+            ->assertSee('Deactivate selected', false)
+            ->assertSee('name="ids[]"', false)
+            ->assertSee('id="select_all_institutions"', false);
     }
 
     public function test_admin_can_create_institution_and_add_branch(): void
@@ -160,6 +184,66 @@ class AdminFinancialInstitutionManagementTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.financial-institutions.branches.edit', [$institutionA, $branchOnB]))
             ->assertNotFound();
+    }
+
+    public function test_admin_can_bulk_activate_and_deactivate_institutions(): void
+    {
+        $admin = $this->adminWithPermissions([
+            'financial-institutions.view',
+            'financial-institutions.update',
+        ]);
+
+        $active = FinancialInstitution::create([
+            'name' => 'Active Bank',
+            'code' => 'ACT',
+            'is_active' => true,
+        ]);
+        $inactive = FinancialInstitution::create([
+            'name' => 'Inactive Bank',
+            'code' => 'INACT',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.financial-institutions.bulk-status'), [
+                'ids' => [$active->id, $inactive->id],
+                'action' => 'deactivate',
+            ])
+            ->assertRedirect(route('admin.financial-institutions.index'))
+            ->assertSessionHas('status');
+
+        $this->assertFalse($active->fresh()->is_active);
+        $this->assertFalse($inactive->fresh()->is_active);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.financial-institutions.bulk-status'), [
+                'ids' => [$active->id, $inactive->id],
+                'action' => 'activate',
+            ])
+            ->assertRedirect(route('admin.financial-institutions.index'));
+
+        $this->assertTrue($active->fresh()->is_active);
+        $this->assertTrue($inactive->fresh()->is_active);
+    }
+
+    public function test_bulk_status_requires_update_permission(): void
+    {
+        $admin = $this->adminWithPermissions(['financial-institutions.view']);
+
+        $institution = FinancialInstitution::create([
+            'name' => 'Permission Bank',
+            'code' => 'PERM',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.financial-institutions.bulk-status'), [
+                'ids' => [$institution->id],
+                'action' => 'deactivate',
+            ])
+            ->assertForbidden();
+
+        $this->assertTrue($institution->fresh()->is_active);
     }
 
     public function test_guest_cannot_access_financial_institutions(): void

@@ -327,6 +327,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('financial-institutions/{financial_institution}/branches', [FinancialInstitutionController::class, 'storeBranch'])->name('financial-institutions.branches.store');
         Route::get('financial-institutions/{financial_institution}/branches/{branch}/edit', [FinancialInstitutionController::class, 'editBranch'])->name('financial-institutions.branches.edit');
         Route::put('financial-institutions/{financial_institution}/branches/{branch}', [FinancialInstitutionController::class, 'updateBranch'])->name('financial-institutions.branches.update');
+        Route::post('financial-institutions/bulk-status', [FinancialInstitutionController::class, 'bulkStatus'])->name('financial-institutions.bulk-status');
         Route::resource('financial-institutions', FinancialInstitutionController::class)->except(['show', 'destroy']);
         Route::resource('faqs', FaqController::class)->except(['show', 'destroy']);
         Route::get('backups', [BackupController::class, 'index'])->name('backups.index');

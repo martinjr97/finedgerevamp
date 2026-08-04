@@ -1042,6 +1042,24 @@ body[data-theme="dark"] .content-area .status-pill-approved,
 body[data-theme="dark"] .content-area .status-pill-approved * {
     color: #fdba74 !important;
 }
+.status-pill-inactive {
+    background: #ffe4e6 !important;
+    border: 1px solid #f43f5e !important;
+    color: #be123c !important;
+}
+.content-area .status-pill-inactive,
+.content-area .status-pill-inactive * {
+    color: #be123c !important;
+}
+body[data-theme="dark"] .status-pill-inactive {
+    background: rgba(244, 63, 94, 0.22) !important;
+    border-color: #fb7185 !important;
+    color: #fda4af !important;
+}
+body[data-theme="dark"] .content-area .status-pill-inactive,
+body[data-theme="dark"] .content-area .status-pill-inactive * {
+    color: #fda4af !important;
+}
 
 /* Gateway routing premium toggles (green on / red off) */
 .gateway-toggle {
@@ -1265,6 +1283,312 @@ table tbody tr:hover {
 .sort-indicator .sort-down {
     color: var(--color-primary);
     opacity: 0.5;
+}
+
+/* ---------- Scoped admin data table (opt-in via .admin-data-table) ---------- */
+/* simple-datatables v9 uses lowercase .datatable-*; keep camelCase aliases for safety. */
+.admin-data-table {
+    border: 1px solid var(--brand-border);
+    border-radius: 1rem;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    overflow: hidden;
+}
+.admin-data-table .datatable-wrapper,
+.admin-data-table .dataTable-wrapper {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+}
+.admin-data-table .datatable-top,
+.admin-data-table .dataTable-top {
+    float: none;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--brand-border);
+    background: var(--color-surface);
+}
+.admin-data-table .datatable-top::after,
+.admin-data-table .dataTable-top::after {
+    display: none;
+    content: none;
+}
+.admin-data-table .admin-table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+}
+.admin-data-table .admin-table-toolbar__left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+.admin-data-table .admin-table-toolbar__right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-left: auto;
+    flex: 0 0 auto;
+}
+.admin-data-table .admin-table-length,
+.admin-data-table .datatable-dropdown,
+.admin-data-table .dataTable-dropdown {
+    float: none;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+.admin-data-table .admin-table-length__label,
+.admin-data-table .datatable-dropdown label,
+.admin-data-table .dataTable-dropdown label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-muted) !important;
+    white-space: nowrap;
+}
+.admin-data-table .admin-table-bulk-actions,
+.admin-data-table .admin-data-table__bulk {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+.admin-data-table .admin-table-bulk-actions[hidden],
+.admin-data-table [data-admin-table-bulk][hidden],
+.admin-data-table [hidden] {
+    display: none !important;
+}
+.admin-data-table .datatable-search,
+.admin-data-table .dataTable-search {
+    float: none;
+    display: block;
+    margin: 0;
+    width: auto;
+}
+.admin-data-table .datatable-input,
+.admin-data-table .dataTable-input,
+.admin-data-table .datatable-selector,
+.admin-data-table .dataTable-selector {
+    min-height: 2.25rem;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.875rem;
+    border-radius: 0.65rem;
+}
+.admin-data-table .datatable-input,
+.admin-data-table .dataTable-input {
+    width: 16.5rem;
+    max-width: 18.75rem;
+    min-width: 14.5rem;
+}
+.admin-data-table .datatable-container,
+.admin-data-table .dataTable-container {
+    overflow-x: auto;
+}
+.admin-data-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+.admin-data-table thead th {
+    background: var(--color-surface-alt);
+    color: var(--color-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid var(--brand-border);
+    border-right: 1px solid rgba(0, 0, 0, 0.04);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.admin-data-table thead th:last-child {
+    border-right: 0;
+}
+.admin-data-table tbody td {
+    padding: 0.55rem 0.75rem;
+    font-size: 0.875rem;
+    border-top: 1px solid var(--brand-border);
+    border-right: 1px solid rgba(0, 0, 0, 0.03);
+    vertical-align: middle;
+    color: var(--color-primary);
+}
+.admin-data-table tbody td:last-child {
+    border-right: 0;
+}
+.admin-data-table tbody tr:hover {
+    background: var(--color-surface-alt);
+}
+.admin-data-table .admin-data-table__check {
+    width: 2.5rem;
+    text-align: center;
+}
+.admin-data-table .admin-data-table__actions {
+    white-space: nowrap;
+}
+.admin-data-table .admin-data-table__actions .inline-flex {
+    flex-wrap: nowrap;
+}
+.admin-data-table .datatable-bottom,
+.admin-data-table .dataTable-bottom,
+.admin-data-table .datatable-pagination,
+.admin-data-table .dataTable-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--brand-border);
+    background: var(--color-surface);
+    float: none;
+}
+.admin-data-table .datatable-info,
+.admin-data-table .dataTable-info {
+    order: 1;
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--color-muted) !important;
+}
+.admin-data-table .datatable-pagination ul,
+.admin-data-table .dataTable-pagination ul,
+.admin-data-table nav.datatable-pagination,
+.admin-data-table nav.dataTable-pagination,
+.admin-data-table .datatable-pagination-list {
+    order: 2;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0 0 0 auto;
+    padding: 0;
+    list-style: none;
+    float: none;
+}
+.admin-data-table .datatable-pagination li,
+.admin-data-table .dataTable-pagination li {
+    display: inline-flex;
+    float: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.admin-data-table .datatable-pagination a,
+.admin-data-table .dataTable-pagination a,
+.admin-data-table .datatable-pagination button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    float: none;
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.8125rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+}
+.admin-data-table .datatable-pagination a:focus-visible,
+.admin-data-table .dataTable-pagination a:focus-visible,
+.admin-data-table .datatable-input:focus-visible,
+.admin-data-table .dataTable-input:focus-visible,
+.admin-data-table .datatable-selector:focus-visible,
+.admin-data-table .dataTable-selector:focus-visible,
+.admin-data-table .admin-table-bulk-actions select:focus-visible,
+.admin-data-table .admin-table-bulk-actions button:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+}
+.admin-data-table .sort-indicator {
+    display: inline-flex;
+    flex-direction: column;
+    margin-left: 0.35rem;
+    line-height: 1;
+    vertical-align: middle;
+    pointer-events: none;
+}
+.admin-data-table .sort-indicator .sort-up,
+.admin-data-table .sort-indicator .sort-down {
+    font-size: 0.55rem;
+    opacity: 0.35;
+}
+.admin-data-table th[aria-sort="ascending"] .sort-up,
+.admin-data-table th.datatable-ascending .sort-up,
+.admin-data-table th.dataTable-ascending .sort-up,
+.admin-data-table th.asc .sort-up {
+    opacity: 1;
+}
+.admin-data-table th[aria-sort="descending"] .sort-down,
+.admin-data-table th.datatable-descending .sort-down,
+.admin-data-table th.dataTable-descending .sort-down,
+.admin-data-table th.desc .sort-down {
+    opacity: 1;
+}
+@media (max-width: 768px) {
+    .admin-data-table .admin-table-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .admin-data-table .admin-table-toolbar__right {
+        margin-left: 0;
+        width: 100%;
+    }
+    .admin-data-table .datatable-search,
+    .admin-data-table .dataTable-search,
+    .admin-data-table .datatable-input,
+    .admin-data-table .dataTable-input {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+    }
+    .admin-data-table .datatable-bottom,
+    .admin-data-table .dataTable-bottom,
+    .admin-data-table .datatable-pagination,
+    .admin-data-table .dataTable-pagination {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .admin-data-table .datatable-pagination ul,
+    .admin-data-table .dataTable-pagination ul,
+    .admin-data-table nav.datatable-pagination,
+    .admin-data-table nav.dataTable-pagination,
+    .admin-data-table .datatable-pagination-list {
+        margin-left: 0;
+        justify-content: flex-start;
+    }
+}
+body[data-theme="dark"] .admin-data-table,
+body[data-theme="dark"] .admin-data-table .datatable-top,
+body[data-theme="dark"] .admin-data-table .dataTable-top,
+body[data-theme="dark"] .admin-data-table .datatable-bottom,
+body[data-theme="dark"] .admin-data-table .dataTable-bottom,
+body[data-theme="dark"] .admin-data-table .datatable-pagination,
+body[data-theme="dark"] .admin-data-table .dataTable-pagination {
+    background: var(--color-primary);
+    color: var(--color-surface);
+}
+body[data-theme="dark"] .admin-data-table thead th {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-surface);
+}
+body[data-theme="dark"] .admin-data-table tbody td {
+    color: var(--color-surface);
+}
+body[data-theme="dark"] .admin-data-table .datatable-info,
+body[data-theme="dark"] .admin-data-table .dataTable-info {
+    color: rgba(255, 255, 255, 0.7) !important;
 }
 .ts-wrapper {
     width: 100%;

@@ -561,10 +561,21 @@
                         return value !== 'false';
                     };
 
+                    const qs = (root, selectors) => {
+                        for (const selector of selectors) {
+                            const el = root.querySelector(selector);
+                            if (el) return el;
+                        }
+                        return null;
+                    };
+
                     document.querySelectorAll('[data-datatable]').forEach((table) => {
                         if (table.dataset.datatableInit === 'true') {
                             return;
                         }
+
+                        const adminTableRoot = table.closest('.admin-data-table');
+                        const isAdminDataTable = Boolean(adminTableRoot);
 
                         const perPage = parseInt(table.dataset.datatablePerPage ?? '10', 10);
                         const perPageSelect = (table.dataset.datatablePerPageSelect ?? '10,25,50,100')
@@ -572,373 +583,135 @@
                             .map((value) => parseInt(value.trim(), 10))
                             .filter(Number.isFinite);
 
-                        // Check if Actions column should be excluded from sorting
-                        const actionsColumnIndex = Array.from(table.querySelectorAll('thead th')).findIndex(th => {
-                            const text = th.textContent.trim().toLowerCase();
-                            return text === 'actions' || text === 'action';
-                        });
+                        const headersBeforeInit = table.querySelectorAll('thead th');
+                        const columnOptions = [];
 
-                        // Determine which columns should be sortable (exclude Actions column)
-                        const headers = table.querySelectorAll('thead th');
-                        const sortableColumns = [];
-                        headers.forEach((header, index) => {
+                        headersBeforeInit.forEach((header, index) => {
                             const headerText = header.textContent.trim().toLowerCase();
-                            // Exclude Actions column from sorting
-                            if (headerText !== 'actions' && headerText !== 'action') {
-                                sortableColumns.push(index);
+                            const isActions = headerText === 'actions' || headerText === 'action';
+                            const isCheckboxOnly = Boolean(header.querySelector('input[type="checkbox"]'))
+                                && headerText.replace(/\s+/g, '') === '';
+                            const explicitlyDisabled = header.dataset.sortable === 'false';
+
+                            if (isActions || isCheckboxOnly || explicitlyDisabled) {
+                                columnOptions.push({ select: index, sortable: false });
                             }
                         });
 
+                        const searchPlaceholder = table.dataset.datatableSearchPlaceholder || 'Search…';
+
+                        // simple-datatables v9 renders: <select> + labels.perPage (no {select} token).
                         const options = {
                             searchable: getBoolean(table.dataset.datatableSearch, true),
-                            sortable: true, // Explicitly enable sorting
+                            sortable: true,
                             fixedHeight: getBoolean(table.dataset.datatableFixedHeight, false),
                             perPage,
                             perPageSelect,
+                            columns: columnOptions,
                             labels: {
-                                placeholder: 'Search…',
-                                perPage: 'Per page:',
+                                placeholder: searchPlaceholder,
+                                perPage: isAdminDataTable ? 'entries' : 'entries per page',
                                 noRows: 'No records to display',
                                 info: 'Showing {start} to {end} of {rows} entries',
                             },
                         };
 
-                            // Mark Actions column as non-sortable BEFORE initialization
-                            const headersBeforeInit = table.querySelectorAll('thead th');
-                            headersBeforeInit.forEach((header, index) => {
-                                const headerText = header.textContent.trim().toLowerCase();
-                                if (headerText === 'actions' || headerText === 'action') {
-                                    // Prevent sorting by removing click handler after init
-                                    header.style.cursor = 'default';
-                                } else {
-                                    header.style.cursor = 'pointer';
-                                }
-                            });
-
-                            try {
+                        try {
                             const instance = new simpleDatatables.DataTable(table, options);
                             table.dataset.datatableInit = 'true';
                             table.__dataTable = instance;
-                            
-                            // Add sort indicators AFTER initialization without breaking structure
-                            function addSortIndicators() {
-                                const wrapper = table.closest('.dataTable-wrapper');
-                                if (!wrapper) return;
-                                
-                                const headers = wrapper.querySelectorAll('thead th');
-                                headers.forEach((header, index) => {
-                                    // Skip Actions column
-                                    const headerText = header.textContent.trim().toLowerCase();
-                                    if (headerText === 'actions' || headerText === 'action' || headerText.includes('action')) {
-                                        header.style.cursor = 'default';
-                                        return;
-                                    }
-                                    
-                                    // Check if indicator already exists
-                                    if (header.querySelector('.sort-indicator')) {
-                                        return;
-                                    }
-                                    
-                                    // Create indicator wrapper - append without modifying existing structure
-                                    const indicatorWrapper = document.createElement('span');
-                                    indicatorWrapper.className = 'sort-indicator';
-                                    indicatorWrapper.style.display = 'inline-flex';
-                                    indicatorWrapper.style.flexDirection = 'column';
-                                    indicatorWrapper.style.marginLeft = '0.5rem';
-                                    indicatorWrapper.style.lineHeight = '1';
-                                    indicatorWrapper.style.verticalAlign = 'middle';
-                                    indicatorWrapper.style.pointerEvents = 'none'; // Don't interfere with clicks
-                                        
-                                    const upArrow = document.createElement('span');
-                                    upArrow.className = 'sort-up';
-                                    upArrow.innerHTML = '▲';
-                                    upArrow.style.fontSize = '0.65em';
-                                    upArrow.style.opacity = '0.4';
-                                    upArrow.style.transition = 'opacity 0.2s';
-                                    upArrow.style.display = 'block';
-                                        
-                                    const downArrow = document.createElement('span');
-                                    downArrow.className = 'sort-down';
-                                    downArrow.innerHTML = '▼';
-                                    downArrow.style.fontSize = '0.65em';
-                                    downArrow.style.opacity = '0.4';
-                                    downArrow.style.transition = 'opacity 0.2s';
-                                    downArrow.style.marginTop = '-0.15em';
-                                    downArrow.style.display = 'block';
-                                        
-                                    indicatorWrapper.appendChild(upArrow);
-                                    indicatorWrapper.appendChild(downArrow);
-                                    
-                                    // Append indicator to existing content - preserve all existing content and handlers
-                                    // Wrap existing content in a span if needed for proper alignment
-                                    const existingContent = Array.from(header.childNodes);
-                                    if (existingContent.length > 0 && existingContent[0].nodeType === Node.TEXT_NODE) {
-                                        const textSpan = document.createElement('span');
-                                        textSpan.textContent = existingContent[0].textContent;
-                                        header.innerHTML = '';
-                                        header.appendChild(textSpan);
-                                    }
-                                    
-                                    header.appendChild(indicatorWrapper);
-                                    
-                                    // Use inline-flex on a wrapper instead of changing table-cell display
-                                    // This preserves table layout while allowing flex alignment
-                                    header.style.textAlign = 'center';
-                                    header.style.verticalAlign = 'middle';
-                                });
+
+                            if (!isAdminDataTable) {
+                                return;
                             }
-                            
-                            // Store original header texts before any modifications
-                            const originalHeaderTexts = [];
-                            headersBeforeInit.forEach((header) => {
-                                originalHeaderTexts.push(header.textContent.trim().toLowerCase());
+
+                            const wrapper = qs(adminTableRoot, ['.datatable-wrapper', '.dataTable-wrapper']);
+                            if (!wrapper) {
+                                return;
+                            }
+
+                            const top = qs(wrapper, ['.datatable-top', '.dataTable-top']);
+                            if (!top || top.dataset.adminToolbarReady === 'true') {
+                                return;
+                            }
+
+                            // Build an explicit flex toolbar so plugin floats/block wrappers cannot stack controls.
+                            const toolbar = document.createElement('div');
+                            toolbar.className = 'admin-table-toolbar';
+
+                            const left = document.createElement('div');
+                            left.className = 'admin-table-toolbar__left';
+
+                            const right = document.createElement('div');
+                            right.className = 'admin-table-toolbar__right';
+
+                            const dropdown = qs(top, ['.datatable-dropdown', '.dataTable-dropdown']);
+                            const search = qs(top, ['.datatable-search', '.dataTable-search']);
+                            const bulk = adminTableRoot.querySelector('[data-admin-table-bulk]');
+
+                            if (dropdown) {
+                                dropdown.classList.add('admin-table-length');
+                                const label = dropdown.querySelector('label');
+                                const selector = qs(dropdown, ['.datatable-selector', '.dataTable-selector', 'select']);
+                                if (label && selector) {
+                                    label.replaceChildren();
+                                    const showText = document.createElement('span');
+                                    showText.textContent = 'Show';
+                                    const entriesText = document.createElement('span');
+                                    entriesText.textContent = 'entries';
+                                    label.append(showText, selector, entriesText);
+                                    label.classList.add('admin-table-length__label');
+                                }
+                                if (selector) {
+                                    selector.setAttribute('aria-label', 'Rows per page');
+                                }
+                                left.appendChild(dropdown);
+                            }
+
+                            if (bulk) {
+                                bulk.classList.add('admin-table-bulk-actions');
+                                if (!bulk.hasAttribute('hidden')) {
+                                    bulk.hidden = true;
+                                    bulk.setAttribute('aria-hidden', 'true');
+                                }
+                                left.appendChild(bulk);
+                            }
+
+                            if (search) {
+                                right.appendChild(search);
+                            }
+
+                            toolbar.append(left, right);
+                            top.replaceChildren(toolbar);
+                            top.dataset.adminToolbarReady = 'true';
+
+                            const searchInput = qs(toolbar, ['.datatable-input', '.dataTable-input', 'input[type="search"]', 'input']);
+                            if (searchInput) {
+                                searchInput.setAttribute('aria-label', searchPlaceholder);
+                                searchInput.setAttribute('placeholder', searchPlaceholder);
+                                if (!searchInput.id) {
+                                    searchInput.id = 'admin-data-table-search-' + Math.random().toString(36).slice(2, 8);
+                                }
+                            }
+
+                            wrapper.querySelectorAll('thead th').forEach((header) => {
+                                if (header.dataset.sortable === 'false' || header.querySelector('input[type="checkbox"]')) {
+                                    return;
+                                }
+                                const text = header.textContent.trim().toLowerCase();
+                                if (text === 'actions' || text === 'action') {
+                                    return;
+                                }
+                                if (header.querySelector('.sort-indicator')) {
+                                    return;
+                                }
+
+                                const indicator = document.createElement('span');
+                                indicator.className = 'sort-indicator';
+                                indicator.setAttribute('aria-hidden', 'true');
+                                indicator.innerHTML = '<span class="sort-up">▲</span><span class="sort-down">▼</span>';
+                                header.appendChild(indicator);
                             });
-                            
-                            // Prevent Actions column from being sortable
-                            setTimeout(() => {
-                                const wrapper = table.closest('.dataTable-wrapper');
-                                if (!wrapper) return;
-                                
-                                const headers = wrapper.querySelectorAll('thead th');
-                                headers.forEach((header, index) => {
-                                    // Use stored original text to avoid issues with modified content
-                                    const originalText = originalHeaderTexts[index] || '';
-                                    
-                                    if (originalText === 'actions' || originalText === 'action') {
-                                        header.style.cursor = 'default';
-                                        // Prevent click event from triggering sort
-                                        const preventSort = function(e) {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            return false;
-                                        };
-                                        header.addEventListener('click', preventSort, true);
-                                        // Also try to remove any sort functionality
-                                        header.style.pointerEvents = 'none';
-                                        // But allow children (like buttons) to be clickable
-                                        const children = header.querySelectorAll('*');
-                                        children.forEach(child => {
-                                            child.style.pointerEvents = 'auto';
-                                        });
-                                    }
-                                });
-                            }, 200);
-                            
-                            // Add indicators after a delay to ensure table is fully initialized
-                            setTimeout(addSortIndicators, 300);
-                            setTimeout(addSortIndicators, 600);
-                            
-                            // Update sort indicators when sorting changes
-                            function updateSortIndicators() {
-                                const wrapper = table.closest('.dataTable-wrapper');
-                                if (!wrapper) return;
-                                
-                                const headers = wrapper.querySelectorAll('thead th');
-                                headers.forEach((header, index) => {
-                                    const sortUp = header.querySelector('.sort-up');
-                                    const sortDown = header.querySelector('.sort-down');
-                                    
-                                    if (!sortUp || !sortDown) return;
-                                    
-                                    // Check if this column is currently sorted by looking at classes or data attributes
-                                    const isAsc = header.classList.contains('asc') || 
-                                                 header.classList.contains('dataTable-asc') ||
-                                                 header.getAttribute('data-sort') === 'asc';
-                                    const isDesc = header.classList.contains('desc') || 
-                                                  header.classList.contains('dataTable-desc') ||
-                                                  header.getAttribute('data-sort') === 'desc';
-                                    
-                                    if (isAsc) {
-                                        sortUp.style.opacity = '1';
-                                        sortDown.style.opacity = '0.4';
-                                    } else if (isDesc) {
-                                        sortUp.style.opacity = '0.4';
-                                        sortDown.style.opacity = '1';
-                                    } else {
-                                        sortUp.style.opacity = '0.4';
-                                        sortDown.style.opacity = '0.4';
-                                    }
-                                });
-                            }
-                            
-                            // Listen for sort events using MutationObserver to catch DOM changes
-                            const sortObserver = new MutationObserver(function(mutations) {
-                                updateSortIndicators();
-                            });
-                            
-                            setTimeout(() => {
-                                const wrapper = table.closest('.dataTable-wrapper');
-                                if (wrapper) {
-                                    const thead = wrapper.querySelector('thead');
-                                    if (thead) {
-                                        sortObserver.observe(thead, {
-                                            attributes: true,
-                                            attributeFilter: ['class', 'data-sort'],
-                                            subtree: true
-                                        });
-                                    }
-                                    
-                                    // Also listen for clicks on headers
-                                    const headers = wrapper.querySelectorAll('thead th');
-                                    headers.forEach((header) => {
-                                        const headerText = header.textContent.trim().toLowerCase();
-                                        if (headerText.includes('action')) {
-                                            return;
-                                        }
-                                        
-                                        header.addEventListener('click', function() {
-                                            setTimeout(updateSortIndicators, 150);
-                                        }, true);
-                                    });
-                                }
-                            }, 700);
-                            
-                            // Initial update
-                            setTimeout(updateSortIndicators, 400);
-                            setTimeout(updateSortIndicators, 800);
-                            
-                            // Force pagination to display horizontally and fix search position
-                            function fixPagination() {
-                                const wrapper = table.closest('.dataTable-wrapper');
-                                if (!wrapper) return;
-                                
-                                // Fix top section (search and selector)
-                                const top = wrapper.querySelector('.dataTable-top');
-                                if (top) {
-                                    top.style.display = 'flex';
-                                    top.style.justifyContent = 'space-between';
-                                    
-                                    const selector = top.querySelector('div:first-child');
-                                    if (selector) {
-                                        selector.style.order = '1';
-                                        selector.style.marginLeft = '0';
-                                    }
-                                    
-                                    const search = top.querySelector('.dataTable-search');
-                                    if (search) {
-                                        search.style.order = '2';
-                                        search.style.marginLeft = 'auto';
-                                    }
-                                }
-                                
-                                const pagination = wrapper.querySelector('.dataTable-pagination');
-                                if (!pagination) return;
-                                
-                                // Fix pagination container
-                                pagination.style.display = 'flex';
-                                pagination.style.flexDirection = 'row';
-                                pagination.style.flexWrap = 'nowrap';
-                                pagination.style.justifyContent = 'space-between';
-                                
-                                // Position info text on left
-                                const info = pagination.querySelector('.dataTable-info');
-                                if (info) {
-                                    info.style.order = '1';
-                                    info.style.flex = '0 0 auto';
-                                }
-                                
-                                // Find and fix all ul elements - be very aggressive
-                                const uls = pagination.querySelectorAll('ul');
-                                uls.forEach(ul => {
-                                    ul.style.setProperty('display', 'flex', 'important');
-                                    ul.style.setProperty('flex-direction', 'row', 'important');
-                                    ul.style.setProperty('flex-wrap', 'nowrap', 'important');
-                                    ul.style.setProperty('align-items', 'center', 'important');
-                                    ul.style.setProperty('list-style', 'none', 'important');
-                                    ul.style.setProperty('margin', '0', 'important');
-                                    ul.style.setProperty('padding', '0', 'important');
-                                    ul.style.setProperty('margin-left', 'auto', 'important');
-                                    ul.style.setProperty('gap', '0.25rem', 'important');
-                                    ul.style.setProperty('width', 'auto', 'important');
-                                    ul.style.setProperty('height', 'auto', 'important');
-                                    ul.style.setProperty('order', '2', 'important');
-                                    
-                                    // Fix all li elements
-                                    Array.from(ul.querySelectorAll('li')).forEach(li => {
-                                        li.style.setProperty('display', 'inline-block', 'important');
-                                        li.style.setProperty('float', 'none', 'important');
-                                        li.style.setProperty('margin', '0', 'important');
-                                        li.style.setProperty('padding', '0', 'important');
-                                        li.style.setProperty('list-style', 'none', 'important');
-                                        li.style.setProperty('width', 'auto', 'important');
-                                        li.style.setProperty('height', 'auto', 'important');
-                                        li.style.setProperty('vertical-align', 'middle', 'important');
-                                        
-                                        // Fix all anchor elements
-                                        const links = li.querySelectorAll('a');
-                                        links.forEach(a => {
-                                            a.style.setProperty('display', 'inline-block', 'important');
-                                            a.style.setProperty('float', 'none', 'important');
-                                            a.style.setProperty('vertical-align', 'middle', 'important');
-                                        });
-                                    });
-                                });
-                                
-                                // Also fix any direct children of pagination that might be lists
-                                Array.from(pagination.children).forEach(child => {
-                                    if (child.tagName === 'UL' || child.classList.contains('pagination')) {
-                                        child.style.setProperty('display', 'flex', 'important');
-                                        child.style.setProperty('flex-direction', 'row', 'important');
-                                        child.style.setProperty('flex-wrap', 'nowrap', 'important');
-                                    }
-                                });
-                            }
-                            
-                            // Fix immediately and after delays - multiple attempts
-                            fixPagination();
-                            setTimeout(fixPagination, 50);
-                            setTimeout(fixPagination, 100);
-                            setTimeout(fixPagination, 250);
-                            setTimeout(fixPagination, 500);
-                            setTimeout(fixPagination, 1000);
-                            
-                            // Watch for DOM changes and fix pagination
-                            const paginationObserver = new MutationObserver(() => {
-                                fixPagination();
-                            });
-                            
-                            // Also use interval as backup
-                            const intervalId = setInterval(() => {
-                                const wrapper = table.closest('.dataTable-wrapper');
-                                if (wrapper) {
-                                    const pagination = wrapper.querySelector('.dataTable-pagination');
-                                    if (pagination) {
-                                        const uls = pagination.querySelectorAll('ul');
-                                        if (uls.length > 0) {
-                                            uls.forEach(ul => {
-                                                const computedStyle = window.getComputedStyle(ul);
-                                                if (computedStyle.flexDirection !== 'row' && computedStyle.display !== 'flex') {
-                                                    fixPagination();
-                                                }
-                                            });
-                                        }
-                                    }
-                                }
-                            }, 200);
-                            
-                            // Clean up interval when table is destroyed
-                            if (instance && typeof instance.destroy === 'function') {
-                                const originalDestroy = instance.destroy;
-                                instance.destroy = function() {
-                                    clearInterval(intervalId);
-                                    paginationObserver.disconnect();
-                                    return originalDestroy.apply(this, arguments);
-                                };
-                            }
-                            
-                            const wrapper = table.closest('.dataTable-wrapper');
-                            if (wrapper) {
-                                paginationObserver.observe(wrapper, {
-                                    childList: true,
-                                    subtree: true,
-                                    attributes: true
-                                });
-                            }
-                            
-                            // Also fix when pagination changes
-                            if (instance && typeof instance.on === 'function') {
-                                instance.on('datatable.page', fixPagination);
-                            }
                         } catch (error) {
                             console.error('Failed to initialize DataTable:', error);
                         }
@@ -972,9 +745,11 @@
                     }
 
                     if (
-                        select.closest('.dataTable-wrapper') ||
-                        select.closest('.dataTable-top') ||
-                        select.closest('.dataTable-pagination') ||
+                        select.closest('.dataTable-wrapper, .datatable-wrapper') ||
+                        select.closest('.dataTable-top, .datatable-top') ||
+                        select.closest('.dataTable-pagination, .datatable-pagination') ||
+                        select.closest('.admin-table-toolbar, .admin-table-bulk-actions') ||
+                        select.closest('[data-admin-table-bulk]') ||
                         select.closest('[data-no-select-filter]')
                     ) {
                         return false;
