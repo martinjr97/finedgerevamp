@@ -5,7 +5,7 @@
     $maximumLoanTake = $customer->maximum_loan_take ?? 0;
     $hasActiveLoans = $activeLoans->count() > 0;
     $isGroupLoanCustomer = $isGroupLoanCustomer ?? ((string) ($loanProduct?->category ?? '') === 'group_loans');
-    $primaryCtaClass = 'mt-5 inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-green-300 via-emerald-400 to-teal-400 hover:from-green-400 hover:via-emerald-500 hover:to-teal-500 text-emerald-950 font-bold text-base sm:text-lg px-8 py-4 shadow-[0_10px_28px_rgba(74,222,128,0.45)] hover:shadow-[0_14px_32px_rgba(52,211,153,0.55)] ring-2 ring-white ring-offset-2 ring-offset-purple-700 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]';
+    $primaryCtaClass = 'btn-apply-loan mt-5';
 @endphp
 
 @extends('layouts.customer')
@@ -19,9 +19,9 @@
             <div class="p-4 sm:p-6 space-y-4">
         {{-- Section: Welcome + Primary CTA --}}
         <section class="space-y-3">
-            <div class="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-5 sm:p-6 shadow-lg">
+            <div class="bg-primary rounded-2xl p-5 sm:p-6 shadow-xl border border-muted">
                 <h1 class="text-2xl sm:text-3xl font-bold text-white">{{ $greeting }}, {{ $customer->first_name }}!</h1>
-                <p class="text-purple-100 text-sm sm:text-base mt-1">Welcome to your loan management dashboard</p>
+                <p class="text-slate-200 text-sm sm:text-base mt-1">Welcome to your loan management dashboard</p>
                 @if($loanProduct && $canStartLoanFlow)
                 @if($loanProduct->category === 'collateral')
                     <a href="{{ route('customer.collateral-loans.loan-details') }}" class="{{ $primaryCtaClass }}">
@@ -101,21 +101,22 @@
                             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Expected total if all installments are paid per schedule (includes future interest where applicable).</p>
                         </div>
                     @endif
-                    @if(isset($primaryActiveLoan) && $primaryActiveLoan)
-                        <div class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-600 shadow-sm text-sm space-y-1">
-                            <p><span class="text-slate-500">Processing fee:</span> <span class="font-medium text-slate-900 dark:text-white">ZMW {{ number_format($primaryActiveLoan->processing_fee, 2) }}</span></p>
-                            <p><span class="text-slate-500">Earned interest:</span> <span class="font-medium">ZMW {{ number_format($primaryActiveLoan->getEarnedInterest(), 2) }}</span></p>
-                            @if($primaryActiveLoan->quoted_term_rate)
-                                <p><span class="text-slate-500">Term rate:</span> <span class="font-medium">{{ number_format($primaryActiveLoan->quoted_term_rate, 2) }}%</span></p>
-                            @endif
-                            <p><span class="text-slate-500">Interest behavior:</span> <span class="font-medium">{{ $primaryActiveLoan->getInterestBehaviorLabel() }}</span></p>
-                        </div>
-                    @endif
                     @if($nextPaymentDate)
                         <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
-                            <p class="text-xs uppercase tracking-wider text-amber-700 dark:text-amber-300 mb-1 font-semibold">Next Payment Date</p>
-                            <p class="text-lg font-bold text-slate-900 dark:text-white">{{ $nextPaymentDate->format('d M Y') }}</p>
-                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">{{ $nextPaymentDate->diffForHumans() }}</p>
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-xs uppercase tracking-wider text-amber-700 dark:text-amber-300 mb-1 font-semibold">Next Payment Date</p>
+                                    <p class="text-lg font-bold text-slate-900 dark:text-white">{{ $nextPaymentDate->format('d M Y') }}</p>
+                                    <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">{{ $nextPaymentDate->diffForHumans() }}</p>
+                                </div>
+                                <a href="{{ route('customer.repayments.select-type') }}"
+                                   class="btn-make-repayment w-full sm:w-auto">
+                                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Make Repayment
+                                </a>
+                            </div>
                         </div>
                     @endif
                     @if($availableLoanAmount > 0 && $canStartLoanFlow)

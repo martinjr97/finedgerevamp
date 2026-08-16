@@ -305,6 +305,8 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
     </div>
 
     {{-- Financial Settings Modal --}}
@@ -434,7 +436,6 @@
                     </div>
                 </form>
             </div>
-        </div>
         </div>
     </div>
 @endsection

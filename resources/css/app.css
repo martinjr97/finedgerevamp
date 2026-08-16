@@ -358,6 +358,14 @@ body { background-color: var(--color-surface); color: var(--color-primary); }
 .content-area * {
     color: var(--color-primary) !important;
 }
+/* Brand purple page headers keep light text (overrides .content-area *) */
+.content-area .bg-primary,
+.content-area .bg-primary * {
+    color: #ffffff !important;
+}
+.content-area .bg-primary p {
+    color: #e2e8f0 !important;
+}
 /* Labels and secondary text stay muted grey (same specificity as .content-area * so order wins) */
 .content-area *.text-muted,
 .content-area .text-muted,
@@ -1024,6 +1032,99 @@ body[data-theme="dark"] .content-area .status-pill-active,
 body[data-theme="dark"] .content-area .status-pill-active * {
     color: #6ee7b7 !important;
 }
+
+/* Hero Apply / Get Loan CTA — solid green + white text (theme remaps emerald tokens) */
+.btn-apply-loan {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    width: 100%;
+    border-radius: 1rem;
+    background: #059669 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    padding: 1rem 2rem;
+    box-shadow: 0 10px 28px rgba(5, 150, 105, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+@media (min-width: 640px) {
+    .btn-apply-loan {
+        width: auto;
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+    }
+}
+.btn-apply-loan:hover,
+.btn-apply-loan:focus-visible {
+    background: #047857 !important;
+    color: #ffffff !important;
+    box-shadow: 0 14px 32px rgba(5, 150, 105, 0.5);
+    transform: scale(1.02);
+}
+.btn-apply-loan:active {
+    transform: scale(0.98);
+}
+.content-area .btn-apply-loan,
+.content-area .btn-apply-loan * {
+    color: #ffffff !important;
+}
+body[data-theme="dark"] .btn-apply-loan {
+    background: #059669 !important;
+    box-shadow: 0 10px 28px rgba(5, 150, 105, 0.5);
+}
+body[data-theme="dark"] .btn-apply-loan:hover,
+body[data-theme="dark"] .btn-apply-loan:focus-visible {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+body[data-theme="dark"] .content-area .btn-apply-loan,
+body[data-theme="dark"] .content-area .btn-apply-loan * {
+    color: #ffffff !important;
+}
+
+/* Real green CTA — theme remaps emerald/green Tailwind tokens to brand purple */
+.btn-make-repayment {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    background: #059669 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding: 0.625rem 1rem;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.btn-make-repayment:hover,
+.btn-make-repayment:focus-visible {
+    background: #047857 !important;
+    color: #ffffff !important;
+}
+.content-area .btn-make-repayment,
+.content-area .btn-make-repayment * {
+    color: #ffffff !important;
+}
+body[data-theme="dark"] .btn-make-repayment {
+    background: #059669 !important;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.45);
+}
+body[data-theme="dark"] .btn-make-repayment:hover,
+body[data-theme="dark"] .btn-make-repayment:focus-visible {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+body[data-theme="dark"] .content-area .btn-make-repayment,
+body[data-theme="dark"] .content-area .btn-make-repayment * {
+    color: #ffffff !important;
+}
+
 .status-pill-approved {
     background: #ffedd5 !important;
     border: 1px solid #f97316 !important;

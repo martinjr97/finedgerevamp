@@ -38,8 +38,18 @@ class DashboardController extends Controller
         $hasBlockingLoans = $customer->loans()
             ->whereIn('status', ['approved', 'active', 'pending_approval'])
             ->exists();
+        $hasLoanPendingOrProcessing = $customer->loans()
+            ->where(function ($query) {
+                $query->where('status', 'pending_approval')
+                    ->orWhere(function ($q) {
+                        $q->where('status', 'approved')
+                            ->whereIn('disbursement_status', ['pending', 'processing', 'failed']);
+                    });
+            })
+            ->exists();
         $canStartLoanFlow = ! $isGroupLoanCustomer
             && $availableLoanAmount > 0
+            && ! $hasLoanPendingOrProcessing
             && ($canTakeAnotherLoan || ! $hasBlockingLoans);
 
         return view('customer.dashboard', [

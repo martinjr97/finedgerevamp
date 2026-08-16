@@ -4,9 +4,9 @@
 
 @section('content')
     <div class="content-area space-y-6 max-w-2xl mx-auto">
-        <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-6 shadow-xl border-2 border-blue-500">
+        <div class="bg-primary rounded-2xl p-6 shadow-xl border border-muted">
             <h1 class="text-3xl font-bold mb-2 text-white">Disbursement Details</h1>
-            <p class="text-blue-100">Tell us where to send your loan funds</p>
+            <p class="text-slate-200">Tell us where to send your loan funds</p>
         </div>
 
         <form action="{{ route('customer.loans.store-destination') }}" method="POST" class="space-y-6">
