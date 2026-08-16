@@ -57,6 +57,7 @@
 	        <meta charset="utf-8">
 	        <meta name="viewport" content="width=device-width, initial-scale=1">
 	        <meta name="theme-color" content="#151B54">
+	        <meta name="color-scheme" content="light">
 	        <title>@yield('title', config('app.system_name'))</title>
         
         {{-- Favicons --}}

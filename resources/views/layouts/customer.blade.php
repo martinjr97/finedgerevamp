@@ -16,11 +16,12 @@
         : asset(ltrim($rawFaviconPath, '/'));
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ session('theme', 'light') === 'dark' ? 'dark' : '' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
 	        <meta charset="utf-8">
 	        <meta name="viewport" content="width=device-width, initial-scale=1">
 	        <meta name="theme-color" content="#151B54">
+	        <meta name="color-scheme" content="light">
 	        <meta name="csrf-token" content="{{ csrf_token() }}">
 	        <title>@yield('title', 'Dashboard') | {{ config('app.name') }}</title>
         
@@ -42,7 +43,7 @@
             }
         </style>
     </head>
-    <body class="min-h-screen">
+    <body class="min-h-screen" data-theme="light">
         <div class="min-h-screen flex flex-col workspace">
             {{-- Top Navigation Bar --}}
             <header class="customer-topbar border-b border-muted shadow-lg sticky top-0 z-40">

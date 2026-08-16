@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
 @import 'tailwindcss';
 
+/* Never follow OS/browser dark mode — dark: only if .dark is explicitly set */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
@@ -11,7 +14,8 @@
 }
 
 :root {
-    /* FineEdge legacy palette (lite-purple / Gull admin theme) */
+    color-scheme: light;
+
     --brand-purple: #663399;
     --brand-purple-hover: #402060;
     --brand-purple-soft: #d4c6e2;
