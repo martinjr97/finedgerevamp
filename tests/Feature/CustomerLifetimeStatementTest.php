@@ -263,24 +263,22 @@ class CustomerLifetimeStatementTest extends TestCase
         $expectedTotal = $this->ledger->getExpectedSettlementAmount($loanA)
             + $this->ledger->getExpectedSettlementAmount($loanB);
         $netPaidTotal = $this->ledger->calculateNetPaid($loanA) + $this->ledger->calculateNetPaid($loanB);
-        $outstandingTotal = $this->ledger->calculateOutstandingBalance($loanA)
-            + $this->ledger->calculateOutstandingBalance($loanB);
-        $suspenseTotal = $this->ledger->calculateSuspenseAmount($loanA)
-            + $this->ledger->calculateSuspenseAmount($loanB);
 
         $this->assertSame(2, $summary['loans_collected']);
         $this->assertEqualsWithDelta($expectedTotal, $summary['total_expected_settlement'], 0.01);
         $this->assertEqualsWithDelta($netPaidTotal, $summary['total_net_paid'], 0.01);
-        $this->assertEqualsWithDelta($outstandingTotal, $summary['total_outstanding'], 0.01);
-        $this->assertEqualsWithDelta($suspenseTotal, $summary['total_suspense'], 0.01);
 
         $netOwed = round($expectedTotal - $netPaidTotal, 2);
         if ($netOwed < 0) {
             $this->assertEqualsWithDelta(abs($netOwed), $closing['customer_credit'], 0.01);
             $this->assertSame(0.0, $closing['balance_owed']);
+            $this->assertEqualsWithDelta($closing['customer_credit'], $summary['total_suspense'], 0.01);
+            $this->assertSame(0.0, $summary['total_outstanding']);
         } else {
             $this->assertEqualsWithDelta($netOwed, $closing['balance_owed'], 0.01);
             $this->assertSame(0.0, $closing['customer_credit']);
+            $this->assertEqualsWithDelta($closing['balance_owed'], $summary['total_outstanding'], 0.01);
+            $this->assertSame(0.0, $summary['total_suspense']);
         }
     }
 
@@ -575,5 +573,53 @@ class CustomerLifetimeStatementTest extends TestCase
         $loanIds = $statement['rows']->pluck('loan_id')->unique()->filter()->values();
         $this->assertCount(1, $loanIds);
         $this->assertSame($loanOne->id, $loanIds->first());
+        $this->assertEqualsWithDelta(
+            $statement['closing_balance']['balance_owed'],
+            $statement['summary']['total_outstanding'],
+            0.01
+        );
+    }
+
+    public function test_pending_approval_loans_are_excluded_from_statement(): void
+    {
+        $suffix = Str::lower(Str::random(6));
+        $company = Company::create([
+            'name' => 'Pending Co',
+            'slug' => 'pending-co-'.$suffix,
+            'code' => 'PC'.$suffix,
+            'type' => 'partner',
+            'status' => 'active',
+            'approval_status' => 'approved',
+        ]);
+        $product = LoanProduct::create([
+            'company_id' => $company->id,
+            'name' => 'Pending Product',
+            'code' => 'PP-'.$suffix,
+            'category' => 'character',
+            'is_active' => true,
+        ]);
+        $customer = $this->makeCustomer($company, $product, $suffix.'p');
+        $channel = $this->makeChannel($suffix.'p');
+
+        $active = $this->makeLoan($customer, $product, $channel, [['expected' => 1000]]);
+        $pending = $this->makeLoan($customer, $product, $channel, [['expected' => 2500]]);
+        $pending->update([
+            'status' => 'pending_approval',
+            'disbursement_status' => 'pending',
+            'disbursed_at' => null,
+        ]);
+
+        $statement = app(CustomerLifetimeStatementService::class)->build($customer);
+
+        $this->assertSame(1, $statement['summary']['loans_collected']);
+        $this->assertTrue($statement['loans']->contains('id', $active->id));
+        $this->assertFalse($statement['loans']->contains('id', $pending->id));
+        $this->assertEqualsWithDelta(1000.0, $statement['summary']['total_expected_settlement'], 0.01);
+        $this->assertEqualsWithDelta(
+            $statement['closing_balance']['balance_owed'],
+            $statement['summary']['total_outstanding'],
+            0.01
+        );
+        $this->assertEqualsWithDelta(1000.0, $statement['summary']['total_outstanding'], 0.01);
     }
 }

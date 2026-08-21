@@ -53,14 +53,14 @@
 
     <table class="summary">
         <tr>
-            <td class="label">Loans collected</td><td>{{ $summary['loans_collected'] }}</td>
-            <td class="label">Expected settlement</td><td>ZMW {{ number_format($summary['total_expected_settlement'], 2) }}</td>
-            <td class="label">Net paid</td><td>ZMW {{ number_format($summary['total_net_paid'], 2) }}</td>
+            <td class="label">Loans</td><td>{{ $summary['loans_collected'] }}</td>
+            <td class="label">{{ ($filters['loan_id'] ?? null) ? 'Loan amount' : 'Total amount' }}</td>
+            <td>ZMW {{ number_format($summary['total_expected_settlement'], 2) }}</td>
         </tr>
         <tr>
-            <td class="label">Refunded</td><td>ZMW {{ number_format($summary['total_refunded'], 2) }}</td>
-            <td class="label">Outstanding</td><td>ZMW {{ number_format($summary['total_outstanding'], 2) }}</td>
-            <td class="label">Customer credit</td><td>ZMW {{ number_format($summary['total_suspense'], 2) }}</td>
+            <td class="label">Paid</td><td>ZMW {{ number_format($summary['total_net_paid'], 2) }}</td>
+            <td class="label">{{ ($summary['total_suspense'] ?? 0) > 0 ? 'Customer credit' : 'Outstanding' }}</td>
+            <td>ZMW {{ number_format(($summary['total_suspense'] ?? 0) > 0 ? $summary['total_suspense'] : $summary['total_outstanding'], 2) }}</td>
         </tr>
     </table>
 

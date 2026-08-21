@@ -65,8 +65,8 @@ class CustomerLifetimeStatementService
 
         $displayRows = $this->applyRunningBalances($displayRows, $openingBalance);
 
-        $summary = $this->buildSummary($loans);
         $closingBalance = $this->balanceFromNet($this->netBalanceFromOpening($openingBalance) + $this->sumCashMovement($displayRows));
+        $summary = $this->buildSummary($loans, $closingBalance);
 
         return [
             'summary' => $summary,
@@ -96,6 +96,8 @@ class CustomerLifetimeStatementService
                 'loanRepayments.repayment',
                 'loanRepayments.refundOf.repayment',
             ])
+            // Pending / cancelled loans are not part of the cash statement.
+            ->whereNotIn('status', ['pending_approval', 'cancelled'])
             ->orderBy('loan_start_date')
             ->orderBy('id');
 
@@ -103,7 +105,10 @@ class CustomerLifetimeStatementService
             $query->where('id', $loanId);
         }
 
-        return $query->get();
+        return $query->get()
+            // Only loans that have actually entered the disbursement ledger.
+            ->filter(fn (Loan $loan): bool => $this->resolveDisbursementDate($loan) !== null)
+            ->values();
     }
 
     /**
@@ -375,24 +380,18 @@ class CustomerLifetimeStatementService
 
     /**
      * @param  Collection<int, Loan>  $loans
+     * @param  array{balance_owed: float, customer_credit: float}  $closingBalance
      * @return array<string, float|int>
      */
-    private function buildSummary(Collection $loans): array
+    private function buildSummary(Collection $loans, array $closingBalance): array
     {
-        $disbursedLoans = $loans->filter(fn (Loan $loan): bool => $this->resolveDisbursementDate($loan) !== null);
-
         $totalExpected = 0.0;
         $totalNetPaid = 0.0;
-        $totalOutstanding = 0.0;
-        $totalSuspense = 0.0;
         $totalRefunded = 0.0;
 
         foreach ($loans as $loan) {
             $totalExpected += $this->ledgerService->getExpectedSettlementAmount($loan);
-            $netPaid = $this->ledgerService->calculateNetPaid($loan);
-            $totalNetPaid += $netPaid;
-            $totalOutstanding += $this->ledgerService->calculateOutstandingBalance($loan, $netPaid);
-            $totalSuspense += $this->ledgerService->calculateSuspenseAmount($loan, $netPaid);
+            $totalNetPaid += $this->ledgerService->calculateNetPaid($loan);
         }
 
         $totalRefunded = (float) LoanRepayment::query()
@@ -405,13 +404,18 @@ class CustomerLifetimeStatementService
 
         $totalRefunded = round(abs($totalRefunded), 2);
 
+        // Outstanding / credit always match the ledger closing balance for the
+        // same loan + date filters shown in the statement table.
+        $outstanding = round((float) $closingBalance['balance_owed'], 2);
+        $customerCredit = round((float) $closingBalance['customer_credit'], 2);
+
         return [
-            'loans_collected' => $disbursedLoans->count(),
+            'loans_collected' => $loans->count(),
             'total_expected_settlement' => round($totalExpected, 2),
             'total_net_paid' => round($totalNetPaid, 2),
             'total_refunded' => $totalRefunded,
-            'total_outstanding' => round($totalOutstanding, 2),
-            'total_suspense' => round($totalSuspense, 2),
+            'total_outstanding' => $outstanding,
+            'total_suspense' => $customerCredit,
         ];
     }
 

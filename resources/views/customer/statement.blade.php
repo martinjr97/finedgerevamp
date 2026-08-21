@@ -40,21 +40,27 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-xs text-slate-500 uppercase tracking-wide">Loans collected</p>
+                <p class="text-xs text-slate-500 uppercase tracking-wide">Loans</p>
                 <p class="text-xl font-bold text-slate-900 mt-1">{{ $summary['loans_collected'] }}</p>
             </div>
-            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-                <p class="text-xs text-amber-700 uppercase tracking-wide">Outstanding</p>
-                <p class="text-lg font-bold text-amber-900 mt-1">ZMW {{ number_format($summary['total_outstanding'], 2) }}</p>
+            <div class="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 shadow-sm">
+                <p class="text-xs text-cyan-700 uppercase tracking-wide">{{ ($filters['loan_id'] ?? null) ? 'Loan amount' : 'Total amount' }}</p>
+                <p class="text-lg font-bold text-cyan-900 mt-1">ZMW {{ number_format($summary['total_expected_settlement'], 2) }}</p>
             </div>
-            @if ($summary['total_suspense'] > 0)
-                <div class="rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm">
-                    <p class="text-xs text-violet-700 uppercase tracking-wide">Customer credit</p>
-                    <p class="text-lg font-bold text-violet-900 mt-1">ZMW {{ number_format($summary['total_suspense'], 2) }}</p>
-                </div>
-            @endif
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+                <p class="text-xs text-emerald-700 uppercase tracking-wide">Paid</p>
+                <p class="text-lg font-bold text-emerald-900 mt-1">ZMW {{ number_format($summary['total_net_paid'], 2) }}</p>
+            </div>
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                <p class="text-xs text-amber-700 uppercase tracking-wide">
+                    {{ ($summary['total_suspense'] ?? 0) > 0 ? 'Customer credit' : 'Outstanding' }}
+                </p>
+                <p class="text-lg font-bold text-amber-900 mt-1">
+                    ZMW {{ number_format(($summary['total_suspense'] ?? 0) > 0 ? $summary['total_suspense'] : $summary['total_outstanding'], 2) }}
+                </p>
+            </div>
         </div>
 
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

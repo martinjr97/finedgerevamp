@@ -342,30 +342,16 @@
         <div class="summary-heading">{{ $scopeSummaryLabel }}</div>
         <table class="summary-strip" role="presentation">
             <tr>
-                <th>Loans collected</th>
-                <th>Expected settlement</th>
-                @if (($summary['total_default_interest'] ?? 0) > 0.009)
-                    <th>Default interest</th>
-                @endif
-                <th>Net paid</th>
-                <th>Total refunded</th>
-                <th>Outstanding</th>
-                @if (($summary['total_suspense'] ?? 0) > 0)
-                    <th>Customer credit</th>
-                @endif
+                <th>Loans</th>
+                <th>{{ $isSingleLoanScope ? 'Loan amount' : 'Total amount' }}</th>
+                <th>Paid</th>
+                <th>{{ ($summary['total_suspense'] ?? 0) > 0 ? 'Customer credit' : 'Outstanding' }}</th>
             </tr>
             <tr>
                 <td>{{ $summary['loans_collected'] }}</td>
                 <td>{{ FinancialDocumentBranding::formatMoney($summary['total_expected_settlement']) }}</td>
-                @if (($summary['total_default_interest'] ?? 0) > 0.009)
-                    <td>{{ FinancialDocumentBranding::formatMoney($summary['total_default_interest']) }}</td>
-                @endif
                 <td>{{ FinancialDocumentBranding::formatMoney($summary['total_net_paid']) }}</td>
-                <td>{{ FinancialDocumentBranding::formatMoney($summary['total_refunded'] ?? 0) }}</td>
-                <td>{{ FinancialDocumentBranding::formatMoney($summary['total_outstanding']) }}</td>
-                @if (($summary['total_suspense'] ?? 0) > 0)
-                    <td>{{ FinancialDocumentBranding::formatMoney($summary['total_suspense']) }}</td>
-                @endif
+                <td>{{ FinancialDocumentBranding::formatMoney(($summary['total_suspense'] ?? 0) > 0 ? $summary['total_suspense'] : $summary['total_outstanding']) }}</td>
             </tr>
         </table>
 
