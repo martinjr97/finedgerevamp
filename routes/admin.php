@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\BulkRepaymentController;
 use App\Http\Controllers\Admin\ChannelController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CreditorController;
+use App\Http\Controllers\Admin\AssetController;
 use App\Http\Controllers\Admin\CreditScoreSettingController;
 use App\Http\Controllers\Admin\CustomerBulkUploadController;
 use App\Http\Controllers\Admin\CustomerController;
@@ -174,6 +175,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('sms-templates/{smsTemplate}/edit', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'edit'])->name('sms-templates.edit');
         Route::put('sms-templates/{smsTemplate}', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'update'])->name('sms-templates.update');
         Route::resource('creditors', CreditorController::class);
+        Route::resource('assets', AssetController::class);
 
         // Financial Transactions
         Route::get('financial-transactions', [FinancialTransactionController::class, 'index'])->name('financial-transactions.index');

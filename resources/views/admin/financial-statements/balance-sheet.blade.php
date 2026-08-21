@@ -116,6 +116,22 @@
                             </div>
                             <span class="text-white font-semibold text-lg">{{ number_format($loansReceivable, 2) }}</span>
                         </div>
+
+                        <div class="space-y-2 pt-2">
+                            <h4 class="text-sm font-medium text-slate-300">Physical Assets</h4>
+                            @forelse($physicalAssets as $asset)
+                                <div class="flex justify-between items-center text-sm pl-4">
+                                    <span class="text-slate-300">{{ $asset->name }} <span class="text-slate-500">({{ $asset->asset_type }})</span></span>
+                                    <span class="text-white font-medium">{{ number_format($asset->value, 2) }}</span>
+                                </div>
+                            @empty
+                                <div class="pl-4 text-sm text-slate-400">No physical assets recorded</div>
+                            @endforelse
+                            <div class="flex justify-between items-center py-2 border-t border-white/10 mt-2 bg-slate-700/30 px-2 rounded">
+                                <span class="text-slate-200 font-semibold">Total Physical Assets</span>
+                                <span class="text-white font-bold">{{ number_format($totalPhysicalAssets, 2) }}</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Total Assets -->

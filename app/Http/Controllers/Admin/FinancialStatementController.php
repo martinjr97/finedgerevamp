@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Asset;
 use App\Models\Bank;
 use App\Models\CashRegister;
 use App\Models\Creditor;
@@ -60,7 +61,10 @@ class FinancialStatementController extends Controller
             ->groupBy('status')
             ->get();
 
-        $totalAssets = $cashAndCashEquivalents + $loansReceivable;
+        $physicalAssets = Asset::active()->orderBy('asset_type')->orderBy('name')->get();
+        $totalPhysicalAssets = (float) $physicalAssets->sum('value');
+
+        $totalAssets = $cashAndCashEquivalents + $loansReceivable + $totalPhysicalAssets;
 
         // Liabilities - Creditors
         $creditors = Creditor::where('is_active', true)->orderBy('due_date')->get();
@@ -82,6 +86,8 @@ class FinancialStatementController extends Controller
             'loansReceivable' => $loansReceivable,
             'loansCount' => $loansCount,
             'loansBreakdown' => $loansBreakdown,
+            'physicalAssets' => $physicalAssets,
+            'totalPhysicalAssets' => $totalPhysicalAssets,
             'totalAssets' => $totalAssets,
             'creditors' => $creditors,
             'totalLiabilities' => $totalLiabilities,
@@ -287,16 +293,6 @@ class FinancialStatementController extends Controller
         $totalProcessingFees = $loanProcessingFees + $processingFeesFromRepayments;
         if ($totalProcessingFees > 0) {
             $incomeSources['Loan Processing Fees'] = $totalProcessingFees;
-        }
-
-        // Shareholder Contributions
-        $shareholderContributions = FinancialTransaction::where('type', 'income')
-            ->where('category', 'shareholder_contribution')
-            ->whereBetween('transaction_date', [$startDateCarbon, $endDateCarbon])
-            ->sum('amount');
-
-        if ($shareholderContributions > 0) {
-            $incomeSources['Shareholder Contribution'] = $shareholderContributions;
         }
 
         // Investment Income

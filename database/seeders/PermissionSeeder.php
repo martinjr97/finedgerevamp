@@ -73,6 +73,7 @@ class PermissionSeeder extends Seeder
             'payment-gateways' => ['view', 'manage'],
             'sms-operations' => ['view', 'manage'],
             'creditors' => ['view', 'create', 'update', 'delete'],
+            'assets' => ['view', 'create', 'update', 'delete'],
             'customer-groups' => ['view', 'create', 'update', 'delete'],
             'branches' => ['view', 'create', 'update', 'delete'],
             'settings' => ['view', 'update'],

@@ -17,4 +17,4 @@
 - [Support Tickets Module](support-tickets-module.md) <!-- @guards:admin -->
 - [Approvals (Customers & Loans)](approvals-workflow.md) <!-- @guards:admin @permissions:approvals.view -->
 - [Configurations and Setup](configurations.md) <!-- @guards:admin @any-permissions:settings.view,loan-products.view,loan-rate-types.view,channels.view,security-questions.view,sectors.view,ministries.view,provinces.view,branches.view -->
-- [Financial Management Module](financial-management.md) <!-- @guards:admin @any-permissions:banks.view,wallets.view,creditors.view,financial-transactions.view,transfers.view,financial-statements.view -->
+- [Financial Management Module](financial-management.md) <!-- @guards:admin @any-permissions:banks.view,wallets.view,creditors.view,assets.view,financial-transactions.view,transfers.view,financial-statements.view -->

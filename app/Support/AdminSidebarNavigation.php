@@ -173,6 +173,7 @@ class AdminSidebarNavigation
                 'Banks' => ['admin.banks.*'],
                 'Wallets' => ['admin.wallets.*'],
                 'Creditors' => ['admin.creditors.*'],
+                'Physical Assets' => ['admin.assets.*'],
                 'Transactions' => ['admin.financial-transactions.*'],
                 'Transfers' => ['admin.transfers.*'],
                 'Balance Sheet' => ['admin.financial-statements.balance-sheet'],

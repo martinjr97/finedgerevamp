@@ -1,4 +1,4 @@
-<!-- @guards:admin @any-permissions:banks.view,wallets.view,creditors.view,financial-transactions.view,transfers.view,financial-statements.view -->
+<!-- @guards:admin @any-permissions:banks.view,wallets.view,creditors.view,assets.view,financial-transactions.view,transfers.view,financial-statements.view -->
 # Financial Management Module
 
 This section covers the Financial Management menu and related workflows.
@@ -14,6 +14,7 @@ Menu path:
 - Banks: [`/admin/banks`](/admin/banks)
 - Wallets (mobile wallets/cash wallets): [`/admin/wallets`](/admin/wallets)
 - Creditors: [`/admin/creditors`](/admin/creditors)
+- Physical Assets: [`/admin/assets`](/admin/assets)
 - Transactions: [`/admin/financial-transactions`](/admin/financial-transactions)
 - Transfers: [`/admin/transfers`](/admin/transfers)
 - Financial Statements:
@@ -36,6 +37,13 @@ Menu path:
 2. Click create action.
 3. Enter wallet type and account identifiers.
 4. Save.
+
+### Add Physical Asset
+
+1. Open [`/admin/assets`](/admin/assets).
+2. Click **Add Asset**.
+3. Enter asset type, name, value (ZMW), and optional acquisition date / image.
+4. Save — active assets appear under **Physical Assets** on the Balance Sheet.
 
 ### Create Transfer
 

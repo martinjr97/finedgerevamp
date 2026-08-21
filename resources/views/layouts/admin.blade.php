@@ -157,6 +157,7 @@
                                     auth('admin')->user()?->can('banks.view') ? ['label' => 'Banks', 'route' => route('admin.banks.index'), 'icon' => 'building-library'] : null,
                                     auth('admin')->user()?->can('wallets.view') ? ['label' => 'Wallets', 'route' => route('admin.wallets.index'), 'icon' => 'device-phone-mobile'] : null,
                                     auth('admin')->user()?->can('creditors.view') ? ['label' => 'Creditors', 'route' => route('admin.creditors.index'), 'icon' => 'document-text'] : null,
+                                    auth('admin')->user()?->can('assets.view') ? ['label' => 'Physical Assets', 'route' => route('admin.assets.index'), 'icon' => 'cube'] : null,
                                     auth('admin')->user()?->can('financial-transactions.view') ? ['label' => 'Transactions', 'route' => route('admin.financial-transactions.index'), 'icon' => 'arrows-right-left'] : null,
                                     auth('admin')->user()?->can('transfers.view') ? ['label' => 'Transfers', 'route' => route('admin.transfers.index'), 'icon' => 'arrow-path'] : null,
                                     auth('admin')->user()?->can('financial-statements.view') ? ['label' => 'Balance Sheet', 'route' => route('admin.financial-statements.balance-sheet'), 'icon' => 'document-text'] : null,
