@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bank;
+use App\Models\Employee;
 use App\Models\FinancialTransaction;
 use App\Models\Wallet;
+use App\Support\FinancialCategoryCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +44,10 @@ class FinancialTransactionController extends Controller
 
         $transactions = $query->paginate(50);
 
-        return view('admin.financial-transactions.index', compact('transactions'));
+        $expenseCategories = FinancialCategoryCatalog::activeExpenseCategories();
+        $incomeCategories = FinancialCategoryCatalog::activeIncomeCategories();
+
+        return view('admin.financial-transactions.index', compact('transactions', 'expenseCategories', 'incomeCategories'));
     }
 
     /**
@@ -53,8 +58,9 @@ class FinancialTransactionController extends Controller
         abort_unless(auth('admin')->user()?->can('financial-transactions.create'), 403);
         $banks = Bank::where('is_active', true)->orderBy('name')->get();
         $wallets = Wallet::where('is_active', true)->orderBy('name')->get();
+        $incomeCategories = FinancialCategoryCatalog::activeIncomeCategories();
         
-        return view('admin.financial-transactions.create-income', compact('banks', 'wallets'));
+        return view('admin.financial-transactions.create-income', compact('banks', 'wallets', 'incomeCategories'));
     }
 
     /**
@@ -65,8 +71,10 @@ class FinancialTransactionController extends Controller
         abort_unless(auth('admin')->user()?->can('financial-transactions.create'), 403);
         $banks = Bank::where('is_active', true)->orderBy('name')->get();
         $wallets = Wallet::where('is_active', true)->orderBy('name')->get();
+        $expenseCategories = FinancialCategoryCatalog::activeExpenseCategories();
+        $employees = Employee::query()->active()->orderBy('first_name')->orderBy('last_name')->get();
         
-        return view('admin.financial-transactions.create-expense', compact('banks', 'wallets'));
+        return view('admin.financial-transactions.create-expense', compact('banks', 'wallets', 'expenseCategories', 'employees'));
     }
 
     /**
@@ -75,9 +83,11 @@ class FinancialTransactionController extends Controller
     public function storeIncome(Request $request): RedirectResponse
     {
         abort_unless(auth('admin')->user()?->can('financial-transactions.create'), 403);
+
+        $incomeCategoryCodes = FinancialCategoryCatalog::activeIncomeCategoryCodes();
         $validated = $request->validate([
             'transaction_date' => ['required', 'date'],
-            'category' => ['required', 'in:loan_interest,loan_processing_fee,shareholder_contribution,investment_income,donation,grant,other_income'],
+            'category' => ['required', 'in:'.implode(',', $incomeCategoryCodes)],
             'description' => ['required', 'string', 'max:500'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'destination_type' => ['required', 'in:bank,wallet'],
@@ -94,11 +104,14 @@ class FinancialTransactionController extends Controller
                 ? Bank::findOrFail($validated['destination_id'])
                 : Wallet::findOrFail($validated['destination_id']);
 
+            $incomeCategory = FinancialCategoryCatalog::resolveIncomeCategory($validated['category']);
+
             $transaction = FinancialTransaction::create([
                 'transaction_number' => FinancialTransaction::generateTransactionNumber('income'),
                 'transaction_date' => $validated['transaction_date'],
                 'type' => 'income',
                 'category' => $validated['category'],
+                'income_category_id' => $incomeCategory?->id,
                 'description' => $validated['description'],
                 'amount' => $validated['amount'],
                 'destination_type' => $validated['destination_type'],
@@ -130,10 +143,15 @@ class FinancialTransactionController extends Controller
     public function storeExpense(Request $request): RedirectResponse
     {
         abort_unless(auth('admin')->user()?->can('financial-transactions.create'), 403);
+
+        $expenseCategoryCodes = FinancialCategoryCatalog::activeExpenseCategoryCodes();
         $validated = $request->validate([
             'transaction_date' => ['required', 'date'],
-            'category' => ['required', 'in:operational,administrative,marketing,salaries,utilities,rent,other_expense'],
+            'category' => ['required', 'in:'.implode(',', $expenseCategoryCodes)],
+            'expense_subcategory_id' => ['nullable', 'integer'],
             'description' => ['required', 'string', 'max:500'],
+            'receiver_name' => ['nullable', 'string', 'max:255'],
+            'employee_id' => ['nullable', 'integer', 'exists:employees,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'source_type' => ['required', 'in:bank,wallet'],
             'source_id' => ['required', 'integer'],
@@ -155,12 +173,29 @@ class FinancialTransactionController extends Controller
                     ->with('error', 'Insufficient balance. Available: ' . number_format($source->current_balance, 2));
             }
 
+            $expenseCategory = FinancialCategoryCatalog::resolveExpenseCategory($validated['category']);
+            $expenseSubcategory = $expenseCategory
+                ? FinancialCategoryCatalog::resolveExpenseSubcategory($expenseCategory->id, $validated['expense_subcategory_id'] ?? null)
+                : null;
+
+            $employee = ! empty($validated['employee_id'])
+                ? Employee::query()->find($validated['employee_id'])
+                : null;
+            $receiverName = trim((string) ($validated['receiver_name'] ?? ''));
+            if ($receiverName === '' && $employee) {
+                $receiverName = $employee->full_name;
+            }
+
             $transaction = FinancialTransaction::create([
                 'transaction_number' => FinancialTransaction::generateTransactionNumber('expense'),
                 'transaction_date' => $validated['transaction_date'],
                 'type' => 'expense',
                 'category' => $validated['category'],
+                'expense_category_id' => $expenseCategory?->id,
+                'expense_subcategory_id' => $expenseSubcategory?->id,
                 'description' => $validated['description'],
+                'receiver_name' => $receiverName !== '' ? $receiverName : null,
+                'employee_id' => $employee?->id,
                 'amount' => $validated['amount'],
                 'source_type' => $validated['source_type'],
                 'source_id' => $validated['source_id'],
@@ -191,7 +226,7 @@ class FinancialTransactionController extends Controller
     public function show(FinancialTransaction $financialTransaction): View
     {
         abort_unless(auth('admin')->user()?->can('financial-transactions.view'), 403);
-        $financialTransaction->load(['sourceBank', 'sourceWallet', 'destinationBank', 'destinationWallet', 'creator']);
+        $financialTransaction->load(['sourceBank', 'sourceWallet', 'destinationBank', 'destinationWallet', 'creator', 'employee', 'expenseCategory', 'expenseSubcategory']);
         return view('admin.financial-transactions.show', compact('financialTransaction'));
     }
 

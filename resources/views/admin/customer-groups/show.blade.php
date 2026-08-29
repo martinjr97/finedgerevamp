@@ -23,7 +23,8 @@
             ]
         ])
 
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-6 lg:grid-cols-3">
+            <div class="lg:col-span-2 space-y-6">
             {{-- Group Information --}}
             <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
                 <h2 class="text-xl font-semibold text-white">Group Information</h2>
@@ -65,10 +66,26 @@
                                     <p class="text-xs text-slate-400">Not assigned</p>
                                 @endif
                             </div>
-                            <button type="button" class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-500/30 js-open-rm-modal">
+                            <button type="button" class="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-500/30 js-open-rm-modal">
                                 {{ $customerGroup->relationshipManager ? 'Change' : 'Assign' }}
                             </button>
                         </div>
+                        @php
+                            $relationshipManagerHistoryCount = $customerGroup->relationshipManagerHistories->count();
+                        @endphp
+                        @if($relationshipManagerHistoryCount > 0)
+                            <button
+                                type="button"
+                                class="mt-3 inline-flex items-center gap-2 text-xs font-medium text-cyan-300 hover:text-cyan-200 transition js-toggle-rm-history"
+                                aria-expanded="false"
+                                aria-controls="relationshipManagerHistoryPanel"
+                            >
+                                <svg class="h-4 w-4 js-rm-history-chevron transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                                View relationship manager history ({{ $relationshipManagerHistoryCount }})
+                            </button>
+                        @endif
                     </div>
                     @if($customerGroup->description)
                         <div>
@@ -147,19 +164,101 @@
                     @endif
                 </div>
             </div>
+            </div>
+
+            <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Snapshot</h3>
+                    <span class="text-xs uppercase tracking-[0.3em] text-slate-400">Live</span>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <p class="text-xs uppercase text-slate-400 mb-1">Customers in Group</p>
+                        @can('customers.view')
+                            <a
+                                href="{{ route('admin.customers.index', ['customer_group_id' => $customerGroup->id]) }}"
+                                class="group inline-flex items-center gap-2 text-3xl font-semibold text-white transition hover:text-cyan-300"
+                                title="View customers in {{ $customerGroup->name }}"
+                            >
+                                {{ number_format($customerGroup->customers_count) }}
+                                <svg class="h-5 w-5 text-slate-500 opacity-0 transition group-hover:text-cyan-300 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                            </a>
+                        @else
+                            <p class="text-3xl font-semibold text-white">{{ number_format($customerGroup->customers_count) }}</p>
+                        @endcan
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase text-slate-400 mb-1">Active Loans</p>
+                        @can('loans.view')
+                            <a
+                                href="{{ route('admin.loans.index', ['status' => 'active', 'disbursement_status' => 'completed', 'customer_group_id' => $customerGroup->id]) }}"
+                                class="group inline-flex items-center gap-2 text-3xl font-semibold text-white transition hover:text-cyan-300"
+                                title="View active loans for this group"
+                            >
+                                {{ number_format($loanSnapshot['active_loans_count']) }}
+                                <svg class="h-5 w-5 text-slate-500 opacity-0 transition group-hover:text-cyan-300 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                            </a>
+                        @else
+                            <p class="text-3xl font-semibold text-white">{{ number_format($loanSnapshot['active_loans_count']) }}</p>
+                        @endcan
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase text-slate-400 mb-1">Total Outstanding Balance</p>
+                        <p class="text-2xl font-semibold text-amber-300">
+                            ZMW {{ number_format($loanSnapshot['total_outstanding_balance'], 2) }}
+                        </p>
+                    </div>
+                    @if($loanSnapshot['has_overdue'])
+                        <div class="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4">
+                            <p class="text-xs uppercase tracking-wide text-rose-200 mb-2">Overdue Exposure</p>
+                            <p class="text-2xl font-semibold text-rose-300">
+                                ZMW {{ number_format($loanSnapshot['total_overdue_amount'], 2) }}
+                            </p>
+                            <p class="mt-1 text-sm text-rose-200/90">
+                                {{ number_format($loanSnapshot['overdue_loans_count']) }} {{ $loanSnapshot['overdue_loans_count'] === 1 ? 'loan' : 'loans' }} with overdue installments
+                            </p>
+                            @can('reports.view')
+                                <a
+                                    href="{{ route('admin.reports.arrears', ['customer_group_id' => $customerGroup->id]) }}"
+                                    class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-rose-200 hover:text-white transition"
+                                >
+                                    View arrears report
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                </a>
+                            @endcan
+                        </div>
+                    @endif
+                    <div class="grid grid-cols-2 gap-3 text-sm text-white/80">
+                        <div>
+                            <p class="text-xs uppercase text-slate-500 mb-1">Created</p>
+                            <p>{{ $customerGroup->created_at->format('d M Y') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-slate-500 mb-1">Updated</p>
+                            <p>{{ $customerGroup->updated_at->format('d M Y') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        {{-- Relationship Manager History --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-            <div class="mb-6 flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-white flex items-center gap-2">
-                    <span class="w-1 h-6 rounded-full bg-cyan-500"></span>Relationship Manager History
-                </h2>
-            </div>
-            @php
-                $histories = $customerGroup->relationshipManagerHistories->sortByDesc('started_at');
-            @endphp
-            @if($histories->count() > 0)
+        @php
+            $histories = $customerGroup->relationshipManagerHistories->sortByDesc('started_at');
+        @endphp
+        @if($histories->count() > 0)
+            <div id="relationshipManagerHistoryPanel" class="hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-white">Relationship Manager History</h2>
+                    <button type="button" class="text-xs font-medium text-slate-400 hover:text-white transition js-toggle-rm-history">
+                        Hide history
+                    </button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full w-full text-sm text-slate-300">
                         <thead>
@@ -204,10 +303,8 @@
                         </tbody>
                     </table>
                 </div>
-            @else
-                <p class="text-center text-slate-400 py-6 text-sm">No relationship manager history recorded yet.</p>
-            @endif
-        </div>
+            </div>
+        @endif
 
         {{-- Customers List --}}
         <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
@@ -216,34 +313,49 @@
                     <span class="w-1 h-6 rounded-full bg-cyan-500"></span>Customers in this Group
                 </h2>
                 <span class="rounded-full bg-cyan-500/20 px-3 py-1 text-sm font-medium text-cyan-300">
-                    {{ $customerGroup->customers->count() }} {{ $customerGroup->customers->count() == 1 ? 'Customer' : 'Customers' }}
+                    {{ $customerGroup->customers_count }} {{ $customerGroup->customers_count == 1 ? 'Customer' : 'Customers' }}
                 </span>
             </div>
             @if($customerGroup->customers->count() > 0)
-                <div class="overflow-x-auto">
-                    <table data-datatable="true" data-datatable-per-page="10" class="min-w-full w-full text-sm text-slate-300">
+                <div class="admin-data-table">
+                    <table
+                        data-datatable="true"
+                        data-datatable-per-page="10"
+                        data-datatable-search-placeholder="Search customers…"
+                        class="min-w-full w-full"
+                    >
                         <thead>
-                            <tr class="text-sm font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b border-white/10">
-                                <th class="px-4 py-4 text-base">Name</th>
-                                <th class="px-4 py-4 text-base">Email</th>
-                                <th class="px-4 py-4 text-base">Phone</th>
-                                <th class="px-4 py-4 text-base">Status</th>
-                                <th class="px-4 py-4 text-base">Actions</th>
+                            <tr class="font-semibold uppercase text-white/80 text-center">
+                                <th scope="col">Name</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Phone</th>
+                                <th scope="col">Status</th>
+                                <th data-sortable="false" scope="col" class="admin-data-table__actions">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($customerGroup->customers as $customer)
-                                <tr class="border-t border-white/5 text-center">
-                                    <td class="px-4 py-3 font-medium text-white">{{ $customer->full_name }}</td>
-                                    <td class="px-4 py-3">{{ $customer->email }}</td>
-                                    <td class="px-4 py-3">{{ $customer->phone ?? '—' }}</td>
-                                    <td class="px-4 py-3">
-                                        <span class="rounded-full px-2 py-1 text-xs {{ $customer->status === 'active' ? 'bg-emerald-500/20 text-emerald-300' : ($customer->status === 'pending' ? 'bg-amber-500/20 text-amber-300' : 'bg-rose-500/20 text-rose-300') }}">
+                                <tr class="text-center">
+                                    <td class="font-medium text-white">{{ $customer->full_name }}</td>
+                                    <td>{{ $customer->email }}</td>
+                                    <td>{{ $customer->phone ?? '—' }}</td>
+                                    <td>
+                                        <span class="text-sm font-medium {{ $customer->status === 'active' ? 'text-emerald-400' : ($customer->status === 'pending' ? 'text-amber-400' : 'text-rose-400') }}">
                                             {{ ucfirst($customer->status) }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <a href="{{ route('admin.customers.show', $customer) }}" class="rounded-full bg-blue-500/20 border border-blue-500/50 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-500/30 hover:border-blue-500 transition">View</a>
+                                    <td>
+                                        <div class="inline-flex items-center gap-3">
+                                            @can('customers.view')
+                                            <a href="{{ route('admin.customers.show', $customer) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-blue-400/50 bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-500/20 transition">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                                View
+                                            </a>
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -443,6 +555,29 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const rmHistoryPanel = document.getElementById('relationshipManagerHistoryPanel');
+            const rmHistoryToggles = document.querySelectorAll('.js-toggle-rm-history');
+            const rmHistoryChevron = document.querySelector('.js-rm-history-chevron');
+
+            const toggleRmHistory = () => {
+                if (!rmHistoryPanel) {
+                    return;
+                }
+
+                const isHidden = rmHistoryPanel.classList.contains('hidden');
+                rmHistoryPanel.classList.toggle('hidden', !isHidden);
+                rmHistoryToggles.forEach((button) => {
+                    button.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+                });
+                if (rmHistoryChevron) {
+                    rmHistoryChevron.classList.toggle('rotate-180', isHidden);
+                }
+            };
+
+            rmHistoryToggles.forEach((button) => {
+                button.addEventListener('click', toggleRmHistory);
+            });
+
             const modal = document.getElementById('relationshipManagerModal');
             const openButtons = document.querySelectorAll('.js-open-rm-modal');
             const closeButtons = document.querySelectorAll('.js-close-rm-modal');
@@ -493,6 +628,14 @@
             const hasRmErrors = {{ ($errors->has('relationship_manager_id') || $errors->has('change_reason')) ? 'true' : 'false' }};
             if (hasRmErrors) {
                 toggleModal(true);
+            }
+
+            if (hasRmErrors && rmHistoryPanel) {
+                rmHistoryPanel.classList.remove('hidden');
+                rmHistoryToggles.forEach((button) => button.setAttribute('aria-expanded', 'true'));
+                if (rmHistoryChevron) {
+                    rmHistoryChevron.classList.add('rotate-180');
+                }
             }
         });
 

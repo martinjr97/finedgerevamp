@@ -22,6 +22,17 @@
             ]
         ])
 
+        @if($filteredCompany)
+            <div class="rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100 flex flex-wrap items-center justify-between gap-3">
+                <span>
+                    Showing overdue loans for <strong class="text-white">{{ $filteredCompany->name }}</strong> only.
+                </span>
+                <a href="{{ route('admin.reports.arrears', request()->except('company_id', 'page')) }}" class="inline-flex items-center gap-1.5 rounded-xl border border-cyan-400/40 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/20 transition">
+                    Clear company filter
+                </a>
+            </div>
+        @endif
+
         {{-- Summary Cards (filtered dataset totals, not just the current page) --}}
         <div class="grid gap-4 md:grid-cols-3">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
@@ -102,6 +113,9 @@
         {{-- Filters --}}
         <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
             <form method="GET" action="{{ route('admin.reports.arrears') }}" class="space-y-4">
+                @if(request()->filled('company_id'))
+                    <input type="hidden" name="company_id" value="{{ request('company_id') }}">
+                @endif
                 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {{-- Search --}}
                     <div>
@@ -151,7 +165,7 @@
                     <button type="submit" class="rounded-2xl bg-cyan-500/20 border border-cyan-500/50 px-6 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/30 transition">
                         Apply Filters
                     </button>
-                    <a href="{{ route('admin.reports.arrears') }}" class="rounded-2xl border border-white/10 px-6 py-2 text-sm font-medium text-white/80 hover:bg-white/10 transition">
+                    <a href="{{ route('admin.reports.arrears', request()->only('company_id')) }}" class="rounded-2xl border border-white/10 px-6 py-2 text-sm font-medium text-white/80 hover:bg-white/10 transition">
                         Clear Filters
                     </a>
                 </div>

@@ -30,7 +30,7 @@
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>
             Bio Data
         </h2>
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             @include('partials.admin.customer-branch-select', [
                 'branches' => $branches,
                 'inputClass' => $inputClass,
@@ -96,7 +96,7 @@
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-2 xl:col-span-3">
                 @include('partials.customer-identity-fields', [
                     'nationalIdType' => old('national_id_type', isset($customer) ? $customer->national_id_type : null),
                     'nationalIdValue' => old('national_id', isset($customer) ? ($customer->national_id ?? '') : ''),
@@ -115,7 +115,7 @@
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>Work Information</h2>
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             @include('partials.customer-employee-number-field', [
                 'employeeNumberValue' => old('employee_number'),
                 'labelClass' => $labelClass,
@@ -193,8 +193,8 @@
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>Work Address</h2>
-        <div class="grid gap-6 md:grid-cols-2">
-            <div class="md:col-span-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div class="md:col-span-2 xl:col-span-3">
                 <label class="text-sm font-medium {{ $labelClass }}">Work Address Line 1</label>
                 <input type="text" name="work_address_line1" value="{{ old('work_address_line1') }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} {{ $inputFocusClass }} text-white px-4 py-3">
                 @error('work_address_line1')
@@ -272,8 +272,8 @@
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>Customer Address</h2>
-        <div class="grid gap-6 md:grid-cols-2">
-            <div class="md:col-span-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div class="md:col-span-2 xl:col-span-3">
                 <label class="text-sm font-medium {{ $labelClass }}">Address Line 1 <span class="{{ $requiredClass }}">*</span></label>
                 <input type="text" name="address_line1" value="{{ old('address_line1') }}" required class="mt-2 w-full rounded-2xl {{ $inputClass }} {{ $inputFocusClass }} text-white px-4 py-3">
                 @error('address_line1')

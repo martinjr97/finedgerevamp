@@ -9,6 +9,8 @@ use App\Models\LoanRateType;
 use App\Models\Admin;
 use App\Models\CustomerGroupRelationshipManagerHistory;
 use App\Models\Branch;
+use App\Support\PortfolioLoanSnapshot;
+use App\Support\RelationshipManagerCustomerBranchSync;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -152,6 +154,11 @@ class CustomerGroupController extends Controller
                     'change_reason' => 'Initial assignment',
                     'changed_by' => auth('admin')->id(),
                 ]);
+
+                RelationshipManagerCustomerBranchSync::syncForCustomerGroup(
+                    $customerGroup,
+                    (int) $validated['relationship_manager_id']
+                );
             }
 
             return redirect()
@@ -216,15 +223,18 @@ class CustomerGroupController extends Controller
             'customers',
             'relationshipManagerHistories.relationshipManager',
             'relationshipManagerHistories.changedBy',
-        ]);
+        ])->loadCount('customers');
 
         $relationshipManagers = Admin::where('is_relationship_manager', true)
             ->orderBy('first_name')
             ->get();
 
+        $loanSnapshot = PortfolioLoanSnapshot::forCustomerGroup($customerGroup);
+
         return view('admin.customer-groups.show', [
             'customerGroup' => $customerGroup,
             'relationshipManagers' => $relationshipManagers,
+            'loanSnapshot' => $loanSnapshot,
         ]);
     }
 
@@ -282,6 +292,8 @@ class CustomerGroupController extends Controller
                     'changed_by' => auth('admin')->id(),
                 ]);
             }
+
+            RelationshipManagerCustomerBranchSync::syncForCustomerGroup($customerGroup, $newId);
 
             return redirect()
                 ->route('admin.customer-groups.show', $customerGroup)

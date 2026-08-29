@@ -259,6 +259,9 @@
                 @if ($isSingleLoanScope && $selectedLoan->loanProduct?->name)
                     <p class="meta-row"><span class="meta-strong">Product:</span> {{ $selectedLoan->loanProduct->name }}</p>
                 @endif
+                @if ($isSingleLoanScope && ($statement['selected_loan_tenure_summary'] ?? null))
+                    <p class="meta-row"><span class="meta-strong">Tenure:</span> {{ $statement['selected_loan_tenure_summary'] }}</p>
+                @endif
                 <p class="meta-row"><span class="meta-strong">Statement period:</span> {{ $periodLabel }} · <span class="meta-strong">Generated:</span> {{ $generatedAt->format('d M Y, H:i') }}</p>
             </div>
         </div>
@@ -299,7 +302,7 @@
                                 <span class="field-value">{{ $scopeLabel }}</span>
                             </td>
                             <td>
-                                <span class="field-label">Statement period</span>p
+                                <span class="field-label">Statement period</span>
                                 <span class="field-value">{{ $periodLabel }}</span>
                             </td>
                         </tr>

@@ -16,7 +16,12 @@ class FinancialTransaction extends Model
         'transaction_date',
         'type',
         'category',
+        'expense_category_id',
+        'expense_subcategory_id',
+        'income_category_id',
         'description',
+        'receiver_name',
+        'employee_id',
         'amount',
         'source_type',
         'source_id',
@@ -114,6 +119,26 @@ class FinancialTransaction extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'approved_by');
+    }
+
+    public function expenseCategory(): BelongsTo
+    {
+        return $this->belongsTo(ExpenseCategory::class);
+    }
+
+    public function expenseSubcategory(): BelongsTo
+    {
+        return $this->belongsTo(ExpenseSubcategory::class);
+    }
+
+    public function incomeCategory(): BelongsTo
+    {
+        return $this->belongsTo(IncomeCategory::class);
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     /**

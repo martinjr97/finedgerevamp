@@ -49,6 +49,9 @@
         @if ($filters['from_date'] || $filters['to_date'])
             · Period: {{ $filters['from_date'] ?? 'start' }} to {{ $filters['to_date'] ?? 'present' }}
         @endif
+        @if ($statement['selected_loan_tenure_summary'] ?? null)
+            <br>{{ $statement['selected_loan_tenure_summary'] }}
+        @endif
     </p>
 
     <table class="summary">

@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\CustomerRegistrationRequestController as AdminCus
 use App\Http\Controllers\Admin\CustomerRegistrationSettingController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\FinancialInstitutionController;
+use App\Http\Controllers\Admin\FinancialCategoryController;
 use App\Http\Controllers\Admin\FinancialStatementController;
 use App\Http\Controllers\Admin\FinancialTransactionController;
 use App\Http\Controllers\Admin\FraudProtectionController;
@@ -89,6 +90,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::resource('users', UserController::class);
         Route::get('companies/export', [CompanyController::class, 'export'])->name('companies.export');
         Route::post('companies/{company}/loan-rate-type', [CompanyController::class, 'updateLoanRateType'])->name('companies.loan-rate-type');
+        Route::put('companies/{company}/relationship-manager', [CompanyController::class, 'updateRelationshipManager'])->name('companies.update-relationship-manager');
         Route::get('companies/{company}/payment-due-report', [CompanyController::class, 'showPaymentDueReport'])->name('companies.payment-due-report');
         Route::post('companies/{company}/payment-due-report', [CompanyController::class, 'generatePaymentDueReport'])->name('companies.payment-due-report.generate');
         Route::get('companies/{company}/payment-due-report/export', [CompanyController::class, 'exportPaymentDueReport'])->name('companies.payment-due-report.export');
@@ -188,6 +190,20 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('financial-transactions/expense', [FinancialTransactionController::class, 'storeExpense'])->name('financial-transactions.expense.store');
         Route::get('financial-transactions/{financialTransaction}', [FinancialTransactionController::class, 'show'])->name('financial-transactions.show');
         Route::delete('financial-transactions/{financialTransaction}', [FinancialTransactionController::class, 'destroy'])->name('financial-transactions.destroy');
+
+        Route::prefix('financial-categories')->name('financial-categories.')->group(function () {
+            Route::get('/', [FinancialCategoryController::class, 'index'])->name('index');
+            Route::get('expense/create', [FinancialCategoryController::class, 'createExpense'])->name('expense.create');
+            Route::post('expense', [FinancialCategoryController::class, 'storeExpense'])->name('expense.store');
+            Route::get('expense/{expenseCategory}/edit', [FinancialCategoryController::class, 'editExpense'])->name('expense.edit');
+            Route::put('expense/{expenseCategory}', [FinancialCategoryController::class, 'updateExpense'])->name('expense.update');
+            Route::delete('expense/{expenseCategory}', [FinancialCategoryController::class, 'destroyExpense'])->name('expense.destroy');
+            Route::get('income/create', [FinancialCategoryController::class, 'createIncome'])->name('income.create');
+            Route::post('income', [FinancialCategoryController::class, 'storeIncome'])->name('income.store');
+            Route::get('income/{incomeCategory}/edit', [FinancialCategoryController::class, 'editIncome'])->name('income.edit');
+            Route::put('income/{incomeCategory}', [FinancialCategoryController::class, 'updateIncome'])->name('income.update');
+            Route::delete('income/{incomeCategory}', [FinancialCategoryController::class, 'destroyIncome'])->name('income.destroy');
+        });
 
         // Transfers
         Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
@@ -384,6 +400,8 @@ Route::middleware('auth:admin')->group(function (): void {
             Route::get('relationship-manager/export/{format}', [\App\Http\Controllers\Admin\ReportController::class, 'exportRelationshipManagerReport'])
                 ->whereIn('format', ['excel', 'csv', 'pdf'])
                 ->name('relationship-manager.export');
+            Route::get('expenses', [\App\Http\Controllers\Admin\ReportController::class, 'expenses'])->name('expenses');
+            Route::get('expenses/export', [\App\Http\Controllers\Admin\ReportController::class, 'exportExpenses'])->name('expenses.export');
         });
 
         // Approval routes

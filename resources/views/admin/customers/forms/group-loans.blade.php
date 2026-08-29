@@ -31,7 +31,7 @@
 
     <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold text-white">Bio Data</h2>
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="text-sm font-medium text-slate-300">First Name <span class="text-red-400">*</span></label>
                 <input type="text" name="first_name" value="{{ old('first_name') }}" required class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
@@ -70,7 +70,7 @@
                 </select>
                 @error('gender')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-2 xl:col-span-3">
                 @include('partials.customer-identity-fields', [
                     'nationalIdType' => old('national_id_type', isset($customer) ? $customer->national_id_type : null),
                     'nationalIdValue' => old('national_id', isset($customer) ? ($customer->national_id ?? '') : ''),
@@ -87,8 +87,8 @@
 
     <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold text-white">Address</h2>
-        <div class="grid gap-6 md:grid-cols-2">
-            <div class="md:col-span-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div class="md:col-span-2 xl:col-span-3">
                 <label class="text-sm font-medium text-slate-300">Address Line 1 <span class="text-red-400">*</span></label>
                 <input type="text" name="address_line1" value="{{ old('address_line1') }}" required class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
                 @error('address_line1')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
@@ -123,7 +123,7 @@
 
     <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold text-white">Employment / Business Details</h2>
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="text-sm font-medium text-slate-300">Occupation Type <span class="text-red-400">*</span></label>
                 <select name="occupation_type" required class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
@@ -143,7 +143,7 @@
                 <input type="number" name="average_income" value="{{ old('average_income') }}" step="0.01" min="0" required class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40" placeholder="0.00">
                 @error('average_income')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-2 xl:col-span-3">
                 <label class="text-sm font-medium text-slate-300">Business Location Address Line 1 <span class="text-red-400">*</span></label>
                 <input type="text" name="work_address_line1" value="{{ old('work_address_line1') }}" required class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
                 @error('work_address_line1')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror

@@ -31,7 +31,10 @@
         Generated: {{ $generatedAt->format('d M Y H:i') }}<br>
         Branch: {{ $filters['branch_id'] ? ($branchOptions->firstWhere('id', (int) $filters['branch_id'])->name ?? 'Selected Branch') : 'All Branches' }} |
         Mode: {{ ucfirst($filters['mode']) }} |
-        PAR Bucket: {{ strtoupper($filters['par_bucket']) }} |
+        PAR Bucket: {{ match ($filters['par_bucket']) {
+            'minus_30' => 'Due Within 30 Days (-30)',
+            default => strtoupper((string) $filters['par_bucket']),
+        } }} |
         Customer Type: {{ ucfirst($filters['customer_type']) }} |
         Export Data: {{ ucfirst($dataset) }} |
         Date Range:

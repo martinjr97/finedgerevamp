@@ -35,7 +35,7 @@ class LoanController extends Controller
         }
 
         if ($request->has('customer_group_id') && $request->customer_group_id) {
-            $query->where('customer_group_id', $request->customer_group_id);
+            $query->forCustomerGroupMembership((int) $request->customer_group_id);
         }
 
         if ($request->has('customer_id') && $request->customer_id) {

@@ -108,6 +108,12 @@
                         <p class="text-base font-semibold text-primary">{{ $user->branch->name ?? '—' }}</p>
                     </div>
                     <div>
+                        <p class="text-xs uppercase tracking-wide text-muted mb-1">Relationship Manager</p>
+                        <span class="inline-block rounded-full px-3 py-1 text-sm font-medium text-primary {{ $user->is_relationship_manager ? 'bg-emerald-500/20 border border-emerald-600/40' : 'bg-slate-500/20 border border-slate-600/40' }}">
+                            {{ $user->is_relationship_manager ? 'Yes' : 'No' }}
+                        </span>
+                    </div>
+                    <div>
                         <p class="text-xs uppercase tracking-wide text-muted mb-2">Assigned Roles</p>
                         <div class="flex flex-wrap gap-2">
                             @forelse ($user->roles as $role)

@@ -23,6 +23,9 @@
                     <p class="text-xs uppercase tracking-[0.3em] text-blue-100/80">Account statement</p>
                     <h1 class="text-3xl font-bold text-white mt-1">{{ $customer->full_name }}</h1>
                     <p class="text-blue-100 mt-1 text-sm">{{ $customer->email }} · {{ $customer->phone }}</p>
+                    @if ($statement['selected_loan_tenure_summary'] ?? null)
+                        <p class="text-blue-100/90 mt-2 text-sm">{{ $statement['selected_loan_tenure_summary'] }}</p>
+                    @endif
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <a href="{{ route('customer.statement.pdf', $filterQuery) }}"

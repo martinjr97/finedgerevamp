@@ -47,6 +47,9 @@
                     <p class="text-xs uppercase tracking-[0.35em] text-cyan-300">Account statement</p>
                     <h2 class="text-2xl font-bold text-white mt-1">{{ $customer->full_name }}</h2>
                     <p class="text-sm text-slate-400 mt-1">{{ $customer->email }} · {{ $customer->phone }}</p>
+                    @if ($statement['selected_loan_tenure_summary'] ?? null)
+                        <p class="text-sm text-cyan-200/90 mt-2">{{ $statement['selected_loan_tenure_summary'] }}</p>
+                    @endif
                 </div>
                 <div class="text-right text-sm text-slate-400">
                     <p>Generated {{ now()->format('d M Y, H:i') }}</p>

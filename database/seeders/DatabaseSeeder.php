@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
 	                CashRegisterSeeder::class,
 	                FinancialInstitutionSeeder::class,
 	                WalletProviderSeeder::class,
+	                FinancialCategorySeeder::class,
 	                SecurityQuestionSeeder::class,
 	                RateTableSeeder::class,
 					CGratePaymentGatewaySeeder::class,

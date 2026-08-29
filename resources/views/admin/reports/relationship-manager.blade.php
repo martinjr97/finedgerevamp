@@ -54,6 +54,7 @@
                             <option value="par30" @selected(($filters['par_bucket'] ?? 'all') === 'par30')>PAR30 Only</option>
                             <option value="par60" @selected(($filters['par_bucket'] ?? 'all') === 'par60')>PAR60 Only</option>
                             <option value="par90" @selected(($filters['par_bucket'] ?? 'all') === 'par90')>PAR90 Only</option>
+                            <option value="minus_30" @selected(($filters['par_bucket'] ?? 'all') === 'minus_30')>Due Within 30 Days (-30)</option>
                         </select>
                     </div>
 
@@ -149,7 +150,7 @@
                     </button>
                 </div>
                 <p class="text-xs text-slate-400">
-                    Tip: Choose Branch, PAR Bucket, and customer type first. For PAR30-only data, set <strong>PAR Bucket = PAR30 Only</strong>.
+                    Tip: Choose Branch, PAR Bucket, and customer type first. For PAR30-only data, set <strong>PAR Bucket = PAR30 Only</strong>. Use <strong>Due Within 30 Days (-30)</strong> to preview upcoming installments.
                 </p>
             </form>
         </div>
@@ -169,9 +170,14 @@
                 <p class="text-xs text-slate-400 mt-1">{{ number_format($summary['total_repayments_count'] ?? 0) }} repayments</p>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
-                <p class="text-xs font-medium text-slate-400 mb-1">PAR Ratio</p>
+                <p class="text-xs font-medium text-slate-400 mb-1">
+                    {{ ($filters['par_bucket'] ?? 'all') === 'minus_30' ? 'Due Within 30 Days Ratio' : 'PAR Ratio' }}
+                </p>
                 <p class="text-xl font-bold text-rose-300">{{ number_format($summary['par_ratio'] ?? 0, 2) }}%</p>
-                <p class="text-xs text-slate-400 mt-1">At Risk: ZMW {{ number_format($summary['total_par_amount'] ?? 0, 2) }}</p>
+                <p class="text-xs text-slate-400 mt-1">
+                    {{ ($filters['par_bucket'] ?? 'all') === 'minus_30' ? 'Amount Due' : 'At Risk' }}:
+                    ZMW {{ number_format($summary['total_par_amount'] ?? 0, 2) }}
+                </p>
             </div>
         </div>
 
@@ -202,7 +208,9 @@
                                 <td class="px-4 py-3 text-center text-amber-300 font-semibold">ZMW {{ number_format($row['total_outstanding_balance'], 2) }}</td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="text-rose-300 font-semibold">ZMW {{ number_format($row['par_amount'], 2) }}</div>
-                                    <div class="text-xs text-slate-400">{{ number_format($row['par_ratio'], 2) }}% ({{ $row['par_status'] }})</div>
+                                    <div class="text-xs text-slate-400">
+                                        {{ number_format($row['par_ratio'], 2) }}% ({{ $row['par_status'] }})
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 text-center">{{ number_format($row['individual_customers_count']) }}</td>
                                 <td class="px-4 py-3 text-center">{{ number_format($row['groups_count']) }}</td>

@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CompanyRequest;
 use App\Models\Admin;
 use App\Models\Company;
+use App\Models\CompanyRelationshipManagerHistory;
+use App\Models\Loan;
 use App\Models\LoanProduct;
 use App\Models\LoanRateType;
 use App\Models\LoanPaymentSchedule;
 use App\Models\Sector;
+use App\Support\PortfolioLoanSnapshot;
+use App\Support\RelationshipManagerCustomerBranchSync;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -74,6 +78,8 @@ class CompanyController extends Controller
             'relationshipManager',
             'approver',
             'loanRateType.loanProduct',
+            'relationshipManagerHistories.relationshipManager',
+            'relationshipManagerHistories.changedBy',
         ])->loadCount(['admins', 'customers']);
 
         $mouProduct = LoanProduct::where('category', 'mou')->first();
@@ -84,7 +90,13 @@ class CompanyController extends Controller
                 ->get()
             : collect();
 
-        return view('admin.companies.show', compact('company', 'loanRateTypes'));
+        $relationshipManagers = Admin::where('is_relationship_manager', true)
+            ->orderBy('first_name')
+            ->get();
+
+        $loanSnapshot = PortfolioLoanSnapshot::forCompany($company);
+
+        return view('admin.companies.show', compact('company', 'loanRateTypes', 'relationshipManagers', 'loanSnapshot'));
     }
 
     public function store(CompanyRequest $request): RedirectResponse
@@ -104,6 +116,21 @@ class CompanyController extends Controller
                 'approval_status' => $requiresApproval ? 'pending' : 'approved',
                 'status' => $requiresApproval ? 'pending' : ($data['status'] ?? 'active'),
             ]));
+
+            if (! empty($data['relationship_manager_id'])) {
+                CompanyRelationshipManagerHistory::create([
+                    'company_id' => $company->id,
+                    'relationship_manager_id' => $data['relationship_manager_id'],
+                    'started_at' => now(),
+                    'change_reason' => 'Initial assignment',
+                    'changed_by' => auth('admin')->id(),
+                ]);
+
+                RelationshipManagerCustomerBranchSync::syncForCompany(
+                    $company,
+                    (int) $data['relationship_manager_id']
+                );
+            }
 
             $message = $requiresApproval
                 ? 'Company created and is pending approval.'
@@ -149,10 +176,23 @@ class CompanyController extends Controller
             $data = $request->validated();
             unset($data['type'], $data['is_primary']);
 
+            $previousRelationshipManagerId = $company->relationship_manager_id;
+
             $company->fill($data);
             // Ensure type is consistent with primary flag
             $company->type = $company->is_primary ? 'operator' : 'partner';
             $company->save();
+
+            $newRelationshipManagerId = $company->relationship_manager_id;
+            if ($previousRelationshipManagerId !== $newRelationshipManagerId) {
+                $this->applyCompanyRelationshipManagerChange(
+                    $company,
+                    $newRelationshipManagerId,
+                    'Updated via company edit form',
+                    auth('admin')->id()
+                );
+                RelationshipManagerCustomerBranchSync::syncForCompany($company, $newRelationshipManagerId);
+            }
 
             return redirect()
                 ->route('admin.companies.edit', $company)
@@ -340,6 +380,80 @@ class CompanyController extends Controller
                 ]
                 : null,
         ]);
+    }
+
+    public function updateRelationshipManager(Request $request, Company $company): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('companies.update'), 403);
+
+        $validated = $request->validate([
+            'relationship_manager_id' => ['nullable', 'exists:admins,id'],
+            'change_reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $currentId = $company->relationship_manager_id;
+        $newId = $validated['relationship_manager_id'] ?? null;
+
+        if ($currentId === $newId) {
+            return redirect()
+                ->route('admin.companies.show', $company)
+                ->with('status', 'No changes were made to the relationship manager.');
+        }
+
+        if ($currentId !== null && empty($validated['change_reason'])) {
+            return redirect()
+                ->route('admin.companies.show', $company)
+                ->withInput()
+                ->withErrors([
+                    'change_reason' => 'Please provide a reason for changing the relationship manager.',
+                ]);
+        }
+
+        try {
+            $this->applyCompanyRelationshipManagerChange(
+                $company,
+                $newId,
+                $validated['change_reason'] ?? null,
+                auth('admin')->id()
+            );
+
+            $company->update([
+                'relationship_manager_id' => $newId,
+            ]);
+
+            RelationshipManagerCustomerBranchSync::syncForCompany($company, $newId);
+
+            return redirect()
+                ->route('admin.companies.show', $company)
+                ->with('status', 'Relationship manager updated successfully.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('admin.companies.show', $company)
+                ->withInput()
+                ->with('error', 'Failed to update relationship manager: '.$e->getMessage());
+        }
+    }
+
+    private function applyCompanyRelationshipManagerChange(
+        Company $company,
+        ?int $newRelationshipManagerId,
+        ?string $changeReason,
+        ?int $changedBy
+    ): void {
+        CompanyRelationshipManagerHistory::where('company_id', $company->id)
+            ->whereNull('ended_at')
+            ->update(['ended_at' => now()]);
+
+        if ($newRelationshipManagerId !== null) {
+            CompanyRelationshipManagerHistory::create([
+                'company_id' => $company->id,
+                'relationship_manager_id' => $newRelationshipManagerId,
+                'started_at' => now(),
+                'ended_at' => null,
+                'change_reason' => $changeReason,
+                'changed_by' => $changedBy,
+            ]);
+        }
     }
 
     /**

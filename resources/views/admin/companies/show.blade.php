@@ -154,6 +154,51 @@
                         <p class="text-xs uppercase text-slate-400 mb-1">Relationship Admins</p>
                         <p class="text-3xl font-semibold text-white">{{ $company->admins_count }}</p>
                     </div>
+                    <div>
+                        <p class="text-xs uppercase text-slate-400 mb-1">Active Loans</p>
+                        @can('loans.view')
+                            <a
+                                href="{{ route('admin.loans.index', ['status' => 'active', 'disbursement_status' => 'completed']) }}"
+                                class="group inline-flex items-center gap-2 text-3xl font-semibold text-white transition hover:text-cyan-300"
+                                title="View active loans"
+                            >
+                                {{ number_format($loanSnapshot['active_loans_count']) }}
+                                <svg class="h-5 w-5 text-slate-500 opacity-0 transition group-hover:text-cyan-300 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                            </a>
+                        @else
+                            <p class="text-3xl font-semibold text-white">{{ number_format($loanSnapshot['active_loans_count']) }}</p>
+                        @endcan
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase text-slate-400 mb-1">Total Outstanding Balance</p>
+                        <p class="text-2xl font-semibold text-amber-300">
+                            ZMW {{ number_format($loanSnapshot['total_outstanding_balance'], 2) }}
+                        </p>
+                    </div>
+                    @if($loanSnapshot['has_overdue'])
+                        <div class="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4">
+                            <p class="text-xs uppercase tracking-wide text-rose-200 mb-2">Overdue Exposure</p>
+                            <p class="text-2xl font-semibold text-rose-300">
+                                ZMW {{ number_format($loanSnapshot['total_overdue_amount'], 2) }}
+                            </p>
+                            <p class="mt-1 text-sm text-rose-200/90">
+                                {{ number_format($loanSnapshot['overdue_loans_count']) }} {{ $loanSnapshot['overdue_loans_count'] === 1 ? 'loan' : 'loans' }} with overdue installments
+                            </p>
+                            @can('reports.view')
+                                <a
+                                    href="{{ route('admin.reports.arrears', ['company_id' => $company->id]) }}"
+                                    class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-rose-200 hover:text-white transition"
+                                >
+                                    View arrears report
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                </a>
+                            @endcan
+                        </div>
+                    @endif
                     <div class="grid grid-cols-2 gap-3 text-sm text-white/80">
                         <div>
                             <p class="text-xs uppercase text-slate-500 mb-1">Created</p>
@@ -221,12 +266,39 @@
                         <p>{{ $company->contact_phone ?? '—' }}</p>
                     </div>
                     <div>
-                        <p class="text-xs uppercase text-slate-400 mb-1">Relationship Manager</p>
-                        @if($company->relationshipManager)
-                            <p>{{ $company->relationshipManager->full_name }}</p>
-                            <p class="text-xs text-slate-400">{{ $company->relationshipManager->email }}</p>
-                        @else
-                            <p>Not assigned</p>
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-xs uppercase text-slate-400 mb-1">Relationship Manager</p>
+                                <div id="relationshipManagerDisplay">
+                                    @if($company->relationshipManager)
+                                        <p>{{ $company->relationshipManager->full_name }}</p>
+                                        <p class="text-xs text-slate-400">{{ $company->relationshipManager->email }}</p>
+                                    @else
+                                        <p>Not assigned</p>
+                                    @endif
+                                </div>
+                            </div>
+                            @can('companies.update')
+                                <button type="button" class="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-500/30 js-open-rm-modal">
+                                    {{ $company->relationshipManager ? 'Change' : 'Assign' }}
+                                </button>
+                            @endcan
+                        </div>
+                        @php
+                            $relationshipManagerHistoryCount = $company->relationshipManagerHistories->count();
+                        @endphp
+                        @if($relationshipManagerHistoryCount > 0)
+                            <button
+                                type="button"
+                                class="mt-3 inline-flex items-center gap-2 text-xs font-medium text-cyan-300 hover:text-cyan-200 transition js-toggle-rm-history"
+                                aria-expanded="false"
+                                aria-controls="relationshipManagerHistoryPanel"
+                            >
+                                <svg class="h-4 w-4 js-rm-history-chevron transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                                View relationship manager history ({{ $relationshipManagerHistoryCount }})
+                            </button>
                         @endif
                     </div>
                 </div>
@@ -242,7 +314,124 @@
                 </div>
             </div>
         </div>
+
+        @php
+            $relationshipManagerHistories = $company->relationshipManagerHistories->sortByDesc('started_at');
+        @endphp
+        @if($relationshipManagerHistories->count() > 0)
+            <div id="relationshipManagerHistoryPanel" class="hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <h3 class="text-lg font-semibold text-white">Relationship Manager History</h3>
+                    <button type="button" class="text-xs font-medium text-slate-400 hover:text-white transition js-toggle-rm-history">
+                        Hide history
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full w-full text-sm text-slate-300">
+                        <thead>
+                            <tr class="text-xs font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b border-white/10">
+                                <th class="px-4 py-3">Manager</th>
+                                <th class="px-4 py-3">Period</th>
+                                <th class="px-4 py-3">Changed By</th>
+                                <th class="px-4 py-3">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($relationshipManagerHistories as $history)
+                                <tr class="border-t border-white/5 text-center">
+                                    <td class="px-4 py-3">
+                                        @if($history->relationshipManager)
+                                            <div class="font-medium text-white">{{ $history->relationshipManager->full_name }}</div>
+                                            <div class="text-xs text-slate-400">{{ $history->relationshipManager->email }}</div>
+                                        @else
+                                            <span class="text-slate-400 text-xs">Manager removed</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="text-white text-xs">
+                                            {{ $history->started_at?->format('d M Y H:i') ?? '—' }}
+                                            <span class="text-slate-400">→</span>
+                                            {{ $history->ended_at?->format('d M Y H:i') ?? 'Present' }}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        @if($history->changedBy)
+                                            <div class="text-white text-xs">{{ $history->changedBy->full_name }}</div>
+                                            <div class="text-xs text-slate-400">{{ $history->changedBy->email }}</div>
+                                        @else
+                                            <span class="text-slate-400 text-xs">System</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-left align-top">
+                                        {{ $history->change_reason ?? '—' }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
     </div>
+
+    @can('companies.update')
+        <div id="relationshipManagerModal" class="fixed inset-0 z-40 hidden">
+            <div class="absolute inset-0 z-40 bg-slate-900/60 js-close-rm-modal"></div>
+            <div class="relative z-50 flex h-full w-full items-start justify-end overflow-y-auto px-4 py-8">
+                <div class="w-full max-w-md rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 shadow-2xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-white">Update Relationship Manager</h3>
+                            <p class="text-sm text-slate-400">Assign or change the relationship manager for this company.</p>
+                        </div>
+                        <button type="button" class="text-slate-400 hover:text-white js-close-rm-modal">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <form id="relationshipManagerForm" action="{{ route('admin.companies.update-relationship-manager', $company) }}" method="POST" class="space-y-4">
+                        @csrf
+                        @method('PUT')
+                        <div>
+                            <label class="text-sm font-medium text-slate-200">Relationship Manager</label>
+                            <select name="relationship_manager_id" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 text-sm">
+                                <option value="">Not assigned</option>
+                                @foreach($relationshipManagers as $manager)
+                                    <option value="{{ $manager->id }}" @selected(old('relationship_manager_id', $company->relationship_manager_id) == $manager->id)>
+                                        {{ $manager->full_name }} ({{ $manager->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('relationship_manager_id')
+                                <p class="mt-1 text-xs text-rose-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-200 mb-1">
+                                Reason for change
+                                @if($company->relationship_manager_id)
+                                    <span class="text-rose-400" title="Required when changing an existing manager">*</span>
+                                @endif
+                            </label>
+                            <textarea name="change_reason" rows="3" class="w-full rounded-2xl bg-white/5 border border-white/10 text-white px-3 py-2 text-sm focus:border-cyan-400 focus:ring-cyan-400/40" placeholder="Explain why you are changing the relationship manager">{{ old('change_reason') }}</textarea>
+                            @error('change_reason')
+                                <p class="mt-1 text-xs text-rose-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="flex items-center justify-end gap-3">
+                            <button type="button" class="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm text-white js-close-rm-modal">
+                                Cancel
+                            </button>
+                            <button type="submit" class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-cyan-500/30">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endcan
 
     <div id="loanRateTypeModal" class="fixed inset-0 z-40 hidden">
         <div class="absolute inset-0 z-40 bg-slate-900/60 js-close-rate-type-modal"></div>
@@ -290,6 +479,77 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const rmModal = document.getElementById('relationshipManagerModal');
+            const rmOpenButtons = document.querySelectorAll('.js-open-rm-modal');
+            const rmCloseButtons = document.querySelectorAll('.js-close-rm-modal');
+            const rmHistoryPanel = document.getElementById('relationshipManagerHistoryPanel');
+            const rmHistoryToggles = document.querySelectorAll('.js-toggle-rm-history');
+            const rmHistoryChevron = document.querySelector('.js-rm-history-chevron');
+
+            const toggleRmHistory = () => {
+                if (!rmHistoryPanel) {
+                    return;
+                }
+
+                const isHidden = rmHistoryPanel.classList.contains('hidden');
+                rmHistoryPanel.classList.toggle('hidden', !isHidden);
+                rmHistoryToggles.forEach((button) => {
+                    button.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+                });
+                if (rmHistoryChevron) {
+                    rmHistoryChevron.classList.toggle('rotate-180', isHidden);
+                }
+            };
+
+            rmHistoryToggles.forEach((button) => {
+                button.addEventListener('click', toggleRmHistory);
+            });
+
+            if (rmModal) {
+                const toggleRmModal = (show) => {
+                    if (show) {
+                        try {
+                            window.scrollTo({ top: 0, behavior: 'instant' });
+                        } catch (e) {
+                            window.scrollTo(0, 0);
+                        }
+                        const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+                        if (scrollBarWidth > 0) {
+                            document.body.style.paddingRight = `${scrollBarWidth}px`;
+                        }
+                        document.body.classList.add('modal-open');
+                        rmModal.classList.remove('hidden');
+                        rmModal.classList.add('flex');
+                    } else {
+                        document.body.classList.remove('modal-open');
+                        document.body.style.paddingRight = '';
+                        rmModal.classList.add('hidden');
+                        rmModal.classList.remove('flex');
+                    }
+                };
+
+                rmOpenButtons.forEach((button) => button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    toggleRmModal(true);
+                }));
+
+                rmCloseButtons.forEach((button) => button.addEventListener('click', () => toggleRmModal(false)));
+
+                @if($errors->has('relationship_manager_id') || $errors->has('change_reason'))
+                    toggleRmModal(true);
+                @endif
+            }
+
+            @if($errors->has('relationship_manager_id') || $errors->has('change_reason'))
+                if (rmHistoryPanel) {
+                    rmHistoryPanel.classList.remove('hidden');
+                    rmHistoryToggles.forEach((button) => button.setAttribute('aria-expanded', 'true'));
+                    if (rmHistoryChevron) {
+                        rmHistoryChevron.classList.add('rotate-180');
+                    }
+                }
+            @endif
+
             const modal = document.getElementById('loanRateTypeModal');
             const openButtons = document.querySelectorAll('.js-open-rate-type-modal');
             const closeButtons = document.querySelectorAll('.js-close-rate-type-modal');

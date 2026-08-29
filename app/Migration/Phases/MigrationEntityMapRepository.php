@@ -30,6 +30,16 @@ class MigrationEntityMapRepository
 
     public const TYPE_RELATIONSHIP_MANAGER = 'relationship_manager';
 
+    public const TYPE_EXPENSE_CATEGORY = 'expense_category';
+
+    public const TYPE_EXPENSE_SUBCATEGORY = 'expense_subcategory';
+
+    public const TYPE_INCOME_CATEGORY = 'income_category';
+
+    public const TYPE_FINANCIAL_TRANSACTION = 'financial_transaction';
+
+    public const TYPE_TREASURY_WALLET = 'treasury_wallet';
+
     public function find(string $entityType, string $legacyIdentifier, ?string $legacySecondary = null): ?object
     {
         $query = DB::table('migration_entity_maps')

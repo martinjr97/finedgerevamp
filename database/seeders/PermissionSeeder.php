@@ -66,6 +66,7 @@ class PermissionSeeder extends Seeder
             'bulk-repayments' => ['view', 'process'],
             'pmec_submissions' => ['view', 'create', 'export', 'mark_failed'],
             'financial-transactions' => ['view', 'create', 'delete', 'export'],
+            'financial-categories' => ['view', 'create', 'update', 'delete'],
             'financial-statements' => ['view'],
             'transfers' => ['view', 'create', 'approve', 'reject'],
             'banks' => ['view', 'create', 'update', 'delete'],

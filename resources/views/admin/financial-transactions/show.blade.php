@@ -29,8 +29,20 @@
                 </div>
                 <div>
                     <label class="text-sm text-slate-400">Category</label>
-                    <p class="text-white capitalize">{{ str_replace('_', ' ', $financialTransaction->category ?? '—') }}</p>
+                    <p class="text-white">{{ \App\Support\FinancialCategoryCatalog::transactionCategoryLabel($financialTransaction) }}</p>
                 </div>
+                @if($financialTransaction->type === 'expense' && ($financialTransaction->receiver_name || $financialTransaction->employee))
+                <div>
+                    <label class="text-sm text-slate-400">Receiver</label>
+                    <p class="text-white">{{ $financialTransaction->receiver_name ?? $financialTransaction->employee?->full_name }}</p>
+                </div>
+                @endif
+                @if($financialTransaction->type === 'expense' && $financialTransaction->employee)
+                <div>
+                    <label class="text-sm text-slate-400">Linked Employee</label>
+                    <p class="text-white">{{ $financialTransaction->employee->full_name }}</p>
+                </div>
+                @endif
                 <div>
                     <label class="text-sm text-slate-400">Amount</label>
                     <p class="text-white font-semibold text-2xl {{ $financialTransaction->type === 'income' ? 'text-emerald-400' : ($financialTransaction->type === 'expense' ? 'text-rose-400' : 'text-blue-400') }}">

@@ -41,8 +41,8 @@
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>Customer Group</h2>
-        <div class="grid gap-6 md:grid-cols-2">
-            <div class="md:col-span-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div class="md:col-span-2 xl:col-span-3">
                 <label class="text-sm font-medium {{ $labelClass }}">Group <span class="{{ $requiredClass }}">*</span></label>
                 <select name="customer_group_id" required class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
                     <option value="">Select Customer Group</option>
@@ -64,7 +64,7 @@
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>Bio Data</h2>
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">First Name <span class="{{ $requiredClass }}">*</span></label>
                 <input type="text" name="first_name" value="{{ old('first_name') }}" required class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
@@ -120,7 +120,7 @@
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-2 xl:col-span-3">
                 @include('partials.customer-identity-fields', [
                     'nationalIdType' => old('national_id_type', isset($customer) ? $customer->national_id_type : null),
                     'nationalIdValue' => old('national_id', isset($customer) ? ($customer->national_id ?? '') : ''),
@@ -139,8 +139,8 @@
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>Customer Address</h2>
-        <div class="grid gap-6 md:grid-cols-2">
-            <div class="md:col-span-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div class="md:col-span-2 xl:col-span-3">
                 <label class="text-sm font-medium {{ $labelClass }}">Address Line 1 <span class="{{ $requiredClass }}">*</span></label>
                 <input type="text" name="address_line1" value="{{ old('address_line1') }}" required class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
                 @error('address_line1')
@@ -189,7 +189,7 @@
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>Next of Kin Information</h2>
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">Name <span class="{{ $requiredClass }}">*</span></label>
                 <input type="text" name="next_of_kin_name" value="{{ old('next_of_kin_name') }}" required class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
@@ -220,7 +220,7 @@
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-2 xl:col-span-3">
                 <label class="text-sm font-medium {{ $labelClass }}">Address Line 1</label>
                 <input type="text" name="next_of_kin_address_line1" value="{{ old('next_of_kin_address_line1') }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
                 @error('next_of_kin_address_line1')
@@ -248,7 +248,7 @@
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>Work Information</h2>
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">Employment Status <span class="{{ $requiredClass }}">*</span></label>
                 <select name="is_employed" required class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">

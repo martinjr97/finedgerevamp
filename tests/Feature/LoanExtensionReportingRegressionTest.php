@@ -486,5 +486,75 @@ class LoanExtensionReportingRegressionTest extends TestCase
                     && $summary['par30_plus'] === 1;
             });
     }
+
+    public function test_relationship_manager_report_minus_30_par_bucket_includes_upcoming_loans(): void
+    {
+        $suffix = Str::lower(Str::random(6));
+        $company = $this->makeCompany($suffix);
+        $product = $this->makeLoanProduct($company, $suffix);
+        $channel = $this->makeChannel($suffix);
+        $relationshipManager = Admin::create([
+            'company_id' => $company->id,
+            'first_name' => 'Relationship',
+            'last_name' => 'Manager',
+            'email' => 'rm-'.$suffix.'@example.com',
+            'password' => 'password',
+            'is_active' => true,
+            'is_relationship_manager' => true,
+            'approval_status' => 'approved',
+            'must_change_password' => false,
+        ]);
+        $company->update(['relationship_manager_id' => $relationshipManager->id]);
+
+        $customer = $this->makeCustomer($company, $product, $suffix);
+        $admin = $this->makeAdminWithPermissions(['reports.view']);
+
+        $upcomingLoan = $this->makeLoan($customer, $product, $channel, $suffix.'up');
+        $this->makeSchedule(
+            $upcomingLoan,
+            1,
+            Carbon::today()->addDays(10),
+            400,
+            0,
+            400,
+            'upcoming',
+            false,
+            0
+        );
+
+        $overdueLoan = $this->makeLoan($customer, $product, $channel, $suffix.'od');
+        $this->makeSchedule(
+            $overdueLoan,
+            1,
+            Carbon::today()->subDays(45),
+            600,
+            0,
+            600,
+            'overdue',
+            false,
+            45
+        );
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.reports.relationship-manager', [
+                'relationship_manager_id' => $relationshipManager->id,
+                'par_bucket' => 'minus_30',
+                'mode' => 'detailed',
+            ]))
+            ->assertStatus(200)
+            ->assertViewHas('reportRows', function ($rows) use ($upcomingLoan, $overdueLoan) {
+                $row = $rows->first();
+                if ($row === null) {
+                    return false;
+                }
+
+                $loanNumbers = collect($row['details']['loans'])->pluck('loan_number')->all();
+
+                return (float) $row['par_amount'] === 400.0
+                    && $row['par_status'] === 'Due Within 30 Days'
+                    && in_array($upcomingLoan->loan_number, $loanNumbers, true)
+                    && ! in_array($overdueLoan->loan_number, $loanNumbers, true);
+            });
+    }
 }
 

@@ -1,0 +1,35 @@
+{
+    "run_uuid": "41eb43ac-7585-4993-951d-1d19eb876839",
+    "migration_run_id": 72,
+    "promote": true,
+    "from_date": "2026-08-29",
+    "expense_categories": {
+        "MATCHED": 24,
+        "CREATED": 0,
+        "WOULD_CREATE": 0
+    },
+    "expense_subcategories": {
+        "MATCHED": 22,
+        "CREATED": 12,
+        "WOULD_CREATE": 0
+    },
+    "income_categories": {
+        "MATCHED": 0,
+        "CREATED": 3,
+        "WOULD_CREATE": 0
+    },
+    "expenses": {
+        "MATCHED": 0,
+        "CREATED": 0,
+        "WOULD_CREATE": 0,
+        "SKIPPED": 0,
+        "NO_SOURCE": 0
+    },
+    "incomes": {
+        "MATCHED": 0,
+        "CREATED": 0,
+        "WOULD_CREATE": 0,
+        "SKIPPED": 0,
+        "NO_DESTINATION": 0
+    }
+}

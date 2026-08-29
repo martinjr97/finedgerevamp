@@ -99,6 +99,11 @@ class Company extends Model
         return $this->belongsTo(Admin::class, 'relationship_manager_id');
     }
 
+    public function relationshipManagerHistories(): HasMany
+    {
+        return $this->hasMany(CompanyRelationshipManagerHistory::class);
+    }
+
     public function loanRateType(): BelongsTo
     {
         return $this->belongsTo(LoanRateType::class);

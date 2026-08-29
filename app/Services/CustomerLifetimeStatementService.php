@@ -27,7 +27,8 @@ class CustomerLifetimeStatementService
      *     closing_balance: array{balance_owed: float, customer_credit: float},
      *     loans: Collection<int, Loan>,
      *     filters: array<string, mixed>,
-     *     defaulted_date_range: bool
+     *     defaulted_date_range: bool,
+     *     selected_loan_tenure_summary: ?string
      * }
      */
     public function build(
@@ -67,6 +68,7 @@ class CustomerLifetimeStatementService
 
         $closingBalance = $this->balanceFromNet($this->netBalanceFromOpening($openingBalance) + $this->sumCashMovement($displayRows));
         $summary = $this->buildSummary($loans, $closingBalance);
+        $selectedLoan = $loanId !== null ? $loans->first() : null;
 
         return [
             'summary' => $summary,
@@ -80,6 +82,7 @@ class CustomerLifetimeStatementService
                 'loan_id' => $loanId,
             ],
             'defaulted_date_range' => $defaultedDateRange,
+            'selected_loan_tenure_summary' => $selectedLoan?->statementTenureSummary(),
         ];
     }
 

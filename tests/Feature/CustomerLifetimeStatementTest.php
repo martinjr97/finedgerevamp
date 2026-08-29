@@ -431,6 +431,49 @@ class CustomerLifetimeStatementTest extends TestCase
             ->assertSee('Period: '.$from.' to '.$to);
     }
 
+    public function test_single_loan_statement_shows_tenure_and_start_date(): void
+    {
+        $admin = $this->makeAdmin();
+        $suffix = Str::lower(Str::random(6));
+        $company = Company::create([
+            'name' => 'Tenure Co',
+            'slug' => 'tenure-co-'.$suffix,
+            'code' => 'TC'.$suffix,
+            'type' => 'partner',
+            'status' => 'active',
+            'approval_status' => 'approved',
+        ]);
+        $product = LoanProduct::create([
+            'company_id' => $company->id,
+            'name' => 'Tenure Product',
+            'code' => 'TCP-'.$suffix,
+            'category' => 'character',
+            'is_active' => true,
+        ]);
+        $customer = $this->makeCustomer($company, $product, $suffix.'tenure');
+        $channel = $this->makeChannel($suffix.'tenure');
+        $startDate = Carbon::parse('2025-01-01');
+        $loan = $this->makeLoan($customer, $product, $channel, [
+            ['expected' => 500],
+            ['expected' => 500],
+            ['expected' => 500],
+            ['expected' => 500],
+            ['expected' => 500],
+            ['expected' => 500],
+        ], $startDate);
+
+        $tenureSummary = $loan->fresh()->statementTenureSummary();
+        $this->assertSame('6 months loan, started on 1st Jan 2025', $tenureSummary);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.customers.statement', [
+                'customer' => $customer,
+                'loan_id' => $loan->id,
+            ]))
+            ->assertOk()
+            ->assertSee('6 months loan, started on 1st Jan 2025', false);
+    }
+
     public function test_schedule_rows_do_not_change_running_balance(): void
     {
         $suffix = Str::lower(Str::random(6));

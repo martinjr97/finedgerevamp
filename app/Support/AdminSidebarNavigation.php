@@ -175,6 +175,7 @@ class AdminSidebarNavigation
                 'Creditors' => ['admin.creditors.*'],
                 'Physical Assets' => ['admin.assets.*'],
                 'Transactions' => ['admin.financial-transactions.*'],
+                'Categories' => ['admin.financial-categories.*'],
                 'Transfers' => ['admin.transfers.*'],
                 'Balance Sheet' => ['admin.financial-statements.balance-sheet'],
                 'Cash Flow' => ['admin.financial-statements.cash-flow'],
@@ -224,6 +225,7 @@ class AdminSidebarNavigation
                 'Branch Report' => ['admin.reports.branches'],
                 'Risk Heatmap Dashboard' => ['admin.reports.risk-heatmap'],
                 'Relationship Manager Report' => ['admin.reports.relationship-manager', 'admin.reports.relationship-manager.*'],
+                'Expenses Report' => ['admin.reports.expenses', 'admin.reports.expenses.*'],
             ],
             'menu-audit-logs' => [
                 '_self' => ['admin.audit-logs.*'],

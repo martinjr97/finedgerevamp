@@ -37,6 +37,7 @@
                             <th scope="col">Email</th>
                             <th scope="col">Company</th>
                             <th scope="col">Branch</th>
+                            <th scope="col">Relationship Manager</th>
                             <th scope="col">Roles</th>
                             <th scope="col">Status</th>
                             <th scope="col">Last Login</th>
@@ -52,6 +53,11 @@
                                 <td>{{ $user->email }}</td>
                                 <td>{{ $user->company->name ?? '—' }}</td>
                                 <td>{{ $user->branch->name ?? '—' }}</td>
+                                <td>
+                                    <span class="text-sm font-medium {{ $user->is_relationship_manager ? 'text-emerald-400' : 'text-slate-400' }}">
+                                        {{ $user->is_relationship_manager ? 'Yes' : 'No' }}
+                                    </span>
+                                </td>
                                 <td>
                                     <span class="rounded-full bg-white/5 px-2 py-1 text-sm">
                                         {{ $user->roles->pluck('name')->join(', ') ?: '—' }}

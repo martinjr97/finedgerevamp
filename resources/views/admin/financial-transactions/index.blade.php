@@ -20,6 +20,13 @@
                     'href' => route('admin.financial-transactions.expense.create'),
                     'icon' => '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>',
                     'can' => auth('admin')->user()?->can('financial-transactions.create')
+                ],
+                [
+                    'text' => 'Manage Categories',
+                    'href' => route('admin.financial-categories.index'),
+                    'icon' => '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>',
+                    'can' => auth('admin')->user()?->can('financial-categories.view'),
+                    'class' => 'inline-flex items-center gap-2 rounded-xl border border-violet-400/40 bg-violet-500/10 px-3 py-2 text-sm font-semibold text-violet-100 hover:bg-violet-500/20 transition',
                 ]
             ]
         ])
@@ -42,22 +49,14 @@
                         <select name="category" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2 focus:border-cyan-400 focus:ring-cyan-400/40">
                             <option value="">All</option>
                             <optgroup label="Income">
-                                <option value="loan_interest" @selected(request('category') === 'loan_interest')>Loan Interest</option>
-                                <option value="loan_processing_fee" @selected(request('category') === 'loan_processing_fee')>Loan Processing Fee</option>
-                                <option value="shareholder_contribution" @selected(request('category') === 'shareholder_contribution')>Shareholder Contribution</option>
-                                <option value="investment_income" @selected(request('category') === 'investment_income')>Investment Income</option>
-                                <option value="donation" @selected(request('category') === 'donation')>Donation</option>
-                                <option value="grant" @selected(request('category') === 'grant')>Grant</option>
-                                <option value="other_income" @selected(request('category') === 'other_income')>Other Income</option>
+                                @foreach ($incomeCategories as $category)
+                                    <option value="{{ $category->code }}" @selected(request('category') === $category->code)>{{ $category->name }}</option>
+                                @endforeach
                             </optgroup>
                             <optgroup label="Expenses">
-                                <option value="operational" @selected(request('category') === 'operational')>Operational</option>
-                                <option value="administrative" @selected(request('category') === 'administrative')>Administrative</option>
-                                <option value="marketing" @selected(request('category') === 'marketing')>Marketing</option>
-                                <option value="salaries" @selected(request('category') === 'salaries')>Salaries</option>
-                                <option value="utilities" @selected(request('category') === 'utilities')>Utilities</option>
-                                <option value="rent" @selected(request('category') === 'rent')>Rent</option>
-                                <option value="other_expense" @selected(request('category') === 'other_expense')>Other Expense</option>
+                                @foreach ($expenseCategories as $category)
+                                    <option value="{{ $category->code }}" @selected(request('category') === $category->code)>{{ $category->name }}</option>
+                                @endforeach
                             </optgroup>
                         </select>
                     </div>
@@ -110,7 +109,7 @@
                                         {{ ucfirst($transaction->type) }}
                                     </span>
                                 </td>
-                                <td class="capitalize">{{ str_replace('_', ' ', $transaction->category ?? '—') }}</td>
+                                <td>{{ \App\Support\FinancialCategoryCatalog::transactionCategoryLabel($transaction) }}</td>
                                 <td class="text-left">{{ $transaction->description }}</td>
                                 <td>
                                     @if($transaction->source)

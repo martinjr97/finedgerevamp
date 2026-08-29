@@ -416,6 +416,17 @@ class Loan extends Model
     }
 
     /**
+     * Loans for customers currently assigned to the given group.
+     *
+     * Uses customer membership (not loans.customer_group_id) so legacy or
+     * migrated loans still appear in the group's portfolio snapshot.
+     */
+    public function scopeForCustomerGroupMembership($query, int $customerGroupId)
+    {
+        return $query->whereHas('customer', fn ($customerQuery) => $customerQuery->where('customer_group_id', $customerGroupId));
+    }
+
+    /**
      * Loans that have completed disbursement (any lifecycle status).
      */
     public function scopeDisbursed($query)
@@ -430,6 +441,32 @@ class Loan extends Model
     {
         return $this->status === 'active'
             && $this->disbursement_status === 'completed';
+    }
+
+    /**
+     * Human-readable tenure and start date for account statements.
+     * e.g. "6 months loan, started on 1st Jan 2025"
+     */
+    public function statementTenureSummary(): ?string
+    {
+        $tenureMonths = (int) ($this->tenure_months ?? 0);
+        $startDate = $this->loan_start_date;
+
+        $tenureLabel = match (true) {
+            $tenureMonths === 1 => '1 month loan',
+            $tenureMonths > 1 => "{$tenureMonths} months loan",
+            default => null,
+        };
+
+        if ($startDate) {
+            $formattedStart = $startDate->format('jS M Y');
+
+            return $tenureLabel
+                ? "{$tenureLabel}, started on {$formattedStart}"
+                : "Started on {$formattedStart}";
+        }
+
+        return $tenureLabel;
     }
 
     /**

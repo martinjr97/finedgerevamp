@@ -15,6 +15,9 @@ use App\Models\Customer;
 use App\Models\Branch;
 use App\Models\Province;
 use App\Models\Admin;
+use App\Models\Employee;
+use App\Models\FinancialTransaction;
+use App\Support\ExpenseReportBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
@@ -112,7 +115,7 @@ class ReportController extends Controller
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date'],
             'customer_type' => ['nullable', 'in:all,individual,group'],
-            'par_bucket' => ['nullable', 'in:all,current,at_risk,par30,par60,par90'],
+            'par_bucket' => ['nullable', 'in:all,current,at_risk,par30,par60,par90,minus_30'],
             'mode' => ['nullable', 'in:summary,detailed'],
             'export_dataset' => ['nullable', 'in:all,summary,customers,loans,repayments'],
             'excel_tabs' => ['nullable', 'array'],
@@ -254,7 +257,7 @@ class ReportController extends Controller
                 $portfolioLoans = $this->filterRelationshipManagerLoansByParBucket($portfolioLoans, $filters['par_bucket'])
                     ->values();
 
-                $parMetrics = $this->calculateRelationshipManagerParMetrics($portfolioLoans);
+                $parMetrics = $this->calculateRelationshipManagerParMetrics($portfolioLoans, $filters['par_bucket']);
                 $scopedCustomerIds = $filters['par_bucket'] === 'all'
                     ? $customerIds
                     : $portfolioLoans->pluck('customer_id')->unique()->values();
@@ -394,7 +397,8 @@ class ReportController extends Controller
                         $scopedGroups,
                         $filters['par_bucket'] === 'all' ? $loans : $portfolioLoans,
                         $repaymentRows,
-                        $filters['customer_type']
+                        $filters['customer_type'],
+                        $filters['par_bucket']
                     );
                 }
 
@@ -486,7 +490,15 @@ class ReportController extends Controller
                 return false;
             }
 
+            if ($normalized === 'minus_30') {
+                return $this->extractLoanUpcomingDueData($loan, 30)['due_amount'] > 0;
+            }
+
             $parStatus = strtolower($this->extractLoanParData($loan)['par_status']);
+
+            if ($normalized === 'current') {
+                return $parStatus === 'current';
+            }
 
             if ($normalized === 'at_risk') {
                 return in_array($parStatus, ['par30', 'par60', 'par90'], true);
@@ -496,8 +508,38 @@ class ReportController extends Controller
         })->values();
     }
 
-    private function calculateRelationshipManagerParMetrics(Collection $loans): array
+    private function calculateRelationshipManagerParMetrics(Collection $loans, string $parBucket = 'all'): array
     {
+        $normalizedBucket = strtolower($parBucket);
+
+        if ($normalizedBucket === 'minus_30') {
+            $metrics = [
+                'par_amount' => 0.0,
+                'par30_amount' => 0.0,
+                'par60_amount' => 0.0,
+                'par90_amount' => 0.0,
+                'par30_count' => 0,
+                'par60_count' => 0,
+                'par90_count' => 0,
+                'par_status' => 'Due Within 30 Days',
+            ];
+
+            foreach ($loans as $loan) {
+                if (!($loan instanceof Loan)) {
+                    continue;
+                }
+
+                $upcomingData = $this->extractLoanUpcomingDueData($loan, 30);
+                if ($upcomingData['due_amount'] <= 0) {
+                    continue;
+                }
+
+                $metrics['par_amount'] += $upcomingData['due_amount'];
+            }
+
+            return $metrics;
+        }
+
         $metrics = [
             'par_amount' => 0.0,
             'par30_amount' => 0.0,
@@ -595,12 +637,78 @@ class ReportController extends Controller
         ];
     }
 
+    /**
+     * @return array{due_amount: float, days_until_due: int, par_status: string}
+     */
+    private function extractLoanUpcomingDueData(Loan $loan, int $withinDays = 30): array
+    {
+        $today = Carbon::today();
+        $windowEnd = $today->copy()->addDays($withinDays);
+        $schedules = $loan->relationLoaded('paymentSchedules')
+            ? $loan->paymentSchedules
+            : $loan->paymentSchedules()->get();
+
+        $upcomingSchedules = $schedules->filter(function ($schedule) use ($today, $windowEnd) {
+            if ((float) $schedule->remaining_amount <= 0) {
+                return false;
+            }
+
+            $dueDate = $schedule->due_date instanceof Carbon
+                ? $schedule->due_date
+                : ($schedule->due_date ? Carbon::parse($schedule->due_date) : null);
+
+            return $dueDate
+                && $dueDate->gte($today)
+                && $dueDate->lte($windowEnd);
+        });
+
+        $dueAmount = (float) $upcomingSchedules->sum(function ($schedule) {
+            return (float) $schedule->remaining_amount;
+        });
+
+        $primarySchedule = $upcomingSchedules->sortBy('due_date')->first();
+        $daysUntilDue = 0;
+
+        if ($primarySchedule) {
+            $dueDate = $primarySchedule->due_date instanceof Carbon
+                ? $primarySchedule->due_date
+                : Carbon::parse($primarySchedule->due_date);
+            $daysUntilDue = (int) max(0, $today->diffInDays($dueDate, false));
+        }
+
+        return [
+            'due_amount' => $dueAmount,
+            'days_until_due' => $daysUntilDue,
+            'par_status' => $daysUntilDue > 0 ? 'Due in '.$daysUntilDue.' days' : 'Due today',
+        ];
+    }
+
+    private function relationshipManagerLoanDisplayData(Loan $loan, string $parBucket = 'all'): array
+    {
+        if (strtolower($parBucket) === 'minus_30') {
+            $upcomingData = $this->extractLoanUpcomingDueData($loan, 30);
+
+            return [
+                'overdue_amount' => $upcomingData['due_amount'],
+                'par_status' => $upcomingData['par_status'],
+            ];
+        }
+
+        $parData = $this->extractLoanParData($loan);
+
+        return [
+            'overdue_amount' => $parData['overdue_amount'],
+            'par_status' => $parData['par_status'],
+        ];
+    }
+
     private function getRelationshipManagerDetailRows(
         Collection $customers,
         Collection $groups,
         Collection $loans,
         Collection $repayments,
-        string $customerType
+        string $customerType,
+        string $parBucket = 'all'
     ): array {
         $customerRows = $customers
             ->map(function (Customer $customer) {
@@ -633,8 +741,8 @@ class ReportController extends Controller
             })->values();
 
         $loanRows = $loans
-            ->map(function (Loan $loan) {
-                $parData = $this->extractLoanParData($loan);
+            ->map(function (Loan $loan) use ($parBucket) {
+                $displayData = $this->relationshipManagerLoanDisplayData($loan, $parBucket);
                 $customerName = trim((string) ($loan->customer?->registered_name ?: $loan->customer?->full_name));
                 if ($customerName === '') {
                     $customerName = 'N/A';
@@ -650,8 +758,8 @@ class ReportController extends Controller
                     'principal_amount' => (float) $loan->principal_amount,
                     'total_amount' => (float) $loan->total_amount,
                     'outstanding_balance' => (float) $loan->outstanding_balance,
-                    'overdue_amount' => $parData['overdue_amount'],
-                    'par_status' => $parData['par_status'],
+                    'overdue_amount' => $displayData['overdue_amount'],
+                    'par_status' => $displayData['par_status'],
                     'disbursement_channel' => $loan->channel?->name ?? 'N/A',
                     'channel_type' => $loan->disbursementChannelTypeLabel(),
                     'disbursement_destination' => $loan->disbursementDestinationSummary() ?: 'N/A',
@@ -982,8 +1090,11 @@ class ReportController extends Controller
 
         $loanProducts = LoanProduct::where('is_active', true)->orderBy('name')->get();
         $customerGroups = CustomerGroup::where('is_active', true)->orderBy('name')->get();
+        $filteredCompany = $request->filled('company_id')
+            ? Company::query()->find((int) $request->input('company_id'))
+            : null;
 
-        return view('admin.reports.arrears', compact('arrearsData', 'arrearsSummary', 'loanProducts', 'customerGroups'));
+        return view('admin.reports.arrears', compact('arrearsData', 'arrearsSummary', 'loanProducts', 'customerGroups', 'filteredCompany'));
     }
 
     /**
@@ -1044,8 +1155,21 @@ class ReportController extends Controller
         }
 
         if ($request->filled('customer_group_id')) {
-            $query->where('customer_group_id', $request->customer_group_id);
+            $query->forCustomerGroupMembership((int) $request->input('customer_group_id'));
         }
+
+        if ($request->filled('company_id')) {
+            $companyId = (int) $request->input('company_id');
+            $adminCompanyFilterId = auth('admin')->user()?->getCompanyFilterId();
+
+            if ($adminCompanyFilterId !== null && (int) $adminCompanyFilterId !== $companyId) {
+                abort(403, 'You cannot view arrears for another company.');
+            }
+
+            $query->whereHas('customer', fn (Builder $customerQuery) => $customerQuery->where('company_id', $companyId));
+        }
+
+        AdminCompanyScope::applyLoanFilter($query, auth('admin')->user());
 
         if ($request->filled('days_overdue_max') && ! $upcomingWindow) {
             $maxDate = Carbon::today()->subDays((int) $request->days_overdue_max);
@@ -1531,7 +1655,7 @@ class ReportController extends Controller
         }
 
         if ($request->filled('customer_group_id')) {
-            $query->where('customer_group_id', $request->customer_group_id);
+            $query->forCustomerGroupMembership((int) $request->input('customer_group_id'));
         }
 
         if ($request->filled('date_from')) {
@@ -1903,7 +2027,7 @@ class ReportController extends Controller
         }
 
         if ($request->has('customer_group_id') && $request->customer_group_id) {
-            $query->where('customer_group_id', $request->customer_group_id);
+            $query->forCustomerGroupMembership((int) $request->customer_group_id);
         }
 
         if ($request->has('company_id') && $request->company_id) {
@@ -2965,5 +3089,69 @@ class ReportController extends Controller
             'delinquencyByRegion',
             'loanOfficerRisk'
         ));
+    }
+
+    public function expenses(Request $request, ExpenseReportBuilder $builder): View
+    {
+        abort_unless(auth('admin')->user()?->can('reports.view'), 403);
+
+        $report = $builder->build($request);
+        $expenseCategories = $builder->filterCategories();
+        $employees = Employee::query()->active()->orderBy('first_name')->orderBy('last_name')->get();
+
+        return view('admin.reports.expenses', [
+            'expenses' => $report['expenses'],
+            'summary' => $report['summary'],
+            'categoryBreakdown' => $report['categoryBreakdown'],
+            'subcategoryBreakdown' => $report['subcategoryBreakdown'],
+            'topExpenses' => $report['topExpenses'],
+            'topReceivers' => $report['topReceivers'],
+            'expenseCategories' => $expenseCategories,
+            'employees' => $employees,
+        ]);
+    }
+
+    public function exportExpenses(Request $request, ExpenseReportBuilder $builder)
+    {
+        abort_unless(auth('admin')->user()?->can('reports.view'), 403);
+
+        $rows = $builder->exportRows($request);
+        $filename = 'expenses-report-'.now()->format('Ymd-His').'.csv';
+
+        return Response::streamDownload(function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Date',
+                'Transaction Number',
+                'Category',
+                'Subcategory',
+                'Description',
+                'Receiver',
+                'Employee',
+                'Amount',
+                'Source',
+                'Reference',
+            ]);
+
+            foreach ($rows as $expense) {
+                $source = $expense->sourceBank?->name ?? $expense->sourceWallet?->name ?? '';
+                fputcsv($handle, [
+                    $expense->transaction_date?->format('Y-m-d'),
+                    $expense->transaction_number,
+                    $expense->expenseCategory?->name ?? $expense->category,
+                    $expense->expenseSubcategory?->name ?? 'Unclassified',
+                    $expense->description,
+                    $expense->receiver_name,
+                    $expense->employee?->full_name,
+                    number_format((float) $expense->amount, 2, '.', ''),
+                    $source,
+                    $expense->reference_number,
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
     }
 }

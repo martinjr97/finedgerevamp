@@ -45,14 +45,14 @@
             @error('company_id') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="block text-sm font-semibold text-primary">Registered Name <span class="text-primary">*</span></label>
                 <input type="text" name="registered_name" id="registered_name" value="{{ old('registered_name') }}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
                 @error('registered_name') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
         </div>
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="block text-sm font-semibold text-primary">Monthly Net Revenue <span class="text-primary">*</span></label>
                 <input type="number" name="monthly_net_revenue" value="{{ old('monthly_net_revenue') }}" step="0.01" min="0" required class="w-full rounded-xl border border-muted px-3 py-2 text-primary" placeholder="0.00">
@@ -65,7 +65,7 @@
                 @error('qualification_percentage') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
         </div>
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="block text-sm font-semibold text-primary">Email <span class="text-primary">*</span></label>
                 <input type="email" name="email" value="{{ old('email') }}" required class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
@@ -81,7 +81,7 @@
 
     {{-- Representative panel --}}
     <div id="representative-panel" class="space-y-4 rounded-2xl border border-muted bg-soft-white p-4 hidden">
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="block text-sm font-semibold text-primary">Parent Company Customer <span class="text-primary">*</span></label>
                 <select name="parent_customer_id" id="parent_customer_id" class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
@@ -107,7 +107,7 @@
             </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="block text-sm font-semibold text-primary">First Name <span class="text-primary">*</span></label>
                 <input type="text" name="first_name" value="{{ old('first_name') }}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
@@ -129,7 +129,7 @@
             'helpClass' => 'mt-1 text-xs text-slate-500',
             'requiredClass' => 'text-primary',
         ])
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
                 <label class="block text-sm font-semibold text-primary">Email <span class="text-primary">*</span></label>
                 <input type="email" name="email" value="{{ old('email') }}" required class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
@@ -152,7 +152,7 @@
         'selectClass' => 'w-full rounded-xl px-3 py-2 text-primary',
     ])
 
-    <div class="grid gap-4 md:grid-cols-2">
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <div>
             <label class="block text-sm font-semibold text-primary">Address Line 1</label>
             <input type="text" name="address_line1" value="{{ old('address_line1') }}" class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
