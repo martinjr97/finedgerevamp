@@ -198,6 +198,8 @@ Route::middleware('auth:admin')->group(function (): void {
             Route::get('expense/{expenseCategory}/edit', [FinancialCategoryController::class, 'editExpense'])->name('expense.edit');
             Route::put('expense/{expenseCategory}', [FinancialCategoryController::class, 'updateExpense'])->name('expense.update');
             Route::delete('expense/{expenseCategory}', [FinancialCategoryController::class, 'destroyExpense'])->name('expense.destroy');
+            Route::get('expense/{expenseCategory}/subcategories/create', [FinancialCategoryController::class, 'createExpenseSubcategory'])->name('expense.subcategory.create');
+            Route::post('expense/{expenseCategory}/subcategories', [FinancialCategoryController::class, 'storeExpenseSubcategory'])->name('expense.subcategory.store');
             Route::get('income/create', [FinancialCategoryController::class, 'createIncome'])->name('income.create');
             Route::post('income', [FinancialCategoryController::class, 'storeIncome'])->name('income.store');
             Route::get('income/{incomeCategory}/edit', [FinancialCategoryController::class, 'editIncome'])->name('income.edit');

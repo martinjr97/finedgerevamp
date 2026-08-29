@@ -108,6 +108,43 @@ class FinancialCategoryController extends Controller
             ->with('status', 'Expense category updated successfully.');
     }
 
+    public function createExpenseSubcategory(ExpenseCategory $expenseCategory): View
+    {
+        abort_unless(auth('admin')->user()?->can('financial-categories.create'), 403);
+
+        return view('admin.financial-categories.create-expense-subcategory', compact('expenseCategory'));
+    }
+
+    public function storeExpenseSubcategory(Request $request, ExpenseCategory $expenseCategory): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('financial-categories.create'), 403);
+
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:expense_subcategories,name,NULL,id,expense_category_id,'.$expenseCategory->id,
+            ],
+            'code' => ['nullable', 'string', 'max:100'],
+            'description' => ['nullable', 'string'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        ExpenseSubcategory::create([
+            'expense_category_id' => $expenseCategory->id,
+            'name' => $validated['name'],
+            'code' => $validated['code'] ?? ExpenseSubcategory::generateUniqueCode($expenseCategory->id, $validated['name']),
+            'description' => $validated['description'] ?? null,
+            'is_active' => $request->boolean('is_active', true),
+            'created_by' => auth('admin')->id(),
+        ]);
+
+        return redirect()
+            ->route('admin.financial-categories.expense.edit', $expenseCategory)
+            ->with('status', 'Expense subcategory created successfully.');
+    }
+
     public function destroyExpense(ExpenseCategory $expenseCategory): RedirectResponse
     {
         abort_unless(auth('admin')->user()?->can('financial-categories.delete'), 403);

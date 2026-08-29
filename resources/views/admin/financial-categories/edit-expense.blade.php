@@ -31,17 +31,25 @@
             @endif
         @endcan
 
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg max-w-2xl">
-            <h3 class="text-lg font-semibold text-white mb-4">Subcategories</h3>
+        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg max-w-2xl space-y-4">
+            <div class="flex items-center justify-between gap-3">
+                <h3 class="text-lg font-semibold text-white">Subcategories</h3>
+                @can('financial-categories.create')
+                    <a href="{{ route('admin.financial-categories.expense.subcategory.create', $expenseCategory) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/50 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/20 transition">
+                        Add Subcategory
+                    </a>
+                @endcan
+            </div>
             <ul class="space-y-2 text-sm text-slate-300">
-                @foreach ($expenseCategory->subcategories as $subcategory)
+                @forelse ($expenseCategory->subcategories as $subcategory)
                     <li class="flex items-center justify-between rounded-xl border border-white/10 px-4 py-2">
                         <span>{{ $subcategory->name }} <span class="text-xs text-slate-500">({{ $subcategory->code ?: 'no code' }})</span></span>
                         <span class="{{ $subcategory->is_active ? 'text-emerald-400' : 'text-rose-400' }}">{{ $subcategory->is_active ? 'Active' : 'Inactive' }}</span>
                     </li>
-                @endforeach
+                @empty
+                    <li class="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-slate-400">No subcategories yet.</li>
+                @endforelse
             </ul>
-            <p class="mt-4 text-xs text-slate-500">Subcategories are migrated from the legacy system. Additional subcategory management can be added later if needed.</p>
         </div>
     </div>
 @endsection

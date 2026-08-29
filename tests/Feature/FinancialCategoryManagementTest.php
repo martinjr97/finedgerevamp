@@ -95,4 +95,33 @@ class FinancialCategoryManagementTest extends TestCase
 
         $this->assertTrue(IncomeCategory::query()->where('code', 'CONS_'.$suffix)->exists());
     }
+
+    public function test_admin_can_create_expense_subcategory_from_category_index(): void
+    {
+        $this->seed(FinancialCategorySeeder::class);
+        $admin = $this->makeAdmin([
+            'financial-categories.view',
+            'financial-categories.create',
+        ]);
+
+        $category = ExpenseCategory::query()->where('code', 'operational')->firstOrFail();
+        $suffix = Str::lower(Str::random(5));
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.financial-categories.index'))
+            ->assertOk()
+            ->assertSee(route('admin.financial-categories.expense.subcategory.create', $category), false);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.financial-categories.expense.subcategory.store', $category), [
+                'name' => 'Office supplies '.$suffix,
+                'description' => 'Stationery and consumables',
+                'is_active' => 1,
+            ])
+            ->assertRedirect(route('admin.financial-categories.expense.edit', $category));
+
+        $this->assertTrue(
+            $category->subcategories()->where('name', 'Office supplies '.$suffix)->exists()
+        );
+    }
 }
