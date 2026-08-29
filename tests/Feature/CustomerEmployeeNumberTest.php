@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\CustomerGroup;
 use App\Models\LoanProduct;
@@ -40,6 +41,56 @@ class CustomerEmployeeNumberTest extends TestCase
         $admin->givePermissionTo('customers.create');
 
         return $admin;
+    }
+
+    private function branch(): Branch
+    {
+        return Branch::query()->where('is_active', true)->orderBy('id')->first()
+            ?? Branch::create([
+                'name' => 'Test Branch',
+                'code' => 'TST-'.Str::upper(Str::random(4)),
+                'is_active' => true,
+            ]);
+    }
+
+    public function test_government_customer_requires_branch(): void
+    {
+        $admin = $this->admin();
+        $product = LoanProduct::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Gov',
+            'code' => 'GOV-'.Str::upper(Str::random(3)),
+            'category' => 'government',
+            'is_active' => true,
+        ]);
+        $ministry = Ministry::create([
+            'name' => 'Health',
+            'code' => 'MOH-'.Str::random(3),
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.customers.store'), [
+                'loan_product_id' => $product->id,
+                'first_name' => 'Gov',
+                'last_name' => 'Worker',
+                'email' => 'gov-'.Str::random(5).'@example.com',
+                'national_id_type' => 'nrc',
+                'national_id' => '123456/78/1',
+                'address_line1' => 'Line 1',
+                'city' => 'Lusaka',
+                'country' => 'Zambia',
+                'employee_number' => 'EMP-001',
+                'ministry_id' => $ministry->id,
+                'date_of_employment' => '2020-01-01',
+                'gross_salary' => 10000,
+                'net_salary' => 8000,
+                'verified_by' => $admin->id,
+                'next_of_kin_name' => 'Kin',
+                'next_of_kin_phone' => '260978232335',
+                'next_of_kin_relationship' => 'Sibling',
+            ])
+            ->assertSessionHasErrors('branch_id');
     }
 
     public function test_government_customer_requires_employee_number(): void
@@ -149,6 +200,7 @@ class CustomerEmployeeNumberTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->post(route('admin.customers.store'), [
                 'loan_product_id' => $product->id,
+                'branch_id' => $this->branch()->id,
                 'first_name' => 'Char',
                 'last_name' => 'Self',
                 'email' => 'char-'.Str::random(5).'@example.com',

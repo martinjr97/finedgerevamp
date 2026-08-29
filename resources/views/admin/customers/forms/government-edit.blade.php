@@ -28,6 +28,16 @@
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
             <span class="w-1 h-6 rounded-full bg-{{ $colors['input_focus_border'] }}"></span>Bio Data</h2>
         <div class="grid gap-6 md:grid-cols-2">
+            @include('partials.admin.customer-branch-select', [
+                'branches' => $branches,
+                'selectedBranchId' => old('branch_id', $customer->branch_id),
+                'inputClass' => $inputClass,
+                'inputFocusClass' => $inputFocusClass,
+                'labelClass' => $labelClass,
+                'errorClass' => $errorClass,
+                'helpClass' => $helpClass,
+                'requiredClass' => $requiredClass,
+            ])
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">First Name <span class="{{ $requiredClass }}">*</span></label>
                 <input type="text" name="first_name" value="{{ old('first_name', $customer->first_name) }}" required class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">

@@ -19,6 +19,15 @@
                     'can' => auth('admin')->user()?->can('assets.update'),
                     'class' => 'inline-flex items-center gap-2 rounded-xl border border-purple-400/40 bg-purple-500/10 px-3 py-2 text-sm font-semibold text-purple-100 hover:bg-purple-500/20 transition',
                 ],
+                [
+                    'text' => 'Transfer',
+                    'href' => '#',
+                    'can' => auth('admin')->user()?->can('assets.update'),
+                    'class' => 'inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/20 transition js-open-asset-transfer-modal',
+                    'attributes' => [
+                        'data-asset-id' => $asset->id,
+                    ],
+                ],
             ]
         ])
 
@@ -41,6 +50,10 @@
                     <p class="font-semibold mt-1 {{ $asset->is_active ? 'text-emerald-400' : 'text-rose-400' }}">
                         {{ $asset->is_active ? 'Active' : 'Inactive' }}
                     </p>
+                </div>
+                <div>
+                    <p class="text-slate-400">Asset Owner</p>
+                    <p class="text-white font-semibold mt-1">{{ $asset->employee?->full_name ?? '—' }}</p>
                 </div>
                 <div class="md:col-span-2">
                     <p class="text-slate-400">Description</p>
@@ -73,5 +86,48 @@
                 </form>
             @endcan
         </div>
+
+        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
+            <div>
+                <h2 class="text-xl font-semibold text-white">Transfer History</h2>
+                <p class="text-sm text-slate-400 mt-1">Complete trail of ownership changes for this asset.</p>
+            </div>
+
+            <div class="admin-data-table">
+                <table class="min-w-full w-full text-sm text-slate-300">
+                    <thead>
+                        <tr class="font-semibold uppercase text-white/80 text-center">
+                            <th scope="col">Date</th>
+                            <th scope="col">From</th>
+                            <th scope="col">To</th>
+                            <th scope="col">Reason</th>
+                            <th scope="col">Transferred By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($asset->transfers as $transfer)
+                            <tr class="text-center">
+                                <td>{{ $transfer->created_at->format('d M Y H:i') }}</td>
+                                <td>{{ $transfer->fromEmployee?->full_name ?? 'Unassigned' }}</td>
+                                <td class="font-medium text-white">{{ $transfer->toEmployee?->full_name ?? 'Unassigned' }}</td>
+                                <td class="text-left">{{ $transfer->reason ?: '—' }}</td>
+                                <td>{{ $transfer->transferredBy?->full_name ?? '—' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-slate-400">No transfers recorded yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+
+    @can('assets.update')
+        @include('admin.assets.partials.transfer-modal', [
+            'employees' => $employees,
+            'assets' => collect([$asset]),
+        ])
+    @endcan
 @endsection

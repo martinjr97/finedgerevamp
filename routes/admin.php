@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ChannelController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CreditorController;
 use App\Http\Controllers\Admin\AssetController;
+use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\CreditScoreSettingController;
 use App\Http\Controllers\Admin\CustomerBulkUploadController;
 use App\Http\Controllers\Admin\CustomerController;
@@ -176,6 +177,8 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::put('sms-templates/{smsTemplate}', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'update'])->name('sms-templates.update');
         Route::resource('creditors', CreditorController::class);
         Route::resource('assets', AssetController::class);
+        Route::post('assets/{asset}/transfer', [AssetController::class, 'transfer'])->name('assets.transfer');
+        Route::resource('employees', EmployeeController::class)->except(['show']);
 
         // Financial Transactions
         Route::get('financial-transactions', [FinancialTransactionController::class, 'index'])->name('financial-transactions.index');
@@ -347,6 +350,7 @@ Route::middleware('auth:admin')->group(function (): void {
         // Support tickets
         Route::get('support-tickets', [SupportTicketController::class, 'index'])->name('support-tickets.index');
         Route::get('support-tickets/create', [SupportTicketController::class, 'create'])->name('support-tickets.create');
+        Route::get('support-tickets/search-customers', [SupportTicketController::class, 'searchCustomers'])->name('support-tickets.search-customers');
         Route::post('support-tickets', [SupportTicketController::class, 'store'])->name('support-tickets.store');
         Route::get('support-tickets/{supportTicket}/attachments/{attachment}', [SupportTicketController::class, 'downloadAttachment'])->name('support-tickets.attachments.download');
         Route::get('support-tickets/{supportTicket}', [SupportTicketController::class, 'show'])->name('support-tickets.show');

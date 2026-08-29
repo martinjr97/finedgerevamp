@@ -135,7 +135,20 @@
                 <div class="space-y-6">
                     <div>
                         <p class="text-xs uppercase text-slate-400 mb-1">Customers Linked</p>
-                        <p class="text-3xl font-semibold text-white">{{ $company->customers_count }}</p>
+                        @can('customers.view')
+                            <a
+                                href="{{ route('admin.customers.index', ['company_id' => $company->id]) }}"
+                                class="group inline-flex items-center gap-2 text-3xl font-semibold text-white transition hover:text-cyan-300"
+                                title="View customers for {{ $company->name }}"
+                            >
+                                {{ number_format($company->customers_count) }}
+                                <svg class="h-5 w-5 text-slate-500 opacity-0 transition group-hover:text-cyan-300 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                            </a>
+                        @else
+                            <p class="text-3xl font-semibold text-white">{{ number_format($company->customers_count) }}</p>
+                        @endcan
                     </div>
                     <div>
                         <p class="text-xs uppercase text-slate-400 mb-1">Relationship Admins</p>

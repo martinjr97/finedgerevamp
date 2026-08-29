@@ -11,9 +11,8 @@ use App\Models\Loan;
 use App\Models\LoanProduct;
 use App\Models\LoanPaymentSchedule;
 use App\Models\Repayment;
+use App\Models\SupportTicket;
 use App\Services\Loans\GatewayAutoDisbursementBalanceAlertService;
-use App\PaymentPlatform\Services\GatewayOperationsMetricsService;
-use App\Support\PermissionMatrix;
 use Carbon\Carbon;
 use Illuminate\View\View;
 
@@ -247,9 +246,17 @@ class DashboardController extends Controller
         $gatewayAutoDisbursementBalanceAlerts = app(GatewayAutoDisbursementBalanceAlertService::class)
             ->alertsForAdmin($admin);
 
-        $gatewayOperationsMetrics = $admin->hasRole(PermissionMatrix::SUPER_ADMIN_ROLE)
-            ? app(GatewayOperationsMetricsService::class)->snapshot()
-            : null;
+        $newAssignedSupportTickets = SupportTicket::query()
+            ->where('assigned_to_id', $admin->id)
+            ->whereIn('status', [SupportTicket::STATUS_NEW, SupportTicket::STATUS_IN_PROGRESS])
+            ->where(function ($query) {
+                $query->whereNull('assignee_acknowledged_at')
+                    ->orWhereColumn('last_assigned_at', '>', 'assignee_acknowledged_at');
+            })
+            ->orderByDesc('last_assigned_at')
+            ->with('assignedBy')
+            ->limit(8)
+            ->get();
 
         return view('admin.dashboard', [
             'todayStats' => $todayStats,
@@ -262,7 +269,7 @@ class DashboardController extends Controller
             'pendingDisbursementAmount' => $pendingDisbursementAmount,
             'pendingDisbursementLoans' => $pendingDisbursementLoans,
             'gatewayAutoDisbursementBalanceAlerts' => $gatewayAutoDisbursementBalanceAlerts,
-            'gatewayOperationsMetrics' => $gatewayOperationsMetrics,
+            'newAssignedSupportTickets' => $newAssignedSupportTickets,
             'dashboardToday' => $today,
         ]);
     }

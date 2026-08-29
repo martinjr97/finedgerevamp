@@ -8,6 +8,7 @@ use App\Models\SupportTicket;
 use App\Models\SupportTicketAssignment;
 use App\Models\SupportTicketAttachment;
 use App\Models\SupportTicketComment;
+use App\Notifications\SupportTicketAssignedNotification;
 use App\Support\PermissionMatrix;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -15,13 +16,17 @@ use InvalidArgumentException;
 
 class SupportTicketService
 {
+    public function __construct(
+        private readonly CustomerNotificationService $customerNotificationService,
+    ) {}
+
     public function assignTicket(
         SupportTicket $ticket,
         ?Admin $assignedTo,
         Admin $assignedBy,
         ?string $note = null
     ): SupportTicket {
-        return DB::transaction(function () use ($ticket, $assignedTo, $assignedBy, $note) {
+        $result = DB::transaction(function () use ($ticket, $assignedTo, $assignedBy, $note) {
             $previousAssignedId = $ticket->assigned_to_id;
             $now = now();
 
@@ -39,6 +44,7 @@ class SupportTicketService
                 'assigned_by_id' => $assignedBy->id,
                 'assigned_at' => $ticket->assigned_at ?? $now,
                 'last_assigned_at' => $now,
+                'assignee_acknowledged_at' => $assignedTo ? null : $ticket->assignee_acknowledged_at,
                 'handled_by_admin_id' => $assignedTo?->id ?? $assignedBy->id,
             ]);
 
@@ -68,8 +74,45 @@ class SupportTicketService
                 'previous_assigned_to_id' => $previousAssignedId,
             ]);
 
-            return $ticket->fresh(['assignedTo', 'assignedBy', 'comments']);
+            return [
+                'ticket' => $ticket->fresh(['assignedTo', 'assignedBy', 'comments']),
+                'previousAssignedId' => $previousAssignedId,
+            ];
         });
+
+        if (
+            $assignedTo
+            && (int) $assignedTo->id !== (int) $result['previousAssignedId']
+        ) {
+            $assignedTo->notify(new SupportTicketAssignedNotification(
+                $result['ticket'],
+                $assignedBy,
+                $note
+            ));
+        }
+
+        return $result['ticket'];
+    }
+
+    public function acknowledgeAssignmentForAssignee(SupportTicket $ticket, Admin $admin): void
+    {
+        if ((int) $ticket->assigned_to_id !== (int) $admin->id) {
+            return;
+        }
+
+        if ($this->assignmentNeedsAcknowledgement($ticket)) {
+            $ticket->update(['assignee_acknowledged_at' => now()]);
+        }
+    }
+
+    public function assignmentNeedsAcknowledgement(SupportTicket $ticket): bool
+    {
+        if ($ticket->assigned_to_id === null || $ticket->last_assigned_at === null) {
+            return false;
+        }
+
+        return $ticket->assignee_acknowledged_at === null
+            || $ticket->last_assigned_at->gt($ticket->assignee_acknowledged_at);
     }
 
     public function addComment(SupportTicket $ticket, array $payload): SupportTicketComment
@@ -184,8 +227,9 @@ class SupportTicketService
             throw new InvalidArgumentException('Invalid ticket status.');
         }
 
-        return DB::transaction(function () use ($ticket, $status, $admin, $comment, $resolutionNote) {
-            $previousStatus = $ticket->status;
+        $previousStatus = $ticket->status;
+
+        $updated = DB::transaction(function () use ($ticket, $status, $admin, $comment, $resolutionNote, $previousStatus) {
             $now = now();
 
             if (filled($comment)) {
@@ -237,8 +281,21 @@ class SupportTicketService
                 ]
             );
 
-            return $ticket->fresh(['assignedTo', 'comments']);
+            return $ticket->fresh(['assignedTo', 'comments', 'customer']);
         });
+
+        if ($previousStatus !== $status && $updated->customer) {
+            $this->customerNotificationService->sendSupportTicketStatusChanged(
+                $updated,
+                $updated->customer,
+                $previousStatus,
+                $status,
+                $comment,
+                $admin
+            );
+        }
+
+        return $updated;
     }
 
     public function resolveTicket(

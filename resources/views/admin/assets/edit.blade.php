@@ -32,6 +32,21 @@
                     @enderror
                 </div>
 
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Asset Owner</label>
+                    <select name="employee_id" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
+                        <option value="">— Unassigned —</option>
+                        @foreach ($employees as $employee)
+                            <option value="{{ $employee->id }}" @selected(old('employee_id', $asset->employee_id) == $employee->id)>
+                                {{ $employee->full_name }}@if($employee->employee_number) ({{ $employee->employee_number }})@endif
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('employee_id')
+                        <p class="mt-1 text-sm text-rose-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="text-sm font-medium text-slate-300">Asset Value (ZMW) <span class="text-rose-400">*</span></label>

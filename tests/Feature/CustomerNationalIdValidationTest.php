@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
@@ -57,8 +58,16 @@ class CustomerNationalIdValidationTest extends TestCase
      */
     private function governmentPayload(Admin $admin, LoanProduct $product, Ministry $ministry, array $overrides = []): array
     {
+        $branch = Branch::query()->where('is_active', true)->orderBy('id')->first()
+            ?? Branch::create([
+                'name' => 'Test Branch',
+                'code' => 'TST-'.Str::upper(Str::random(4)),
+                'is_active' => true,
+            ]);
+
         return array_merge([
             'loan_product_id' => $product->id,
+            'branch_id' => $branch->id,
             'first_name' => 'Gov',
             'last_name' => 'Employee',
             'email' => 'gov-'.Str::random(5).'@example.com',
@@ -74,6 +83,9 @@ class CustomerNationalIdValidationTest extends TestCase
             'gross_salary' => 10000,
             'net_salary' => 8000,
             'verified_by' => $admin->id,
+            'next_of_kin_name' => 'Jane Kin',
+            'next_of_kin_phone' => '260970000001',
+            'next_of_kin_relationship' => 'spouse',
         ], $overrides);
     }
 
@@ -336,7 +348,6 @@ class CustomerNationalIdValidationTest extends TestCase
             'email' => 'self.register@example.com',
             'phone' => '260970000000',
             'national_id' => self::VALID_NRC,
-            'requested_loan_amount' => 1000,
             'ministry_id' => PublicRegistrationPaths::MINISTRY_OTHER,
             'employer_name' => 'MOF',
             'employee_number' => 'E1',

@@ -1,0 +1,72 @@
+{
+    "run_uuid": "94a36b72-153b-462e-966b-f27861c0f8bb",
+    "migration_run_id": 68,
+    "promote": false,
+    "products": {
+        "MATCHED_EXISTING": 0,
+        "CREATED": 0,
+        "SKIPPED": 0
+    },
+    "companies": {
+        "MATCHED_EXISTING": 0,
+        "CREATED": 0,
+        "WOULD_CREATE": 0,
+        "SKIP_GOVERNMENT_PLACEHOLDER": 0,
+        "SKIP_MARKETEER_PLACEHOLDER": 0,
+        "SKIP_CHARACTER_PLACEHOLDER": 0,
+        "SKIP_UNUSED": 0,
+        "MANUAL_REVIEW": 0
+    },
+    "banks": {
+        "MATCHED_EXISTING": 0,
+        "SKIP_TREASURY": 0,
+        "MANUAL_REVIEW": 0,
+        "WOULD_CREATE": 0
+    },
+    "wallet_providers": {
+        "MATCHED_EXISTING": 0,
+        "CREATED": 0,
+        "SKIPPED": 0,
+        "MANUAL_REVIEW": 0,
+        "WOULD_CREATE": 0
+    },
+    "branches": {
+        "MATCHED_EXISTING": 0,
+        "CREATED": 0,
+        "WOULD_CREATE": 2,
+        "MANUAL_REVIEW": 0
+    },
+    "relationship_managers": {
+        "MATCHED_EXISTING": 0,
+        "CREATED": 0,
+        "WOULD_CREATE": 4,
+        "MANUAL_REVIEW": 0
+    },
+    "marketeer": {
+        "groups": {
+            "MATCHED_EXISTING": 0,
+            "WOULD_CREATE": 0,
+            "CREATED": 0,
+            "MANUAL_REVIEW": 0
+        },
+        "markets": {
+            "MATCHED_EXISTING": 0,
+            "WOULD_CREATE": 0,
+            "CREATED": 0,
+            "SKIP_UNUSED": 0,
+            "MANUAL_REVIEW": 0
+        }
+    },
+    "government_placeholders_skipped": 0,
+    "marketeer_placeholders_skipped": 0,
+    "customer_groups": {
+        "GOVERNMENT_MATCHED": 0,
+        "GOVERNMENT_CREATED": 0,
+        "GOVERNMENT_WOULD_CREATE": 0,
+        "GOVERNMENT_MANUAL_REVIEW": 0,
+        "CHARACTER_MATCHED": 0,
+        "CHARACTER_CREATED": 0,
+        "CHARACTER_WOULD_CREATE": 0,
+        "CHARACTER_MANUAL_REVIEW": 0
+    }
+}

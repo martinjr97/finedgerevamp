@@ -90,7 +90,7 @@ class SmsTemplateController extends Controller
             'pin' => '1234',
             'amount' => '500',
             'balance' => '1,200',
-            'loan_number' => 'LN-00001',
+            'loan_number' => 'FIN-GOV-001-20260101-1',
             'repayment_number' => 'RP-00001',
             'due_date' => '15 Jul 2026',
             'reference' => 'REF-001',

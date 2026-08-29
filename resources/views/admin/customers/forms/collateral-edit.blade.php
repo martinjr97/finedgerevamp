@@ -22,6 +22,20 @@
     @method('PUT')
     <input type="hidden" name="loan_product_id" value="{{ old('loan_product_id', $customer->loan_product_id) }}">
 
+    @include('partials.admin.customer-form-branch-section', [
+        'branches' => $branches,
+        'selectedBranchId' => old('branch_id', $customer->branch_id),
+        'sectionClass' => $sectionClass,
+        'headingClass' => $headingClass,
+        'headingAccentClass' => 'bg-' . $colors['input_focus_border'],
+        'inputClass' => $inputClass,
+        'inputFocusClass' => $inputFocusClass,
+        'labelClass' => $labelClass,
+        'errorClass' => $errorClass,
+        'helpClass' => $helpClass,
+        'requiredClass' => $requiredClass,
+    ])
+
     {{-- Customer Group Selection Section --}}
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">
@@ -78,20 +92,14 @@
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>
-            <div>
-                <label class="text-sm font-medium {{ $labelClass }}">Referred By</label>
-                <select name="referred_by" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
-                    <option value="">No referral</option>
-                    @foreach ($referredByCustomers as $referrer)
-                        <option value="{{ $referrer->id }}" @selected(old('referred_by', $customer->referred_by) == $referrer->id)>
-                            {{ $referrer->full_name }}{{ $referrer->phone ? ' - '.$referrer->phone : '' }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('referred_by')
-                    <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
+            @include('partials.admin.customer-referral-select', [
+                'referredByCustomers' => $referredByCustomers,
+                'selected' => old('referred_by', $customer->referred_by),
+                'inputClass' => $inputClass,
+                'inputFocusClass' => $inputFocusClass,
+                'labelClass' => $labelClass,
+                'errorClass' => $errorClass,
+            ])
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">Date of Birth</label>
                 <input type="date" name="date_of_birth" value="{{ old('date_of_birth', $customer->date_of_birth?->format('Y-m-d')) }}" max="{{ now()->subYears(16)->format('Y-m-d') }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">

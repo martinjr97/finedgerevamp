@@ -9,8 +9,11 @@
             'description' => 'View all customer groups across products and companies',
         ])
 
-        {{-- Filters --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+        <x-admin.collapsible-filters
+            panel-id="customer-group-filters-panel"
+            :filter-keys="['search', 'company_id', 'loan_product_id', 'is_active', 'risk_level']"
+            expanded-hint="Refine the customer group list below."
+        >
             <form method="GET" action="{{ route('admin.customer-groups.index') }}" class="space-y-4">
                 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {{-- Search --}}
@@ -80,7 +83,7 @@
                     </a>
                 </div>
             </form>
-        </div>
+        </x-admin.collapsible-filters>
 
         {{-- Customer Groups Table --}}
         <div class="admin-data-table">

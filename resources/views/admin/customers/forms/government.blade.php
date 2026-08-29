@@ -31,6 +31,15 @@
             Bio Data
         </h2>
         <div class="grid gap-6 md:grid-cols-2">
+            @include('partials.admin.customer-branch-select', [
+                'branches' => $branches,
+                'inputClass' => $inputClass,
+                'inputFocusClass' => $inputFocusClass,
+                'labelClass' => $labelClass,
+                'errorClass' => $errorClass,
+                'helpClass' => $helpClass,
+                'requiredClass' => $requiredClass,
+            ])
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">First Name <span class="{{ $requiredClass }}">*</span></label>
                 <input type="text" name="first_name" value="{{ old('first_name') }}" required class="mt-2 w-full rounded-2xl {{ $inputClass }} {{ $inputFocusClass }} text-white px-4 py-3">
@@ -60,20 +69,13 @@
                 'errorClass' => $errorClass,
                 'helpClass' => $helpClass,
             ])
-            <div>
-                <label class="text-sm font-medium {{ $labelClass }}">Referred By</label>
-                <select name="referred_by" class="mt-2 w-full rounded-2xl {{ $inputClass }} {{ $inputFocusClass }} text-white px-4 py-3">
-                    <option value="">No referral</option>
-                    @foreach ($referredByCustomers as $referrer)
-                        <option value="{{ $referrer->id }}" @selected(old('referred_by') == $referrer->id)>
-                            {{ $referrer->full_name }}{{ $referrer->phone ? ' - '.$referrer->phone : '' }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('referred_by')
-                    <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
+            @include('partials.admin.customer-referral-select', [
+                'referredByCustomers' => $referredByCustomers,
+                'inputClass' => $inputClass,
+                'inputFocusClass' => $inputFocusClass,
+                'labelClass' => $labelClass,
+                'errorClass' => $errorClass,
+            ])
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">Date of Birth</label>
                 <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" max="{{ now()->subYears(16)->format('Y-m-d') }}" class="mt-2 w-full rounded-2xl {{ $inputClass }} {{ $inputFocusClass }} text-white px-4 py-3">

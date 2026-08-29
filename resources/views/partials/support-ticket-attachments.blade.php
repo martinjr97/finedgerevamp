@@ -1,16 +1,27 @@
 @php
     $isAdminView = $isAdminView ?? true;
+    $embedded = $embedded ?? false;
     $downloadRoute = $isAdminView ? 'admin.support-tickets.attachments.download' : 'customer.support-tickets.attachments.download';
 @endphp
 
 @if ($attachments->isNotEmpty())
-    <div @class([
-        'rounded-3xl border p-5 shadow-lg space-y-4',
-        $isAdminView ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900',
-    ])>
-        <h2 @class(['text-lg font-semibold', $isAdminView ? 'text-white' : 'text-gray-900 dark:text-white'])>
-            Supporting files
-        </h2>
+    @if ($embedded)
+        <div @class([
+            'pt-4 border-t space-y-3',
+            $isAdminView ? 'border-white/10' : 'border-gray-200 dark:border-gray-700',
+        ])>
+            <h2 @class(['text-sm font-semibold uppercase tracking-wide', $isAdminView ? 'text-slate-300' : 'text-gray-700 dark:text-gray-300'])>
+                Supporting files
+            </h2>
+    @else
+        <div @class([
+            'rounded-3xl border p-5 shadow-lg space-y-4',
+            $isAdminView ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900',
+        ])>
+            <h2 @class(['text-lg font-semibold', $isAdminView ? 'text-white' : 'text-gray-900 dark:text-white'])>
+                Supporting files
+            </h2>
+    @endif
         <ul class="space-y-3">
             @foreach ($attachments as $attachment)
                 <li @class([

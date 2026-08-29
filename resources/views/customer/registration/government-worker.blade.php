@@ -17,9 +17,6 @@
         if ($selectedMinistry && $selectedMinistry !== $ministryOtherValue && $selectedMinistry !== '') {
             $showEmployerField = false;
         }
-        $financialInstitutions = $financialInstitutions ?? collect();
-        $selectedFinancialInstitutionId = (string) old('bank_financial_institution_id');
-        $selectedFinancialInstitutionBranchId = (string) old('bank_financial_institution_branch_id');
         $inputClass = 'mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500/25';
     @endphp
 
@@ -44,7 +41,7 @@
             </div>
         @endif
 
-        @include('customer.registration.partials.common-fields')
+        @include('customer.registration.partials.common-fields', ['hideRequestedLoanAmount' => true])
 
         @include('customer.registration.partials.customer-address', [
             'provinces' => $provinces,
@@ -120,6 +117,19 @@
                 @error('department')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
             </div>
 
+            <div>
+                <label for="interacted_officer_name" class="block text-sm font-medium text-slate-800">Officer you interacted with (optional)</label>
+                <input
+                    id="interacted_officer_name"
+                    name="interacted_officer_name"
+                    type="text"
+                    value="{{ old('interacted_officer_name') }}"
+                    class="{{ $inputClass }}"
+                    placeholder="Name of the officer you spoke with, if any"
+                >
+                @error('interacted_officer_name')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
+            </div>
+
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
                     <label for="employee_number" class="block text-sm font-medium text-slate-800">Employee / payroll number <span class="text-red-500">*</span></label>
@@ -148,52 +158,6 @@
                     <label for="net_salary" class="block text-sm font-medium text-slate-800">Net monthly salary <span class="text-red-500">*</span></label>
                     <input id="net_salary" name="net_salary" type="number" step="0.01" min="0" value="{{ old('net_salary') }}" required class="{{ $inputClass }}">
                     @error('net_salary')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
-                </div>
-            </div>
-
-            <div class="border-t border-slate-200 pt-4">
-                <h3 class="text-base font-semibold text-slate-900">Salary bank details</h3>
-                <p class="text-sm text-slate-600">Provide the bank account where you receive your salary.</p>
-
-                <div class="mt-3 grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label for="bank_financial_institution_id" class="block text-sm font-medium text-slate-800">Bank <span class="text-red-500">*</span></label>
-                        <select id="bank_financial_institution_id" name="bank_financial_institution_id" required class="{{ $inputClass }}" @disabled($financialInstitutions->isEmpty())>
-                            <option value="">Select bank</option>
-                            @foreach($financialInstitutions as $institution)
-                                <option value="{{ $institution->id }}" @selected($selectedFinancialInstitutionId === (string) $institution->id)>
-                                    {{ $institution->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('bank_financial_institution_id')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label for="bank_financial_institution_branch_id" class="block text-sm font-medium text-slate-800">Branch <span class="text-red-500">*</span></label>
-                        <select id="bank_financial_institution_branch_id" name="bank_financial_institution_branch_id" required class="{{ $inputClass }}" @disabled($financialInstitutions->isEmpty())>
-                            <option value="">Select branch</option>
-                            @foreach($financialInstitutions as $institution)
-                                @foreach($institution->branches as $branch)
-                                    <option value="{{ $branch->id }}"
-                                            data-financial-institution-id="{{ $institution->id }}"
-                                            @selected($selectedFinancialInstitutionBranchId === (string) $branch->id)>
-                                        {{ $branch->name }}
-                                    </option>
-                                @endforeach
-                            @endforeach
-                        </select>
-                        @error('bank_financial_institution_branch_id')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label for="bank_account_name" class="block text-sm font-medium text-slate-800">Account name <span class="text-red-500">*</span></label>
-                        <input id="bank_account_name" name="bank_account_name" type="text" value="{{ old('bank_account_name') }}" required class="{{ $inputClass }}" placeholder="As it appears on the bank account">
-                        @error('bank_account_name')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label for="bank_account_number" class="block text-sm font-medium text-slate-800">Account number <span class="text-red-500">*</span></label>
-                        <input id="bank_account_number" name="bank_account_number" type="text" value="{{ old('bank_account_number') }}" required class="{{ $inputClass }}" maxlength="50">
-                        @error('bank_account_number')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
-                    </div>
                 </div>
             </div>
         </div>
@@ -255,6 +219,8 @@
             </div>
         </div>
 
+        @include('customer.registration.partials.next-of-kin-fields', ['inputClass' => $inputClass])
+
         @include('customer.registration.partials.kyc-uploads')
 
         <p class="text-xs text-slate-500">
@@ -294,38 +260,6 @@
 
             ministrySelect.addEventListener('change', syncEmployerField);
             syncEmployerField();
-        })();
-
-        (() => {
-            const bankSelect = document.getElementById('bank_financial_institution_id');
-            const branchSelect = document.getElementById('bank_financial_institution_branch_id');
-
-            if (!bankSelect || !branchSelect) {
-                return;
-            }
-
-            const syncBranches = () => {
-                const institutionId = bankSelect.value;
-                let hasVisible = false;
-
-                branchSelect.querySelectorAll('option[data-financial-institution-id]').forEach((option) => {
-                    const matches = option.dataset.financialInstitutionId === institutionId;
-                    option.hidden = !matches;
-                    option.disabled = !matches;
-                    if (matches) {
-                        hasVisible = true;
-                    }
-                });
-
-                if (!hasVisible) {
-                    branchSelect.value = '';
-                } else if (branchSelect.selectedOptions[0]?.disabled) {
-                    branchSelect.value = '';
-                }
-            };
-
-            bankSelect.addEventListener('change', syncBranches);
-            syncBranches();
         })();
     </script>
 @endpush

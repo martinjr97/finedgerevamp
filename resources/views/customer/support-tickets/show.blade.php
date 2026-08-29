@@ -37,18 +37,32 @@
         ])
 
         <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 shadow-md space-y-4">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Conversation</h2>
-            <div class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Conversation</h2>
+                <p class="text-xs text-gray-500">Latest messages first</p>
+            </div>
+            <div class="space-y-4">
                 @forelse ($ticket->comments as $comment)
                     @include('partials.support-ticket-comment', ['comment' => $comment, 'isAdminView' => false])
                 @empty
-                    @if ($ticket->message)
-                        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                            <p class="text-xs font-semibold uppercase text-gray-500 mb-2">Your message</p>
-                            <p class="whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">{{ $ticket->message }}</p>
-                        </div>
-                    @endif
+                    <p class="text-sm text-gray-500">No replies yet.</p>
                 @endforelse
+
+                @if ($ticket->message)
+                    <div class="flex justify-end">
+                        <article class="max-w-[85%] rounded-2xl rounded-tr-md border border-blue-200 bg-blue-600 px-4 py-3 text-white shadow-sm">
+                            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                                <span class="inline-flex items-center rounded-full border border-blue-300/60 bg-blue-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                                    Your original message
+                                </span>
+                                <time class="text-[11px] text-blue-100/80" datetime="{{ $ticket->created_at?->toIso8601String() }}">
+                                    {{ $ticket->created_at?->format('d M Y, H:i') }}
+                                </time>
+                            </div>
+                            <p class="whitespace-pre-line text-sm leading-relaxed text-white">{{ $ticket->message }}</p>
+                        </article>
+                    </div>
+                @endif
             </div>
         </div>
 

@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreLoanRefundRequest;
+use App\Models\Admin;
 use App\Models\Bank;
+use App\Models\Branch;
 use App\Models\Channel;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
 use App\Models\FinancialInstitution;
 use App\Models\Loan;
 use App\Models\LoanExtension;
+use App\Models\LoanPaymentSchedule;
 use App\Models\LoanProduct;
 use App\Models\LoanRepayment;
 use App\Models\PaymentGateway;
@@ -33,6 +36,7 @@ use App\Services\Loans\LoanDisbursementService;
 use App\Services\SharedPaymentDetailsDetectionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -291,90 +295,59 @@ class LoanController extends Controller
 
     public function todaysPayments(Request $request): View
     {
-        $admin = auth('admin')->user();
-        $companyFilterId = $admin->getCompanyFilterId();
         $today = Carbon::today();
+        $query = $this->buildTodaysPaymentsQuery($request, $today);
 
-        // Get loans that have payment schedules due today
-        $query = Loan::with(['customer', 'loanProduct', 'customerGroup', 'channel'])
-            ->whereHas('paymentSchedules', function ($q) use ($today) {
-                $q->whereDate('due_date', $today);
-            });
+        $loans = $query
+            ->with([
+                'customer',
+                'loanProduct',
+                'customerGroup',
+                'channel',
+                'paymentSchedules' => fn ($q) => $q->whereDate('due_date', $today),
+            ])
+            ->paginate(20)
+            ->withQueryString();
 
-        // Filter by company if not primary company admin
-        if ($companyFilterId !== null) {
-            $query->whereHas('customer', function ($q) use ($companyFilterId) {
-                $q->where('company_id', $companyFilterId);
-            });
-        }
-
-        // Apply search filter if provided
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('loan_number', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function ($customerQuery) use ($search) {
-                        $customerQuery->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        $loans = $query->latest('loan_start_date')->paginate(20);
-
-        // Load today's payment schedules for each loan
-        $loans->getCollection()->transform(function ($loan) use ($today) {
-            $loan->todays_schedule = $loan->paymentSchedules()
-                ->whereDate('due_date', $today)
-                ->first();
+        $loans->getCollection()->transform(function ($loan) {
+            $loan->todays_schedule = $loan->paymentSchedules->first();
 
             return $loan;
         });
 
-        return view('admin.loans.todays-payments', compact('loans', 'today'));
+        $branches = Branch::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $relationshipManagers = Admin::query()
+            ->where('is_relationship_manager', true)
+            ->where('is_active', true)
+            ->when($request->filled('branch_id'), fn (Builder $q) => $q->where('branch_id', $request->integer('branch_id')))
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get(['id', 'first_name', 'last_name']);
+
+        return view('admin.loans.todays-payments', compact('loans', 'today', 'branches', 'relationshipManagers'));
     }
 
     public function exportTodaysPayments(Request $request)
     {
-        $admin = auth('admin')->user();
-        $companyFilterId = $admin->getCompanyFilterId();
         $today = Carbon::today();
+        $query = $this->buildTodaysPaymentsQuery($request, $today);
 
-        // Get loans that have payment schedules due today
-        $query = Loan::with(['customer', 'loanProduct', 'customerGroup', 'channel', 'paymentSchedules'])
-            ->whereHas('paymentSchedules', function ($q) use ($today) {
-                $q->whereDate('due_date', $today);
-            });
-
-        // Filter by company if not primary company admin
-        if ($companyFilterId !== null) {
-            $query->whereHas('customer', function ($q) use ($companyFilterId) {
-                $q->where('company_id', $companyFilterId);
-            });
-        }
-
-        // Apply search filter if provided
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('loan_number', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function ($customerQuery) use ($search) {
-                        $customerQuery->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        $loans = $query->latest('loan_start_date')->get();
+        $loans = $query
+            ->with([
+                'customer',
+                'loanProduct',
+                'customerGroup',
+                'channel',
+                'paymentSchedules' => fn ($q) => $q->whereDate('due_date', $today),
+            ])
+            ->get();
 
         $exportData = $loans->map(function ($loan) use ($today) {
-            $todaysSchedule = $loan->paymentSchedules()
-                ->whereDate('due_date', $today)
-                ->first();
+            $todaysSchedule = $loan->paymentSchedules->first();
 
             return [
                 'Loan Number' => $loan->loan_number,
@@ -1071,5 +1044,78 @@ class LoanController extends Controller
     public function retryDisburseGateway(Loan $loan): RedirectResponse
     {
         return $this->disburseGateway($loan);
+    }
+
+    private function buildTodaysPaymentsQuery(Request $request, Carbon $today): Builder
+    {
+        $admin = auth('admin')->user();
+        $companyFilterId = $admin->getCompanyFilterId();
+
+        $query = Loan::query()
+            ->whereHas('paymentSchedules', fn (Builder $q) => $q->whereDate('due_date', $today));
+
+        if ($companyFilterId !== null) {
+            $query->whereHas('customer', fn (Builder $q) => $q->where('company_id', $companyFilterId));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('loan_number', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function (Builder $customerQuery) use ($search) {
+                        $customerQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('registered_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('branch_id')) {
+            $branchId = $request->integer('branch_id');
+            $query->whereHas('customer', fn (Builder $q) => $q->where('branch_id', $branchId));
+        }
+
+        if ($request->filled('relationship_manager_id')) {
+            $relationshipManagerId = $request->integer('relationship_manager_id');
+            $query->where(function (Builder $q) use ($relationshipManagerId) {
+                $q->whereHas('customerGroup', fn (Builder $groupQuery) => $groupQuery->where('relationship_manager_id', $relationshipManagerId))
+                    ->orWhereHas('customer.company', fn (Builder $companyQuery) => $companyQuery->where('relationship_manager_id', $relationshipManagerId))
+                    ->orWhereHas('customer.customerGroup', fn (Builder $groupQuery) => $groupQuery->where('relationship_manager_id', $relationshipManagerId));
+            });
+        }
+
+        $sortBy = $request->string('sort_by')->toString() ?: 'loan_number';
+        $sortDir = strtolower($request->string('sort_dir')->toString() ?: 'asc') === 'desc' ? 'desc' : 'asc';
+
+        $scheduleSubquery = LoanPaymentSchedule::query()
+            ->select([
+                'loan_id',
+                'expected_amount',
+                'amount_paid',
+                'remaining_amount',
+                'status',
+            ])
+            ->whereDate('due_date', $today);
+
+        $query->leftJoinSub($scheduleSubquery, 'todays_schedule', 'todays_schedule.loan_id', '=', 'loans.id')
+            ->select('loans.*');
+
+        match ($sortBy) {
+            'customer_name' => $query
+                ->leftJoin('customers as sort_customers', 'sort_customers.id', '=', 'loans.customer_id')
+                ->orderBy('sort_customers.first_name', $sortDir)
+                ->orderBy('sort_customers.last_name', $sortDir)
+                ->orderBy('sort_customers.registered_name', $sortDir),
+            'expected_amount' => $query->orderBy('todays_schedule.expected_amount', $sortDir),
+            'amount_paid' => $query->orderBy('todays_schedule.amount_paid', $sortDir),
+            'remaining_amount' => $query->orderBy('todays_schedule.remaining_amount', $sortDir),
+            'payment_status' => $query->orderBy('todays_schedule.status', $sortDir),
+            'outstanding_balance' => $query->orderBy('loans.outstanding_balance', $sortDir),
+            default => $query->orderBy('loans.loan_number', $sortDir),
+        };
+
+        return $query;
     }
 }

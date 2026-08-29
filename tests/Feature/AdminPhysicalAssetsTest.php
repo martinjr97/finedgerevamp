@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Admin;
 use App\Models\Asset;
 use App\Models\Company;
+use App\Models\Employee;
 use App\Models\FinancialTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -121,5 +122,106 @@ class AdminPhysicalAssetsTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.assets.index'))
             ->assertForbidden();
+    }
+
+    public function test_admin_can_add_employee_and_assign_as_asset_owner(): void
+    {
+        $admin = $this->makeAdmin([
+            'assets.view',
+            'assets.create',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.employees.store'), [
+                'first_name' => 'Jane',
+                'last_name' => 'Mwale',
+                'employee_number' => 'EMP-001',
+                'department' => 'Finance',
+                'is_active' => 1,
+            ])
+            ->assertRedirect(route('admin.employees.index'));
+
+        $employee = Employee::query()->where('employee_number', 'EMP-001')->firstOrFail();
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.assets.store'), [
+                'asset_type' => 'Equipment',
+                'name' => 'Company Laptop',
+                'value' => 8000,
+                'employee_id' => $employee->id,
+                'is_active' => 1,
+            ])
+            ->assertRedirect(route('admin.assets.index'));
+
+        $this->assertDatabaseHas('assets', [
+            'name' => 'Company Laptop',
+            'employee_id' => $employee->id,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.assets.index'))
+            ->assertOk()
+            ->assertSee('Jane Mwale')
+            ->assertSee('Company Laptop');
+    }
+
+    public function test_admin_can_transfer_asset_between_employees_with_trail(): void
+    {
+        $admin = $this->makeAdmin([
+            'assets.view',
+            'assets.create',
+            'assets.update',
+        ]);
+
+        $fromEmployee = Employee::create([
+            'first_name' => 'Alice',
+            'last_name' => 'Banda',
+            'employee_number' => 'EMP-A',
+            'is_active' => true,
+        ]);
+
+        $toEmployee = Employee::create([
+            'first_name' => 'Bob',
+            'last_name' => 'Zulu',
+            'employee_number' => 'EMP-B',
+            'is_active' => true,
+        ]);
+
+        $asset = Asset::create([
+            'asset_type' => 'Equipment',
+            'name' => 'Projector',
+            'value' => 5000,
+            'employee_id' => $fromEmployee->id,
+            'is_active' => true,
+            'created_by' => $admin->id,
+            'updated_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->from(route('admin.assets.show', $asset))
+            ->post(route('admin.assets.transfer', $asset), [
+                'to_employee_id' => $toEmployee->id,
+                'reason' => 'Alice moved to another department',
+            ])
+            ->assertRedirect(route('admin.assets.show', $asset));
+
+        $asset->refresh();
+
+        $this->assertSame($toEmployee->id, $asset->employee_id);
+        $this->assertDatabaseHas('asset_transfers', [
+            'asset_id' => $asset->id,
+            'from_employee_id' => $fromEmployee->id,
+            'to_employee_id' => $toEmployee->id,
+            'reason' => 'Alice moved to another department',
+            'transferred_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.assets.show', $asset))
+            ->assertOk()
+            ->assertSee('Transfer History')
+            ->assertSee('Alice Banda')
+            ->assertSee('Bob Zulu')
+            ->assertSee('Alice moved to another department');
     }
 }

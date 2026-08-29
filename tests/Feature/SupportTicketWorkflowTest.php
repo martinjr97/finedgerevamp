@@ -11,8 +11,11 @@ use App\Models\SupportTicketAssignment;
 use App\Models\SupportTicketComment;
 use App\Services\SupportTicketService;
 use App\Support\PermissionMatrix;
+use App\Notifications\SupportTicketAssignedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -377,5 +380,158 @@ class SupportTicketWorkflowTest extends TestCase
             ->get(route('admin.support-tickets.index'))
             ->assertOk()
             ->assertSee($staff->full_name);
+    }
+
+    public function test_assignment_notifies_assignee_by_email(): void
+    {
+        Notification::fake();
+
+        $company = $this->company();
+        $super = $this->superAdmin($company);
+        $staff = $this->admin($company);
+        $ticket = $this->openTicket($this->customer($company));
+
+        app(SupportTicketService::class)->assignTicket($ticket, $staff, $super, 'Please handle');
+
+        Notification::assertSentTo($staff, SupportTicketAssignedNotification::class);
+    }
+
+    public function test_create_ticket_with_assignment_notifies_staff(): void
+    {
+        Notification::fake();
+
+        $company = $this->company();
+        $super = $this->superAdmin($company);
+        $staff = $this->admin($company);
+        $customer = $this->customer($company);
+
+        $this->actingAs($super, 'admin')
+            ->post(route('admin.support-tickets.store'), [
+                'customer_id' => $customer->id,
+                'subject' => 'Assigned on create',
+                'message' => 'Customer needs help.',
+                'assigned_to_id' => $staff->id,
+                'assignment_note' => 'Take this one',
+            ])
+            ->assertRedirect();
+
+        Notification::assertSentTo($staff, SupportTicketAssignedNotification::class);
+    }
+
+    public function test_dashboard_shows_unacknowledged_assigned_ticket(): void
+    {
+        $company = $this->company();
+        $staff = $this->admin($company);
+        $ticket = $this->openTicket($this->customer($company));
+
+        $ticket->update([
+            'assigned_to_id' => $staff->id,
+            'assigned_by_id' => $this->superAdmin($company)->id,
+            'assigned_at' => now(),
+            'last_assigned_at' => now(),
+            'assignee_acknowledged_at' => null,
+        ]);
+
+        $this->actingAs($staff, 'admin')
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('New Support Ticket Assignments')
+            ->assertSee('Need help');
+    }
+
+    public function test_viewing_assigned_ticket_acknowledges_dashboard_alert(): void
+    {
+        $company = $this->company();
+        $staff = $this->admin($company);
+        $ticket = $this->openTicket($this->customer($company));
+
+        $ticket->update([
+            'assigned_to_id' => $staff->id,
+            'assigned_by_id' => $this->superAdmin($company)->id,
+            'assigned_at' => now(),
+            'last_assigned_at' => now(),
+            'assignee_acknowledged_at' => null,
+        ]);
+
+        $this->actingAs($staff, 'admin')
+            ->get(route('admin.support-tickets.show', $ticket))
+            ->assertOk();
+
+        $ticket->refresh();
+        $this->assertNotNull($ticket->assignee_acknowledged_at);
+
+        $this->actingAs($staff, 'admin')
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertDontSee('New Support Ticket Assignments');
+    }
+
+    public function test_status_change_notifies_customer_via_email_and_in_app_not_sms(): void
+    {
+        Notification::fake();
+        Mail::fake();
+
+        $company = $this->company();
+        $super = $this->superAdmin($company);
+        $customer = $this->customer($company);
+        $ticket = $this->openTicket($customer);
+
+        $this->actingAs($super, 'admin')
+            ->patch(route('admin.support-tickets.status.update', $ticket), [
+                'status' => SupportTicket::STATUS_RESOLVED,
+                'resolution_note' => 'Issue fixed remotely.',
+                'comment' => 'We have resolved your login issue.',
+            ])
+            ->assertRedirect();
+
+        Notification::assertSentTo(
+            $customer,
+            \App\Notifications\SupportTicketStatusChangedNotification::class
+        );
+
+        $this->assertDatabaseHas('communications', [
+            'subject' => 'Support ticket #'.$ticket->id.' updated',
+        ]);
+
+        $this->assertSame(0, \App\Models\SmsMessage::query()->where('customer_id', $customer->id)->count());
+    }
+
+    public function test_create_page_uses_searchable_customer_endpoint_instead_of_capped_list(): void
+    {
+        $company = $this->company();
+        $super = $this->superAdmin($company);
+        $visible = $this->customer($company);
+        $visible->forceFill([
+            'first_name' => 'Zedelia',
+            'last_name' => 'Searchable',
+            'phone' => '260977111222',
+        ])->save();
+
+        $this->actingAs($super, 'admin')
+            ->get(route('admin.support-tickets.create'))
+            ->assertOk()
+            ->assertSee('Type at least 2 characters to search all customers')
+            ->assertDontSee('Zedelia Searchable');
+
+        $this->actingAs($super, 'admin')
+            ->getJson(route('admin.support-tickets.search-customers', ['q' => 'Zedelia']))
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => (string) $visible->id,
+                'name' => 'Zedelia Searchable',
+            ]);
+    }
+
+    public function test_internal_note_checkbox_defaults_to_checked_on_comment_form(): void
+    {
+        $company = $this->company();
+        $super = $this->superAdmin($company);
+        $ticket = $this->openTicket($this->customer($company));
+
+        $response = $this->actingAs($super, 'admin')
+            ->get(route('admin.support-tickets.show', $ticket));
+
+        $response->assertOk();
+        $this->assertMatchesRegularExpression('/name="is_internal"[^>]*checked/', $response->getContent());
     }
 }

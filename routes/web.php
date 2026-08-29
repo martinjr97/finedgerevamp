@@ -34,6 +34,8 @@ Route::prefix('customer')
         require __DIR__.'/customer.php';
     });
 
+require __DIR__.'/legacy-migration-dashboard.php';
+
 Route::middleware('auth:admin,customer')->group(function (): void {
     Route::get('/help', [HelpCenterController::class, 'index'])->name('help.index');
     Route::get('/help/docs/{path?}', [HelpCenterController::class, 'document'])

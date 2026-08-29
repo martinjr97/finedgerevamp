@@ -1,0 +1,739 @@
+{
+    "scope": "pilot",
+    "pilot_loan_ids": [
+        2584,
+        2631,
+        2882,
+        187,
+        230,
+        232,
+        7803,
+        14227,
+        14589,
+        16171,
+        450,
+        476,
+        477,
+        18064,
+        18237,
+        1,
+        2,
+        1678,
+        17753,
+        18369
+    ],
+    "active_customer_count": 13,
+    "active_loan_count": 20,
+    "product_counts": {
+        "mou": 10,
+        "government": 4,
+        "character": 4,
+        "marketeer": 2
+    },
+    "multi_active_customers": 4,
+    "companies_needed": 6,
+    "total_active_exposure": 79056.68,
+    "repayment_attribution": {
+        "A_DIRECT": 110,
+        "B_RECONSTRUCTED": 200,
+        "C_AMBIGUOUS": 0,
+        "D_MANUAL": 0
+    },
+    "successful_repayments_in_scope": 310,
+    "customers": [
+        {
+            "legacy_user_id": 12,
+            "legacy_customer_id": 3,
+            "name": "Reuben Chisebu",
+            "nrc": "270304/68/1",
+            "emp_number": "EM1111112",
+            "phone": "260966109322",
+            "email": "reubenchisebu+11@gmail.com",
+            "legacy_client_id": "2",
+            "company_name": "Vendor",
+            "product_type": "salary_based",
+            "active_loans": 1,
+            "historical_loans": 29,
+            "active_exposure": 0
+        },
+        {
+            "legacy_user_id": 14,
+            "legacy_customer_id": 5,
+            "name": "Christopher Banda",
+            "nrc": "730989/11/1",
+            "emp_number": "0000021",
+            "phone": "260968425000",
+            "email": "didcottcb@hotmail.com",
+            "legacy_client_id": "6",
+            "company_name": "Character-based-2",
+            "product_type": "character_based",
+            "active_loans": 3,
+            "historical_loans": 26,
+            "active_exposure": 0
+        },
+        {
+            "legacy_user_id": 52,
+            "legacy_customer_id": 41,
+            "name": "Wamuyoo Ndiyoi",
+            "nrc": "172114/18/1",
+            "emp_number": "Chris06",
+            "phone": "260975225395",
+            "email": "wamu.nm@gmail.com",
+            "legacy_client_id": "7",
+            "company_name": "Character-based-3",
+            "product_type": "character_based",
+            "active_loans": 3,
+            "historical_loans": 10,
+            "active_exposure": 0
+        },
+        {
+            "legacy_user_id": 10,
+            "legacy_customer_id": 1,
+            "name": "Martin Mwale",
+            "nrc": "353651/66/1",
+            "emp_number": "martinmwale97",
+            "phone": "260973936164",
+            "email": "Martinmwalej@gmail.com",
+            "legacy_client_id": "6",
+            "company_name": "Character-based-2",
+            "product_type": "character_based",
+            "active_loans": 1,
+            "historical_loans": 67,
+            "active_exposure": 0
+        },
+        {
+            "legacy_user_id": 48,
+            "legacy_customer_id": 37,
+            "name": "Charles Kalela",
+            "nrc": "899016/11/1",
+            "emp_number": "Chris02",
+            "phone": "260977595280",
+            "email": "charleskalela@gmail.com",
+            "legacy_client_id": "7",
+            "company_name": "Character-based-3",
+            "product_type": "character_based",
+            "active_loans": 1,
+            "historical_loans": 112,
+            "active_exposure": 0
+        },
+        {
+            "legacy_user_id": 374,
+            "legacy_customer_id": 360,
+            "name": "Moses Nyirenda",
+            "nrc": "263002/51/1",
+            "emp_number": "00010077",
+            "phone": "260979901671",
+            "email": "mmyirenda@gmail.com",
+            "legacy_client_id": "8",
+            "company_name": "GRZ",
+            "product_type": "salary_based",
+            "active_loans": 1,
+            "historical_loans": 1,
+            "active_exposure": 2662.75
+        },
+        {
+            "legacy_user_id": 392,
+            "legacy_customer_id": 377,
+            "name": "Caroline Luyanga",
+            "nrc": "921638/11/1",
+            "emp_number": "00197935",
+            "phone": "260972152041",
+            "email": "carolinek@gmail.com",
+            "legacy_client_id": "8",
+            "company_name": "GRZ",
+            "product_type": "salary_based",
+            "active_loans": 1,
+            "historical_loans": 1,
+            "active_exposure": 1356.61
+        },
+        {
+            "legacy_user_id": 491,
+            "legacy_customer_id": 473,
+            "name": "Levy Mugala",
+            "nrc": "289973/16/1",
+            "emp_number": "00220316",
+            "phone": "260977778502",
+            "email": "mugalalevy@gmail.com",
+            "legacy_client_id": "8",
+            "company_name": "GRZ",
+            "product_type": "salary_based",
+            "active_loans": 1,
+            "historical_loans": 1,
+            "active_exposure": 1143.11
+        },
+        {
+            "legacy_user_id": 596,
+            "legacy_customer_id": 577,
+            "name": "Jane Nambela",
+            "nrc": "153780/15/1",
+            "emp_number": "00046429",
+            "phone": "260976615786",
+            "email": "nambelajane8@gmail.com",
+            "legacy_client_id": "8",
+            "company_name": "GRZ",
+            "product_type": "salary_based",
+            "active_loans": 1,
+            "historical_loans": 16,
+            "active_exposure": 177
+        },
+        {
+            "legacy_user_id": 941,
+            "legacy_customer_id": 912,
+            "name": "Lwimbo Kupeta",
+            "nrc": "233256/71/1",
+            "emp_number": "SLB051",
+            "phone": "260979981451",
+            "email": "lwimbosk@gmail.com",
+            "legacy_client_id": "11",
+            "company_name": "Starlabs Limited",
+            "product_type": "salary_based",
+            "active_loans": 3,
+            "historical_loans": 11,
+            "active_exposure": 16790.22
+        },
+        {
+            "legacy_user_id": 916,
+            "legacy_customer_id": 891,
+            "name": "Maleka Nsalamu",
+            "nrc": "207989/10/1",
+            "emp_number": "SLB057",
+            "phone": "260970189489",
+            "email": "malekansalamu009@gmail.com",
+            "legacy_client_id": "11",
+            "company_name": "Starlabs Limited",
+            "product_type": "salary_based",
+            "active_loans": 2,
+            "historical_loans": 26,
+            "active_exposure": 54226.99
+        },
+        {
+            "legacy_user_id": 1997,
+            "legacy_customer_id": 1957,
+            "name": "Gosy Kauyu",
+            "nrc": "193159/16/1",
+            "emp_number": "193159/16/1",
+            "phone": "260779123702",
+            "email": "doctorkumandasikukhuta@gmail.com",
+            "legacy_client_id": "36",
+            "company_name": "Marketize Loans",
+            "product_type": "marketize_based",
+            "active_loans": 1,
+            "historical_loans": 7,
+            "active_exposure": 1400
+        },
+        {
+            "legacy_user_id": 1999,
+            "legacy_customer_id": 1959,
+            "name": "Nelly Kaonga",
+            "nrc": "769145/11/1",
+            "emp_number": "769145/11/1",
+            "phone": "260979130899",
+            "email": "nellykaonga20@gmail.com",
+            "legacy_client_id": "36",
+            "company_name": "Marketize Loans",
+            "product_type": "marketize_based",
+            "active_loans": 1,
+            "historical_loans": 4,
+            "active_exposure": 1300
+        }
+    ],
+    "loans": [
+        {
+            "legacy_loan_id": 1,
+            "legacy_user_id": 12,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 0
+        },
+        {
+            "legacy_loan_id": 2,
+            "legacy_user_id": 14,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 0
+        },
+        {
+            "legacy_loan_id": 187,
+            "legacy_user_id": 52,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 0
+        },
+        {
+            "legacy_loan_id": 230,
+            "legacy_user_id": 52,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 0
+        },
+        {
+            "legacy_loan_id": 232,
+            "legacy_user_id": 52,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 0
+        },
+        {
+            "legacy_loan_id": 450,
+            "legacy_user_id": 10,
+            "product": {
+                "code": "CHAR-001",
+                "category": "character",
+                "reason": "character_based client product_type"
+            },
+            "effective_outstanding": 0
+        },
+        {
+            "legacy_loan_id": 476,
+            "legacy_user_id": 14,
+            "product": {
+                "code": "CHAR-001",
+                "category": "character",
+                "reason": "character_based client product_type"
+            },
+            "effective_outstanding": 0
+        },
+        {
+            "legacy_loan_id": 477,
+            "legacy_user_id": 14,
+            "product": {
+                "code": "CHAR-001",
+                "category": "character",
+                "reason": "character_based client product_type"
+            },
+            "effective_outstanding": 0
+        },
+        {
+            "legacy_loan_id": 1678,
+            "legacy_user_id": 48,
+            "product": {
+                "code": "CHAR-001",
+                "category": "character",
+                "reason": "character_based client product_type"
+            },
+            "effective_outstanding": 0
+        },
+        {
+            "legacy_loan_id": 2584,
+            "legacy_user_id": 374,
+            "product": {
+                "code": "GOV-001",
+                "category": "government",
+                "reason": "gvnt_loan flag"
+            },
+            "effective_outstanding": 2662.75
+        },
+        {
+            "legacy_loan_id": 2631,
+            "legacy_user_id": 392,
+            "product": {
+                "code": "GOV-001",
+                "category": "government",
+                "reason": "gvnt_loan flag"
+            },
+            "effective_outstanding": 1356.61
+        },
+        {
+            "legacy_loan_id": 2882,
+            "legacy_user_id": 491,
+            "product": {
+                "code": "GOV-001",
+                "category": "government",
+                "reason": "gvnt_loan flag"
+            },
+            "effective_outstanding": 1143.11
+        },
+        {
+            "legacy_loan_id": 7803,
+            "legacy_user_id": 596,
+            "product": {
+                "code": "GOV-001",
+                "category": "government",
+                "reason": "gvnt_loan flag"
+            },
+            "effective_outstanding": 177
+        },
+        {
+            "legacy_loan_id": 14227,
+            "legacy_user_id": 941,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 1100.02
+        },
+        {
+            "legacy_loan_id": 14589,
+            "legacy_user_id": 941,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 13560
+        },
+        {
+            "legacy_loan_id": 16171,
+            "legacy_user_id": 941,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 2130.2
+        },
+        {
+            "legacy_loan_id": 17753,
+            "legacy_user_id": 916,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 21826.99
+        },
+        {
+            "legacy_loan_id": 18064,
+            "legacy_user_id": 1997,
+            "product": {
+                "code": "MARK-001",
+                "category": "marketeer",
+                "reason": "marketize_based client product_type"
+            },
+            "effective_outstanding": 1400
+        },
+        {
+            "legacy_loan_id": 18237,
+            "legacy_user_id": 1999,
+            "product": {
+                "code": "MARK-001",
+                "category": "marketeer",
+                "reason": "marketize_based client product_type"
+            },
+            "effective_outstanding": 1300
+        },
+        {
+            "legacy_loan_id": 18369,
+            "legacy_user_id": 916,
+            "product": {
+                "code": "MOU-001",
+                "category": "mou",
+                "reason": "salary_based flag or client product_type"
+            },
+            "effective_outstanding": 32400
+        }
+    ],
+    "bank_wallet": {
+        "legacy_treasury_banks": 2,
+        "legacy_treasury_wallets": 5,
+        "legacy_banks": [
+            {
+                "id": 1,
+                "name": "Zambia Industrial Commercial Bank",
+                "code": "ZICB",
+                "description": "Zambia Industrial Commercial Bank (ZICB)",
+                "is_active": 1,
+                "include_in_income_statement": 0,
+                "show_on_dashboard": 0,
+                "created_by": null,
+                "updated_by": 382,
+                "created_at": "2025-12-02 20:50:39",
+                "updated_at": "2025-12-03 12:20:14"
+            },
+            {
+                "id": 2,
+                "name": "First National Bank",
+                "code": "FNB",
+                "description": "First National Bank Zambia",
+                "is_active": 1,
+                "include_in_income_statement": 0,
+                "show_on_dashboard": 1,
+                "created_by": null,
+                "updated_by": 1694,
+                "created_at": "2025-12-02 20:50:39",
+                "updated_at": "2025-12-10 16:08:39"
+            }
+        ],
+        "legacy_payment_wallets": [
+            {
+                "id": 1,
+                "name": "Kazang",
+                "code": "KAZANG",
+                "wallet_type": "MOBILE_MONEY",
+                "description": "Kazang mobile money wallet",
+                "is_active": 1,
+                "show_on_dashboard": 1,
+                "created_by": null,
+                "updated_by": 1694,
+                "created_at": "2025-12-02 20:51:37",
+                "updated_at": "2025-12-10 16:08:19"
+            },
+            {
+                "id": 2,
+                "name": "Airtel Money",
+                "code": "AIRTEL",
+                "wallet_type": "MOBILE_MONEY",
+                "description": "Airtel Money mobile money service",
+                "is_active": 1,
+                "show_on_dashboard": 1,
+                "created_by": null,
+                "updated_by": 1694,
+                "created_at": "2025-12-02 20:51:37",
+                "updated_at": "2025-12-10 16:08:25"
+            },
+            {
+                "id": 3,
+                "name": "MTN Money",
+                "code": "MTN",
+                "wallet_type": "MOBILE_MONEY",
+                "description": "MTN Money mobile money service",
+                "is_active": 1,
+                "show_on_dashboard": 0,
+                "created_by": null,
+                "updated_by": null,
+                "created_at": "2025-12-02 20:51:37",
+                "updated_at": "2025-12-02 20:51:37"
+            },
+            {
+                "id": 4,
+                "name": "Zamtel Money",
+                "code": "ZAMTEL",
+                "wallet_type": "MOBILE_MONEY",
+                "description": "Zamtel Money mobile money service",
+                "is_active": 1,
+                "show_on_dashboard": 0,
+                "created_by": null,
+                "updated_by": null,
+                "created_at": "2025-12-02 20:51:37",
+                "updated_at": "2025-12-02 20:51:37"
+            },
+            {
+                "id": 5,
+                "name": "Other Wallet",
+                "code": "OTHER",
+                "wallet_type": "OTHER",
+                "description": "Other payment wallets not listed",
+                "is_active": 1,
+                "show_on_dashboard": 0,
+                "created_by": null,
+                "updated_by": null,
+                "created_at": "2025-12-02 20:51:37",
+                "updated_at": "2025-12-02 20:51:37"
+            }
+        ],
+        "active_customers_with_bank": 1,
+        "active_customers_without_bank": 12,
+        "active_customers_with_wallet": 13,
+        "active_customers_without_wallet": 0,
+        "customers_with_multiple_bank_accounts": 0,
+        "bank_account_multiple_target_limitation": true,
+        "invalid_bank_accounts": 1,
+        "invalid_wallets": 0,
+        "duplicate_wallet_numbers": [],
+        "bank_records": [
+            {
+                "legacy_user_id": 14,
+                "legacy_customer_id": 5,
+                "bank_name": "Zanaco",
+                "branch_name": "Cairo Business Center",
+                "sort_code": "020016",
+                "account_number": null,
+                "account_name": "Christopher Banda",
+                "confidence": "MANUAL_REVIEW"
+            }
+        ],
+        "wallet_records": [
+            {
+                "legacy_user_id": 10,
+                "legacy_customer_id": 1,
+                "wallet_number": "260973936164",
+                "wallet_number_normalized": "260973936164",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 12,
+                "legacy_customer_id": 3,
+                "wallet_number": "260966109322",
+                "wallet_number_normalized": "260966109322",
+                "provider_code": "MTN_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 14,
+                "legacy_customer_id": 5,
+                "wallet_number": "260968425000",
+                "wallet_number_normalized": "260968425000",
+                "provider_code": "MTN_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 48,
+                "legacy_customer_id": 37,
+                "wallet_number": "260977595280",
+                "wallet_number_normalized": "260977595280",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 52,
+                "legacy_customer_id": 41,
+                "wallet_number": "260975225395",
+                "wallet_number_normalized": "260975225395",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 374,
+                "legacy_customer_id": 360,
+                "wallet_number": "260979901671",
+                "wallet_number_normalized": "260979901671",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 392,
+                "legacy_customer_id": 377,
+                "wallet_number": "260972152041",
+                "wallet_number_normalized": "260972152041",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 491,
+                "legacy_customer_id": 473,
+                "wallet_number": "260977778502",
+                "wallet_number_normalized": "260977778502",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 596,
+                "legacy_customer_id": 577,
+                "wallet_number": "260976615786",
+                "wallet_number_normalized": "260976615786",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 916,
+                "legacy_customer_id": 891,
+                "wallet_number": "260970189489",
+                "wallet_number_normalized": "260970189489",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 941,
+                "legacy_customer_id": 912,
+                "wallet_number": "260979981451",
+                "wallet_number_normalized": "260979981451",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 1997,
+                "legacy_customer_id": 1957,
+                "wallet_number": "260779123702",
+                "wallet_number_normalized": "260779123702",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            },
+            {
+                "legacy_user_id": 1999,
+                "legacy_customer_id": 1959,
+                "wallet_number": "260979130899",
+                "wallet_number_normalized": "260979130899",
+                "provider_code": "AIRTEL_MONEY",
+                "inferred_from": "users.phone_number",
+                "confidence": "MEDIUM"
+            }
+        ],
+        "bank_mapping": [
+            {
+                "legacy_bank_id": 1,
+                "legacy_name": "Zambia Industrial Commercial Bank",
+                "legacy_code": "ZICB",
+                "target_financial_institution_code": null,
+                "confidence": "HIGH"
+            },
+            {
+                "legacy_bank_id": 2,
+                "legacy_name": "First National Bank",
+                "legacy_code": "FNB",
+                "target_financial_institution_code": "FNB",
+                "confidence": "HIGH"
+            }
+        ],
+        "wallet_provider_mapping": [
+            {
+                "legacy_wallet_id": 1,
+                "legacy_name": "Kazang",
+                "legacy_code": "KAZANG",
+                "target_wallet_provider_code": null,
+                "is_treasury": true,
+                "confidence": "MANUAL_REVIEW"
+            },
+            {
+                "legacy_wallet_id": 2,
+                "legacy_name": "Airtel Money",
+                "legacy_code": "AIRTEL",
+                "target_wallet_provider_code": "AIRTEL_MONEY",
+                "is_treasury": true,
+                "confidence": "HIGH"
+            },
+            {
+                "legacy_wallet_id": 3,
+                "legacy_name": "MTN Money",
+                "legacy_code": "MTN",
+                "target_wallet_provider_code": "MTN_MONEY",
+                "is_treasury": true,
+                "confidence": "HIGH"
+            },
+            {
+                "legacy_wallet_id": 4,
+                "legacy_name": "Zamtel Money",
+                "legacy_code": "ZAMTEL",
+                "target_wallet_provider_code": "ZAMTEL_MONEY",
+                "is_treasury": true,
+                "confidence": "HIGH"
+            },
+            {
+                "legacy_wallet_id": 5,
+                "legacy_name": "Other Wallet",
+                "legacy_code": "OTHER",
+                "target_wallet_provider_code": null,
+                "is_treasury": true,
+                "confidence": "MANUAL_REVIEW"
+            }
+        ]
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "applied": [
+        {
+            "nrc": "730989/11/1",
+            "alias_legacy_user_id": 19,
+            "target_customer_id": 7
+        },
+        {
+            "nrc": "730989/11/1",
+            "primary_legacy_user_id": 14,
+            "target_customer_id": 7
+        },
+        {
+            "nrc": "631351/11/1",
+            "alias_legacy_user_id": 126,
+            "target_customer_id": null
+        },
+        {
+            "nrc": "631351/11/1",
+            "primary_legacy_user_id": 127,
+            "target_customer_id": null
+        }
+    ],
+    "duplicate_groups_resolved": 2
+}

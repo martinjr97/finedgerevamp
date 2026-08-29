@@ -1037,6 +1037,19 @@ body[data-theme="dark"] .content-area .status-pill-active * {
     color: #6ee7b7 !important;
 }
 
+/* Customer registration request — officer name in summary sidebar */
+.summary-officer-name {
+    color: #059669 !important;
+    font-weight: 700;
+}
+.content-area .summary-officer-name {
+    color: #059669 !important;
+}
+body[data-theme="dark"] .summary-officer-name,
+body[data-theme="dark"] .content-area .summary-officer-name {
+    color: #34d399 !important;
+}
+
 /* Hero Apply / Get Loan CTA — solid green + white text (theme remaps emerald tokens) */
 .btn-apply-loan {
     display: inline-flex;

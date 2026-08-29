@@ -252,6 +252,15 @@
                             ];
                         }
 
+                        if (config('migration-dashboard.enabled') && auth('admin')->user()?->can('migration.view')) {
+                            $navItems[] = [
+                                'label' => 'Migration Dashboard',
+                                'icon' => 'arrow-path',
+                                'id' => 'menu-migration-dashboard',
+                                'route' => route('legacy.migration-dashboard.index'),
+                            ];
+                        }
+
                         $navItems = AdminSidebarNavigation::applyRoutePatterns($navItems);
                     @endphp
                     @foreach ($navItems as $item)
@@ -778,6 +787,10 @@
                         select.closest('[data-no-select-filter]')
                     ) {
                         return false;
+                    }
+
+                    if (select.dataset.selectSearchForce === 'true') {
+                        return true;
                     }
 
                     const optionsCount = Array.from(select.options).filter((option) => option.textContent.trim() !== '').length;

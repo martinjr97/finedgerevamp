@@ -106,28 +106,45 @@
                             @endif
                         </div>
                     </div>
+
+                    @include('partials.support-ticket-attachments', [
+                        'ticket' => $ticket,
+                        'attachments' => $ticket->attachments,
+                        'isAdminView' => true,
+                        'embedded' => true,
+                    ])
                 </div>
 
-                @include('partials.support-ticket-attachments', [
-                    'ticket' => $ticket,
-                    'attachments' => $ticket->attachments,
-                    'isAdminView' => true,
-                ])
-
                 <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
-                    <h2 class="text-lg font-semibold text-white">Conversation Timeline</h2>
-                    <div class="space-y-3 max-h-[640px] overflow-y-auto pr-1">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h2 class="text-lg font-semibold text-white">Conversation Timeline</h2>
+                        <p class="text-xs text-slate-400">Latest messages first · customer left, team right, internal notes highlighted</p>
+                    </div>
+                    <div class="space-y-4 max-h-[640px] overflow-y-auto pr-1">
                         @forelse ($ticket->comments as $comment)
                             @include('partials.support-ticket-comment', ['comment' => $comment, 'isAdminView' => true])
                         @empty
-                            <p class="text-sm text-slate-400">No comments yet.</p>
-                            @if ($ticket->message)
-                                <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
-                                    <p class="text-xs uppercase text-slate-400 mb-2">Original message</p>
-                                    <p class="whitespace-pre-line text-sm text-slate-200">{{ $ticket->message }}</p>
-                                </div>
-                            @endif
+                            <p class="text-sm text-slate-400">No replies yet.</p>
                         @endforelse
+
+                        @if ($ticket->message)
+                            <div class="flex justify-start">
+                                <article class="max-w-[85%] rounded-2xl rounded-tl-md border border-blue-400/30 bg-blue-500/10 px-4 py-3 shadow-sm">
+                                    <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-flex items-center rounded-full border border-blue-400/50 bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-100">
+                                                Original request
+                                            </span>
+                                            <span class="text-sm font-semibold text-white">{{ $ticket->name }}</span>
+                                        </div>
+                                        <time class="text-[11px] text-slate-400" datetime="{{ $ticket->created_at?->toIso8601String() }}">
+                                            {{ $ticket->created_at?->format('d M Y, H:i') }}
+                                        </time>
+                                    </div>
+                                    <p class="whitespace-pre-line text-sm leading-relaxed text-slate-100">{{ $ticket->message }}</p>
+                                </article>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -269,8 +286,8 @@
                             @error('comment')<p class="mt-1 text-xs text-rose-400">{{ $message }}</p>@enderror
                         </div>
                         <label class="flex items-start gap-2 text-sm text-slate-300">
-                            <input type="checkbox" name="is_internal" value="1" class="mt-1 rounded border-white/20 bg-black/30 text-amber-500 focus:ring-amber-500/40" @checked(old('is_internal'))>
-                            <span>Internal note only — not visible to customer</span>
+                            <input type="checkbox" name="is_internal" value="1" class="mt-1 rounded border-white/20 bg-black/30 text-amber-500 focus:ring-amber-500/40" @checked(old('is_internal', true))>
+                            <span>Internal note only — not visible to customer (uncheck to send a customer-visible reply)</span>
                         </label>
                         <div class="flex flex-wrap items-center gap-3 pt-2">
                             <button type="submit" class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:from-cyan-600 hover:to-blue-700 transition">

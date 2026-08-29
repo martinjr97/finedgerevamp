@@ -21,6 +21,7 @@
                 <p class="text-lg font-semibold text-emerald-900">{{ session('reference') }}</p>
                 <p class="text-xs text-emerald-700 max-w-md">
                     Please keep this ID safely. You can quote it when following up with support about your registration.
+                    We have also emailed this ID to you for your records.
                 </p>
             </div>
         @endif

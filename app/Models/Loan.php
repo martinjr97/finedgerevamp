@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Loan extends Model
 {
@@ -343,19 +344,54 @@ class Loan extends Model
     //     return $this->hasMany(LoanPayment::class);
     // }
 
+    protected static function booted(): void
+    {
+        static::created(function (Loan $loan): void {
+            if (! self::isTemporaryLoanNumber((string) $loan->loan_number)) {
+                return;
+            }
+
+            $loan->loadMissing('loanProduct');
+            $loan->forceFill([
+                'loan_number' => self::formatLoanNumber($loan->loanProduct, (int) $loan->id),
+            ])->saveQuietly();
+        });
+    }
+
     /**
-     * Generate a unique loan number
+     * Build the public loan number using the loans table auto-increment id.
+     */
+    public static function formatLoanNumber(?LoanProduct $loanProduct, int $loanId): string
+    {
+        $productCode = $loanProduct ? strtoupper($loanProduct->code) : 'DEF';
+        $prefix = 'FIN-'.$productCode;
+        $date = now()->format('Ymd');
+
+        return $prefix.'-'.$date.'-'.$loanId;
+    }
+
+    /**
+     * Placeholder used until the loan row exists and the final number can include its id.
+     */
+    public static function temporaryLoanNumber(): string
+    {
+        return 'TMP-'.Str::upper(Str::replace('-', '', (string) Str::uuid()));
+    }
+
+    public static function isTemporaryLoanNumber(string $loanNumber): bool
+    {
+        return str_starts_with($loanNumber, 'TMP-');
+    }
+
+    /**
+     * Generate a placeholder loan number; the final FIN-* number is assigned on create.
      */
     public static function generateLoanNumber(?LoanProduct $loanProduct = null): string
     {
-        $productCode = $loanProduct ? strtoupper($loanProduct->code) : 'DEF';
-        $prefix = 'LN-'.$productCode;
-        $date = now()->format('Ymd');
+        unset($loanProduct);
 
-        // Generate unique loan number
         do {
-            $random = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-            $loanNumber = $prefix.'-'.$date.'-'.$random;
+            $loanNumber = self::temporaryLoanNumber();
         } while (self::where('loan_number', $loanNumber)->exists());
 
         return $loanNumber;

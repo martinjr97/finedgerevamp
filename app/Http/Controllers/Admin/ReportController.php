@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\AdminCompanyScope;
 use App\Models\Loan;
 use App\Models\Repayment;
 use App\Models\LoanRepayment;
@@ -965,46 +966,97 @@ class ReportController extends Controller
      */
     public function arrears(Request $request): View
     {
-        // Only get loans that have overdue payment schedule items (installments)
+        $allArrearsRows = $this->buildArrearsReportRows($request);
+        $arrearsSummary = $this->summarizeArrearsReportRows($allArrearsRows);
+
+        $perPage = 20;
+        $currentPage = (int) $request->get('page', 1);
+        $items = $allArrearsRows->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $arrearsData = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $allArrearsRows->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        $loanProducts = LoanProduct::where('is_active', true)->orderBy('name')->get();
+        $customerGroups = CustomerGroup::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.reports.arrears', compact('arrearsData', 'arrearsSummary', 'loanProducts', 'customerGroups'));
+    }
+
+    /**
+     * @return Collection<int, array{loan: Loan, overdue_amount: float, days_overdue: int, par_status: ?string, overdue_installments_count: int, is_upcoming: bool}>
+     */
+    private function buildArrearsReportRows(Request $request): Collection
+    {
+        $minDays = $this->arrearsMinDaysOverdueFilter($request);
+
+        return $this->buildArrearsLoansQuery($request)
+            ->get()
+            ->map(fn (Loan $loan) => $this->mapLoanToArrearsRow($loan, $minDays))
+            ->filter()
+            ->sortByDesc('days_overdue')
+            ->values();
+    }
+
+    private function arrearsMinDaysOverdueFilter(Request $request): ?int
+    {
+        if (! $request->filled('days_overdue_min')) {
+            return null;
+        }
+
+        return (int) $request->input('days_overdue_min');
+    }
+
+    private function buildArrearsLoansQuery(Request $request): Builder
+    {
+        $minDays = $this->arrearsMinDaysOverdueFilter($request);
+        $upcomingWindow = $minDays !== null && $minDays < 0;
+
         $query = Loan::with([
             'customer.company.relationshipManager',
             'loanProduct',
             'customerGroup',
-            'paymentSchedules'
+            'paymentSchedules',
         ])
             ->whereIn('status', ['approved', 'active'])
-            ->whereHas('paymentSchedules', function ($q) {
-                // Only loans with overdue installments (due date passed and remaining amount > 0)
-                $q->where('due_date', '<', Carbon::today())
-                  ->where('remaining_amount', '>', 0);
+            ->whereHas('paymentSchedules', function ($q) use ($minDays, $upcomingWindow) {
+                $q->where('remaining_amount', '>', 0);
+
+                if ($upcomingWindow) {
+                    $q->whereDate('due_date', '>=', Carbon::today())
+                        ->whereDate('due_date', '<=', Carbon::today()->addDays(abs($minDays)));
+
+                    return;
+                }
+
+                $q->where('due_date', '<', Carbon::today());
+
+                if ($minDays !== null && $minDays > 0) {
+                    $q->where('due_date', '<=', Carbon::today()->subDays($minDays));
+                }
             });
 
-        // Filters
-        if ($request->has('loan_product_id') && $request->loan_product_id) {
+        if ($request->filled('loan_product_id')) {
             $query->where('loan_product_id', $request->loan_product_id);
         }
 
-        if ($request->has('customer_group_id') && $request->customer_group_id) {
+        if ($request->filled('customer_group_id')) {
             $query->where('customer_group_id', $request->customer_group_id);
         }
 
-        if ($request->has('days_overdue_min') && $request->days_overdue_min) {
-            $minDate = Carbon::today()->subDays($request->days_overdue_min);
-            $query->whereHas('paymentSchedules', function ($q) use ($minDate) {
-                $q->where('due_date', '<=', $minDate)
-                  ->where('remaining_amount', '>', 0);
-            });
-        }
-
-        if ($request->has('days_overdue_max') && $request->days_overdue_max) {
-            $maxDate = Carbon::today()->subDays($request->days_overdue_max);
+        if ($request->filled('days_overdue_max') && ! $upcomingWindow) {
+            $maxDate = Carbon::today()->subDays((int) $request->days_overdue_max);
             $query->whereHas('paymentSchedules', function ($q) use ($maxDate) {
                 $q->where('due_date', '>=', $maxDate)
-                  ->where('remaining_amount', '>', 0);
+                    ->where('due_date', '<', Carbon::today())
+                    ->where('remaining_amount', '>', 0);
             });
         }
 
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('loan_number', 'like', "%{$search}%")
@@ -1017,61 +1069,79 @@ class ReportController extends Controller
             });
         }
 
-        // Get loans with overdue installments
-        $loans = $query->get();
+        return $query;
+    }
 
-        // Calculate arrears data - only for loans with overdue installments
-        $arrearsData = $loans->map(function ($loan) {
-            // Get overdue installments (payment schedules with due date passed and remaining amount)
-            $overdueSchedules = $loan->paymentSchedules()
-                ->where('due_date', '<', Carbon::today())
-                ->where('remaining_amount', '>', 0)
-                ->get();
-            
-            if ($overdueSchedules->isEmpty()) {
-                return null; // Skip loans without overdue installments
+    /**
+     * @return array{loan: Loan, overdue_amount: float, days_overdue: int, par_status: ?string, overdue_installments_count: int, is_upcoming: bool}|null
+     */
+    private function mapLoanToArrearsRow(Loan $loan, ?int $minDays): ?array
+    {
+        $upcomingWindow = $minDays !== null && $minDays < 0;
+        $today = Carbon::today();
+
+        $matchingSchedulesQuery = $loan->paymentSchedules()
+            ->where('remaining_amount', '>', 0);
+
+        if ($upcomingWindow) {
+            $matchingSchedulesQuery
+                ->whereDate('due_date', '>=', $today)
+                ->whereDate('due_date', '<=', $today->copy()->addDays(abs($minDays)));
+        } else {
+            $matchingSchedulesQuery->where('due_date', '<', $today);
+
+            if ($minDays !== null && $minDays > 0) {
+                $matchingSchedulesQuery->where('due_date', '<=', $today->copy()->subDays($minDays));
             }
-            
-            // Calculate total overdue amount from installments
-            $overdueAmount = $overdueSchedules->sum('remaining_amount');
-            
-            // Get the most overdue installment
-            $mostOverdue = $overdueSchedules
+        }
+
+        $matchingSchedules = $matchingSchedulesQuery->get();
+
+        if ($matchingSchedules->isEmpty()) {
+            return null;
+        }
+
+        $overdueAmount = (float) $matchingSchedules->sum('remaining_amount');
+
+        if ($upcomingWindow) {
+            $primarySchedule = $matchingSchedules->sortBy('due_date')->first();
+            $daysOverdue = $primarySchedule
+                ? -1 * $today->diffInDays($primarySchedule->due_date, false)
+                : 0;
+        } else {
+            $primarySchedule = $matchingSchedules
                 ->map(function ($schedule) {
-                    // Update status and days overdue
                     $schedule->updateStatus();
+
                     return $schedule;
                 })
                 ->sortByDesc('days_overdue')
                 ->first();
-            
-            return [
-                'loan' => $loan,
-                'overdue_amount' => $overdueAmount,
-                'days_overdue' => $mostOverdue ? $mostOverdue->days_overdue : 0,
-                'par_status' => $loan->getPARStatus(),
-                'overdue_installments_count' => $overdueSchedules->count(),
-            ];
-        })->filter()->sortByDesc('days_overdue')->values();
+            $daysOverdue = $primarySchedule ? (int) $primarySchedule->days_overdue : 0;
+        }
 
-        // Pagination
-        $perPage = 20;
-        $currentPage = $request->get('page', 1);
-        $items = $arrearsData->slice(($currentPage - 1) * $perPage, $perPage)->values();
-        $total = $arrearsData->count();
-        $arrearsData = new \Illuminate\Pagination\LengthAwarePaginator(
-            $items,
-            $total,
-            $perPage,
-            $currentPage,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
+        return [
+            'loan' => $loan,
+            'overdue_amount' => $overdueAmount,
+            'days_overdue' => $daysOverdue,
+            'par_status' => $upcomingWindow ? null : $loan->getPARStatus(),
+            'overdue_installments_count' => $matchingSchedules->count(),
+            'is_upcoming' => $upcomingWindow,
+        ];
+    }
 
-        // Get filter options
-        $loanProducts = LoanProduct::where('is_active', true)->orderBy('name')->get();
-        $customerGroups = CustomerGroup::where('is_active', true)->orderBy('name')->get();
-
-        return view('admin.reports.arrears', compact('arrearsData', 'loanProducts', 'customerGroups'));
+    /**
+     * @param  Collection<int, array<string, mixed>>  $rows
+     * @return array{total_loans: int, total_overdue_amount: float, avg_days_overdue: float, par30_plus: int}
+     */
+    private function summarizeArrearsReportRows(Collection $rows): array
+    {
+        return [
+            'total_loans' => $rows->count(),
+            'total_overdue_amount' => (float) $rows->sum('overdue_amount'),
+            'avg_days_overdue' => $rows->count() > 0 ? round((float) $rows->avg('days_overdue'), 1) : 0.0,
+            'par30_plus' => $rows->where('days_overdue', '>=', 30)->count(),
+        ];
     }
 
     /**
@@ -1079,69 +1149,17 @@ class ReportController extends Controller
      */
     public function exportArrears(Request $request)
     {
-        // Only get loans that have overdue payment schedule items (installments)
-        $query = Loan::with(['customer', 'loanProduct', 'customerGroup', 'paymentSchedules'])
-            ->whereIn('status', ['approved', 'active'])
-            ->whereHas('paymentSchedules', function ($q) {
-                // Only loans with overdue installments
-                $q->where('due_date', '<', Carbon::today())
-                  ->where('remaining_amount', '>', 0);
-            });
-
-        // Apply same filters as index
-        if ($request->has('loan_product_id') && $request->loan_product_id) {
-            $query->where('loan_product_id', $request->loan_product_id);
-        }
-
-        if ($request->has('customer_group_id') && $request->customer_group_id) {
-            $query->where('customer_group_id', $request->customer_group_id);
-        }
-
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('loan_number', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function ($customerQuery) use ($search) {
-                        $customerQuery->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        $loans = $query->get();
-
-        // Prepare data for export
         $exportData = [];
-        foreach ($loans as $loan) {
-            // Get overdue installments
-            $overdueSchedules = $loan->paymentSchedules()
-                ->where('due_date', '<', Carbon::today())
-                ->where('remaining_amount', '>', 0)
-                ->get();
-            
-            if ($overdueSchedules->isEmpty()) {
-                continue; // Skip loans without overdue installments
-            }
-            
-            $overdueAmount = $overdueSchedules->sum('remaining_amount');
-            
-            // Update status for all schedules
-            foreach ($overdueSchedules as $schedule) {
-                $schedule->updateStatus();
-            }
-            
-            $mostOverdue = $overdueSchedules
-                ->sortByDesc('days_overdue')
-                ->first();
-            
+
+        foreach ($this->buildArrearsReportRows($request) as $item) {
+            $loan = $item['loan'];
             $nextDue = $loan->paymentSchedules()
                 ->where('remaining_amount', '>', 0)
                 ->orderBy('due_date')
                 ->first();
 
             $relationshipManager = $loan->customer->company->relationshipManager ?? null;
-            
+
             $exportData[] = [
                 'Loan Number' => $loan->loan_number,
                 'Customer Name' => $loan->customer->full_name ?? 'N/A',
@@ -1155,10 +1173,10 @@ class ReportController extends Controller
                 'Booked Loan Total' => number_format($loan->total_amount, 2),
                 'Projected Repayment Total' => number_format($loan->getProjectedTotalAmount(), 2),
                 'Booked Outstanding Balance' => number_format($loan->outstanding_balance, 2),
-                'Overdue Amount' => number_format($overdueAmount, 2),
-                'Days Overdue' => $mostOverdue ? $mostOverdue->days_overdue : 0,
-                'Overdue Installments' => $overdueSchedules->count(),
-                'PAR Status' => $loan->getPARStatus() ?? 'N/A',
+                'Overdue Amount' => number_format($item['overdue_amount'], 2),
+                'Days Overdue' => $item['days_overdue'],
+                'Overdue Installments' => $item['overdue_installments_count'],
+                'PAR Status' => $item['par_status'] ?? 'N/A',
                 'Last Payment Date' => $loan->loanRepayments()->latest('created_at')->first()?->created_at->format('Y-m-d') ?? 'N/A',
                 'Next Due Date' => $nextDue ? $nextDue->due_date->format('Y-m-d') : 'N/A',
                 'Loan Start Date' => $loan->loan_start_date->format('Y-m-d'),
@@ -1340,6 +1358,8 @@ class ReportController extends Controller
         $query = Repayment::with(['customer', 'channel', 'loanRepayments.loan'])
             ->where('status', 'completed');
 
+        AdminCompanyScope::applyRepaymentFilter($query, auth('admin')->user());
+
         // Filters
         if ($request->has('channel_id') && $request->channel_id) {
             $query->where('channel_id', $request->channel_id);
@@ -1394,6 +1414,8 @@ class ReportController extends Controller
     {
         $query = Repayment::with(['customer', 'channel', 'loanRepayments.loan'])
             ->where('status', 'completed');
+
+        AdminCompanyScope::applyRepaymentFilter($query, auth('admin')->user());
 
         // Apply same filters
         if ($request->has('channel_id') && $request->channel_id) {
@@ -1502,6 +1524,8 @@ class ReportController extends Controller
 
     protected function applyLoanBookScopeFilters(Builder $query, Request $request): Builder
     {
+        AdminCompanyScope::applyLoanFilter($query, auth('admin')->user());
+
         if ($request->filled('loan_product_id')) {
             $query->where('loan_product_id', $request->loan_product_id);
         }
@@ -1954,25 +1978,25 @@ class ReportController extends Controller
             });
 
         // Performance by Company
-        $performanceByCompany = Loan::selectRaw('
-                customers.company_id,
+        $rollupCompany = AdminCompanyScope::rollupCompanyExpression();
+        $performanceByCompany = Loan::selectRaw("
+                {$rollupCompany} as company_id,
                 COUNT(*) as total_loans,
                 SUM(loans.principal_amount) as total_principal,
                 SUM(loans.total_amount) as total_disbursed,
                 SUM(loans.amount_paid) as total_collected,
                 SUM(loans.outstanding_balance) as total_outstanding,
-                COUNT(CASE WHEN loans.status = "active" THEN 1 END) as active_loans,
-                COUNT(CASE WHEN loans.status = "settled" THEN 1 END) as settled_loans
-            ')
+                COUNT(CASE WHEN loans.status = \"active\" THEN 1 END) as active_loans,
+                COUNT(CASE WHEN loans.status = \"settled\" THEN 1 END) as settled_loans
+            ")
             ->join('customers', 'loans.customer_id', '=', 'customers.id')
-            ->whereNotNull('customers.company_id')
             ->when($request->has('date_from') && $request->date_from, function ($q) use ($request) {
                 $q->whereDate('loans.loan_start_date', '>=', $request->date_from);
             })
             ->when($request->has('date_to') && $request->date_to, function ($q) use ($request) {
                 $q->whereDate('loans.loan_start_date', '<=', $request->date_to);
             })
-            ->groupBy('customers.company_id')
+            ->groupBy(DB::raw($rollupCompany))
             ->get()
             ->map(function ($item) {
                 $item->company = Company::with('relationshipManager')->find($item->company_id);
@@ -2039,19 +2063,19 @@ class ReportController extends Controller
             ->with('customerGroup')
             ->get();
 
-        $performanceByCompany = Loan::selectRaw('
-                customers.company_id,
+        $rollupCompany = AdminCompanyScope::rollupCompanyExpression();
+        $performanceByCompany = Loan::selectRaw("
+                {$rollupCompany} as company_id,
                 COUNT(*) as total_loans,
                 SUM(loans.principal_amount) as total_principal,
                 SUM(loans.total_amount) as total_disbursed,
                 SUM(loans.amount_paid) as total_collected,
                 SUM(loans.outstanding_balance) as total_outstanding,
-                COUNT(CASE WHEN loans.status = "active" THEN 1 END) as active_loans,
-                COUNT(CASE WHEN loans.status = "settled" THEN 1 END) as settled_loans
-            ')
+                COUNT(CASE WHEN loans.status = \"active\" THEN 1 END) as active_loans,
+                COUNT(CASE WHEN loans.status = \"settled\" THEN 1 END) as settled_loans
+            ")
             ->join('customers', 'loans.customer_id', '=', 'customers.id')
-            ->whereNotNull('customers.company_id')
-            ->groupBy('customers.company_id')
+            ->groupBy(DB::raw($rollupCompany))
             ->get();
 
         $exportData = [];
@@ -2169,40 +2193,14 @@ class ReportController extends Controller
      */
     public function exportArrearsSummary(Request $request)
     {
-        $query = Loan::with(['customer.company.relationshipManager', 'loanProduct', 'customerGroup', 'paymentSchedules'])
-            ->whereIn('status', ['approved', 'active'])
-            ->whereHas('paymentSchedules', function ($q) {
-                $q->where('due_date', '<', Carbon::today())
-                  ->where('remaining_amount', '>', 0);
-            });
+        $rows = $this->buildArrearsReportRows($request);
+        $summary = $this->summarizeArrearsReportRows($rows);
 
-        // Apply filters
-        if ($request->has('loan_product_id') && $request->loan_product_id) {
-            $query->where('loan_product_id', $request->loan_product_id);
-        }
-
-        if ($request->has('customer_group_id') && $request->customer_group_id) {
-            $query->where('customer_group_id', $request->customer_group_id);
-        }
-
-        $loans = $query->get();
-        
-        // Calculate summary
-        $summary = [
-            'total_loans' => $loans->count(),
-            'total_overdue_amount' => 0,
-            'by_product' => [],
-            'by_group' => [],
-            'by_par_status' => ['PAR30' => 0, 'PAR60' => 0, 'PAR90' => 0],
-        ];
-
-        foreach ($loans as $loan) {
-            $overdueAmount = $loan->getOverdueAmount();
-            $summary['total_overdue_amount'] += $overdueAmount;
-            
-            $parStatus = $loan->getPARStatus();
+        $byParStatus = ['PAR30' => 0, 'PAR60' => 0, 'PAR90' => 0];
+        foreach ($rows as $row) {
+            $parStatus = $row['par_status'] ?? null;
             if ($parStatus) {
-                $summary['by_par_status'][$parStatus] = ($summary['by_par_status'][$parStatus] ?? 0) + 1;
+                $byParStatus[$parStatus] = ($byParStatus[$parStatus] ?? 0) + 1;
             }
         }
 
@@ -2212,11 +2210,13 @@ class ReportController extends Controller
             [],
             ['Total Overdue Loans', $summary['total_loans']],
             ['Total Overdue Amount', number_format($summary['total_overdue_amount'], 2)],
+            ['Average Days Overdue', $summary['avg_days_overdue']],
+            ['PAR30+ Loans', $summary['par30_plus']],
             [],
             ['PAR Status Breakdown'],
-            ['PAR30', $summary['by_par_status']['PAR30'] ?? 0],
-            ['PAR60', $summary['by_par_status']['PAR60'] ?? 0],
-            ['PAR90', $summary['by_par_status']['PAR90'] ?? 0],
+            ['PAR30', $byParStatus['PAR30'] ?? 0],
+            ['PAR60', $byParStatus['PAR60'] ?? 0],
+            ['PAR90', $byParStatus['PAR90'] ?? 0],
         ];
 
         $filename = 'arrears_summary_' . now()->format('Y-m-d_His') . '.xlsx';

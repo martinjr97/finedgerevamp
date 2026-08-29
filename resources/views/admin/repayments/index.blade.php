@@ -17,8 +17,11 @@
             ]
         ])
 
-        {{-- Filters --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+        <x-admin.collapsible-filters
+            panel-id="repayment-filters-panel"
+            :filter-keys="['search', 'status', 'channel_id', 'customer_id', 'date_from', 'date_to', 'processed_date_from', 'processed_date_to']"
+            expanded-hint="Refine the repayment list below."
+        >
             <form method="GET" action="{{ route('admin.repayments.index') }}" class="space-y-4">
                 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {{-- Search --}}
@@ -109,7 +112,7 @@
                     </a>
                 </div>
             </form>
-        </div>
+        </x-admin.collapsible-filters>
 
         {{-- Repayments Table --}}
         <div class="admin-data-table">

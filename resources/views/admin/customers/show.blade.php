@@ -9,6 +9,7 @@
 	    $isPendingApproval = $customer->approval_status === 'pending';
 	    $isPendingWithoutKyc = $isPendingApproval && ! $hasKycForApproval;
 	    $paymentDetail = $customer->paymentDetail;
+	    $relationshipManager = $customer->customerGroup?->relationshipManager ?? $customer->company?->relationshipManager;
 	@endphp
 	<div class="space-y-8 min-w-0">
         @if($isPendingApproval)
@@ -455,6 +456,30 @@
 	                                </div>
 	                            @endif
 	                        @endif
+	                        <div class="flex items-center justify-between">
+	                            <span class="text-slate-400">Branch:</span>
+	                            @if($customer->branch)
+	                                <span class="font-medium text-white">{{ $customer->branch->name }}</span>
+	                            @else
+	                                <span class="font-medium text-white">—</span>
+	                            @endif
+	                        </div>
+	                        <div class="flex items-center justify-between">
+	                            <span class="text-slate-400">Relationship Manager:</span>
+	                            @if ($relationshipManager)
+	                                <div class="text-right">
+	                                    <span class="font-medium text-white">{{ $relationshipManager->full_name }}</span>
+	                                    @if ($relationshipManager->email)
+	                                        <span class="block text-xs text-slate-400">{{ $relationshipManager->email }}</span>
+	                                    @endif
+	                                    @if ($relationshipManager->phone)
+	                                        <span class="block text-xs text-slate-400">{{ $relationshipManager->phone }}</span>
+	                                    @endif
+	                                </div>
+	                            @else
+	                                <span class="font-medium text-white">Not assigned</span>
+	                            @endif
+	                        </div>
 	                    </div>
 	                </div>
 

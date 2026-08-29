@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'password.changed' => \App\Http\Middleware\EnsurePasswordIsChanged::class,
+            'legacy.migration.dashboard' => \App\Http\Middleware\EnsureLegacyMigrationDashboardEnabled::class,
+            'migration.dashboard.permission' => \App\Http\Middleware\EnsureMigrationDashboardPermission::class,
             'api.admin' => \App\Http\Middleware\EnsureApiAdmin::class,
             'api.customer' => \App\Http\Middleware\EnsureApiCustomer::class,
             'customer.self-service-loans' => \App\Http\Middleware\EnsureCustomerCanRequestSelfServiceLoan::class,

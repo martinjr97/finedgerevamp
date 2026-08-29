@@ -127,12 +127,21 @@ class Admin extends Authenticatable
     }
 
     /**
+     * Check if the admin belongs to the operator company.
+     * Operator company admins can see all data; partner admins are limited to their company.
+     */
+    public function isOperatorCompanyAdmin(): bool
+    {
+        return $this->company && $this->company->type === 'operator';
+    }
+
+    /**
      * Check if the admin's company is primary.
-     * Primary company admins can see all data, non-primary admins are limited to their company.
+     * Primary / operator company admins can see all data, partner admins are limited to their company.
      */
     public function isPrimaryCompanyAdmin(): bool
     {
-        return $this->company && $this->company->is_primary;
+        return $this->company && ($this->company->is_primary || $this->company->type === 'operator');
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Asset extends Model
 {
@@ -18,6 +19,7 @@ class Asset extends Model
         'value',
         'image_path',
         'is_active',
+        'employee_id',
         'created_by',
         'updated_by',
     ];
@@ -39,6 +41,16 @@ class Asset extends Model
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'updated_by');
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
+    }
+
+    public function transfers(): HasMany
+    {
+        return $this->hasMany(AssetTransfer::class)->latest();
     }
 
     public function scopeActive($query)

@@ -37,6 +37,7 @@ class SupportTicket extends Model
         'assigned_by_id',
         'assigned_at',
         'last_assigned_at',
+        'assignee_acknowledged_at',
     ];
 
     protected $casts = [
@@ -45,6 +46,7 @@ class SupportTicket extends Model
         'closed_at' => 'datetime',
         'assigned_at' => 'datetime',
         'last_assigned_at' => 'datetime',
+        'assignee_acknowledged_at' => 'datetime',
     ];
 
     public static function statuses(): array

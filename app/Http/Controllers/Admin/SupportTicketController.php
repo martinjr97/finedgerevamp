@@ -10,6 +10,7 @@ use App\Models\SupportTicketAttachment;
 use App\Services\SupportTicketService;
 use App\Support\DocumentUploadRules;
 use App\Support\ZambianPhoneRules;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -69,19 +70,22 @@ class SupportTicketController extends Controller
         return view('admin.support-tickets.index', compact('tickets', 'staffMembers'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         $this->authorize('create', SupportTicket::class);
 
         $admin = auth('admin')->user();
         $companyFilterId = $admin->getCompanyFilterId();
 
-        $customers = Customer::query()
-            ->when($companyFilterId !== null, fn ($q) => $q->where('company_id', $companyFilterId))
-            ->orderBy('first_name')
-            ->orderBy('last_name')
-            ->limit(300)
-            ->get(['id', 'first_name', 'last_name', 'email', 'phone']);
+        // Preload only the previously selected customer (validation errors) — full list is searched via AJAX.
+        $selectedCustomer = null;
+        $selectedCustomerId = $request->old('customer_id');
+        if ($selectedCustomerId) {
+            $selectedCustomer = Customer::query()
+                ->when($companyFilterId !== null, fn ($q) => $q->where('company_id', $companyFilterId))
+                ->where('id', $selectedCustomerId)
+                ->first(['id', 'first_name', 'last_name', 'email', 'phone', 'national_id']);
+        }
 
         $staffMembers = Admin::query()
             ->where('is_active', true)
@@ -90,7 +94,47 @@ class SupportTicketController extends Controller
             ->orderBy('last_name')
             ->get(['id', 'first_name', 'last_name', 'email']);
 
-        return view('admin.support-tickets.create', compact('customers', 'staffMembers'));
+        return view('admin.support-tickets.create', compact('selectedCustomer', 'staffMembers'));
+    }
+
+    public function searchCustomers(Request $request): JsonResponse
+    {
+        $this->authorize('create', SupportTicket::class);
+
+        $admin = auth('admin')->user();
+        $companyFilterId = $admin->getCompanyFilterId();
+        $search = trim((string) $request->input('q', $request->input('search', '')));
+
+        if (mb_strlen($search) < 2) {
+            return response()->json(['customers' => []]);
+        }
+
+        $customers = Customer::query()
+            ->when($companyFilterId !== null, fn ($q) => $q->where('company_id', $companyFilterId))
+            ->where(function ($query) use ($search) {
+                $query->where('phone', 'like', "%{$search}%")
+                    ->orWhere('national_id', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('employee_number', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+            })
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->limit(50)
+            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'national_id', 'employee_number']);
+
+        return response()->json([
+            'customers' => $customers->map(fn (Customer $customer) => [
+                'id' => (string) $customer->id,
+                'text' => trim($customer->full_name.($customer->phone ? ' ('.$customer->phone.')' : '')),
+                'name' => $customer->full_name,
+                'email' => $customer->email ?? '',
+                'phone' => $customer->phone ?? '',
+                'national_id' => $customer->national_id ?? '',
+            ])->values(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -164,13 +208,14 @@ class SupportTicketController extends Controller
             $supportTicket->save();
         }
 
+        $this->supportTicketService->acknowledgeAssignmentForAssignee($supportTicket, $admin);
+
         $supportTicket->load([
             'customer',
             'assignedTo',
             'assignedBy',
             'handler',
-            'comments.customer',
-            'comments.admin',
+            'comments' => fn ($q) => $q->with(['customer', 'admin'])->orderByDesc('created_at'),
             'assignments.assignedTo',
             'assignments.assignedBy',
             'assignments.previousAssignedTo',

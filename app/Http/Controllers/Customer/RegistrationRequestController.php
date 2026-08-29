@@ -12,12 +12,15 @@ use App\Models\LoanProduct;
 use App\Models\District;
 use App\Models\Ministry;
 use App\Models\Province;
+use App\Notifications\CustomerRegistrationRequestReceivedNotification;
 use App\Support\DocumentUploadRules;
 use App\Support\NationalIdRules;
 use App\Support\PublicRegistrationPaths;
 use App\Support\ZambianPhoneRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -264,17 +267,22 @@ class RegistrationRequestController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function commonRules(): array
+    private function commonRules(bool $includeRequestedLoanAmount = true): array
     {
-        return [
+        $rules = [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'phone' => ZambianPhoneRules::required(),
-            'requested_loan_amount' => ['required', 'numeric', 'min:1'],
             'document_type' => ['nullable', 'in:passport,nrc,drivers_license,voters_card,other'],
             ...DocumentUploadRules::registrationFileRules(),
         ];
+
+        if ($includeRequestedLoanAmount) {
+            $rules['requested_loan_amount'] = ['required', 'numeric', 'min:1'];
+        }
+
+        return $rules;
     }
 
     /**
@@ -292,6 +300,7 @@ class RegistrationRequestController extends Controller
                 'requested_loan_amount' => 'requested loan amount',
                 'estimated_collateral_value' => 'estimated collateral value',
                 'employee_number' => 'employee / payroll number',
+                'interacted_officer_name' => 'officer you interacted with',
                 'date_of_employment' => 'date of employment',
                 'bank_financial_institution_id' => 'bank',
                 'bank_financial_institution_branch_id' => 'bank branch',
@@ -317,6 +326,7 @@ class RegistrationRequestController extends Controller
             // Stored as enum / internal codes, must remain lowercase.
             'document_type',
             'national_id_type',
+            'next_of_kin_relationship',
             'email',
         ];
 
@@ -368,7 +378,7 @@ class RegistrationRequestController extends Controller
                 'national_id' => $data['national_id'] ?? null,
                 'national_id_type' => $data['national_id_type'] ?? null,
                 'tpin' => $data['tpin'] ?? null,
-                'requested_loan_amount' => $data['requested_loan_amount'],
+                'requested_loan_amount' => $data['requested_loan_amount'] ?? null,
                 'status' => 'pending',
                 'payload' => $payload,
                 'employment_details' => $employmentDetails,
@@ -376,6 +386,14 @@ class RegistrationRequestController extends Controller
                 'ip_address' => $request->ip(),
                 'user_agent' => (string) $request->userAgent(),
             ]);
+
+            $this->notifyApplicantOfReceipt(
+                email: trim((string) ($data['email'] ?? '')),
+                firstName: (string) $data['first_name'],
+                lastName: (string) $data['last_name'],
+                reference: $reference,
+                path: $path,
+            );
         } catch (\Exception $e) {
             foreach ($kycPaths as $path) {
                 Storage::disk('public')->delete($path);
@@ -428,7 +446,7 @@ class RegistrationRequestController extends Controller
                 'national_id' => $data['national_id'] ?? null,
                 'national_id_type' => $data['national_id_type'] ?? null,
                 'tpin' => $data['tpin'] ?? null,
-                'requested_loan_amount' => $data['requested_loan_amount'],
+                'requested_loan_amount' => $data['requested_loan_amount'] ?? null,
                 'status' => 'pending',
                 'payload' => $payload,
                 'employment_details' => $employmentDetails,
@@ -482,10 +500,40 @@ class RegistrationRequestController extends Controller
     private function generateReference(): string
     {
         do {
-            $reference = 'CRR-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
+            $reference = 'CRR-'.strtoupper(Str::random(5));
         } while (CustomerRegistrationRequest::where('reference', $reference)->exists());
 
         return $reference;
+    }
+
+    private function notifyApplicantOfReceipt(
+        string $email,
+        string $firstName,
+        string $lastName,
+        string $reference,
+        string $path,
+    ): void {
+        if ($email === '') {
+            return;
+        }
+
+        $fullName = trim("{$firstName} {$lastName}") ?: 'Customer';
+
+        try {
+            Notification::route('mail', $email)->notify(
+                new CustomerRegistrationRequestReceivedNotification(
+                    fullName: $fullName,
+                    reference: $reference,
+                    registrationPathLabel: PublicRegistrationPaths::label($path),
+                )
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Failed to email customer registration request receipt', [
+                'reference' => $reference,
+                'email' => $email,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function flashOldInputFromRegistration(Request $request, CustomerRegistrationRequest $registration): void
@@ -628,11 +676,6 @@ class RegistrationRequestController extends Controller
             'provinces' => Province::where('is_active', true)->orderBy('name')->get(),
             'districts' => District::where('is_active', true)->orderBy('name')->get(),
             'ministryOtherValue' => PublicRegistrationPaths::MINISTRY_OTHER,
-            'financialInstitutions' => FinancialInstitution::query()
-                ->active()
-                ->with(['branches' => fn ($query) => $query->active()->orderBy('name')])
-                ->orderBy('name')
-                ->get(),
         ];
     }
 
@@ -643,15 +686,7 @@ class RegistrationRequestController extends Controller
     {
         $hasMinistries = Ministry::where('is_active', true)->exists();
 
-        $selectedInstitutionId = $request->input('bank_financial_institution_id');
-        $branchRule = Rule::exists('financial_institution_branches', 'id')
-            ->whereNull('deleted_at')
-            ->where('is_active', true);
-        if (filled($selectedInstitutionId)) {
-            $branchRule = $branchRule->where('financial_institution_id', (int) $selectedInstitutionId);
-        }
-
-        $rules = array_merge($this->commonRules(), [
+        $rules = array_merge($this->commonRules(includeRequestedLoanAmount: false), [
             'address_line1' => ['required', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:100'],
             'province_id' => ['required', 'integer', 'exists:provinces,id'],
@@ -666,24 +701,11 @@ class RegistrationRequestController extends Controller
             'country' => ['required', 'string', 'max:100'],
             'employer_name' => [$hasMinistries ? 'nullable' : 'required', 'string', 'max:255'],
             'department' => ['nullable', 'string', 'max:255'],
+            'interacted_officer_name' => ['nullable', 'string', 'max:255'],
             'employee_number' => ['required', 'string', 'max:50'],
             'date_of_employment' => ['required', 'date', 'before_or_equal:today'],
             'gross_salary' => ['nullable', 'numeric', 'min:0'],
             'net_salary' => ['required', 'numeric', 'min:0'],
-            'bank_financial_institution_id' => [
-                'required',
-                'integer',
-                Rule::exists('financial_institutions', 'id')
-                    ->whereNull('deleted_at')
-                    ->where('is_active', true),
-            ],
-            'bank_financial_institution_branch_id' => [
-                'required',
-                'integer',
-                $branchRule,
-            ],
-            'bank_account_name' => ['required', 'string', 'max:255'],
-            'bank_account_number' => ['required', 'string', 'max:50'],
             'work_address_line1' => ['required', 'string', 'max:255'],
             'work_city' => ['nullable', 'string', 'max:100'],
             'work_province_id' => ['required', 'integer', 'exists:provinces,id'],
@@ -694,6 +716,12 @@ class RegistrationRequestController extends Controller
                     fn ($query) => $query->where('province_id', (int) $request->input('work_province_id'))
                 ),
             ],
+            'next_of_kin_name' => ['required', 'string', 'max:255'],
+            'next_of_kin_phone' => ZambianPhoneRules::required(),
+            'next_of_kin_relationship' => ['required', 'string', 'max:50'],
+            'next_of_kin_address_line1' => ['nullable', 'string', 'max:255'],
+            'next_of_kin_city' => ['nullable', 'string', 'max:100'],
+            'next_of_kin_country' => ['nullable', 'string', 'max:100'],
         ]);
 
         if ($hasMinistries) {
@@ -732,20 +760,10 @@ class RegistrationRequestController extends Controller
         $workProvince = Province::find((int) $data['work_province_id']);
         $workDistrict = District::find((int) $data['work_district_id']);
 
-        $financialInstitutionId = (int) $data['bank_financial_institution_id'];
-        $financialInstitutionBranchId = (int) $data['bank_financial_institution_branch_id'];
-        $financialInstitution = FinancialInstitution::query()->find($financialInstitutionId);
-        $financialInstitutionBranch = FinancialInstitutionBranch::query()->find($financialInstitutionBranchId);
-
-        if (
-            ! $financialInstitution
-            || ! $financialInstitutionBranch
-            || (int) $financialInstitutionBranch->financial_institution_id !== $financialInstitutionId
-        ) {
-            throw ValidationException::withMessages([
-                'bank_financial_institution_branch_id' => 'Please select a valid bank branch.',
-            ]);
-        }
+        $interactedOfficerName = filled($data['interacted_officer_name'] ?? null)
+            ? trim((string) $data['interacted_officer_name'])
+            : null;
+        unset($data['interacted_officer_name']);
 
         $employmentDetails = [
             'address_line1' => $data['address_line1'],
@@ -760,16 +778,11 @@ class RegistrationRequestController extends Controller
             'ministry_is_other' => $isOtherMinistry,
             'employer_name' => $isOtherMinistry ? trim((string) $data['employer_name']) : null,
             'department' => $data['department'] ?? null,
+            'interacted_officer_name' => $interactedOfficerName,
             'employee_number' => $data['employee_number'],
             'date_of_employment' => $data['date_of_employment'],
             'gross_salary' => $data['gross_salary'] ?? null,
             'net_salary' => $data['net_salary'],
-            'bank_financial_institution_id' => $financialInstitutionId,
-            'bank_financial_institution_branch_id' => $financialInstitutionBranchId,
-            'bank_name' => Str::upper($financialInstitution->name),
-            'bank_branch' => Str::upper($financialInstitutionBranch->name),
-            'bank_account_name' => $data['bank_account_name'],
-            'bank_account_number' => $data['bank_account_number'],
             'work_address_line1' => $data['work_address_line1'],
             'work_city' => $data['work_city'] ?? null,
             'work_province_id' => (int) $data['work_province_id'],

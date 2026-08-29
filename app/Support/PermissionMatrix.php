@@ -50,6 +50,8 @@ class PermissionMatrix
             'reports' => 'Reports',
             'loans' => 'Loans & Approvals',
             'loan' => 'Loans & Approvals',
+            'backups' => 'Backups',
+            'migration' => 'Legacy Migration',
             default => ucfirst(str_replace('-', ' ', $resource)),
         };
     }

@@ -22,13 +22,13 @@
             ]
         ])
 
-        {{-- Summary Cards --}}
+        {{-- Summary Cards (filtered dataset totals, not just the current page) --}}
         <div class="grid gap-4 md:grid-cols-3">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
                         <p class="text-xs font-medium text-slate-400 mb-1">Total Overdue Loans</p>
-                        <p class="text-2xl font-bold text-white">{{ number_format($arrearsData->total()) }}</p>
+                        <p class="text-2xl font-bold text-white">{{ number_format($arrearsSummary['total_loans']) }}</p>
                     </div>
                     <div class="flex-shrink-0 ml-3">
                         <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
@@ -44,7 +44,7 @@
                     <div class="flex-1">
                         <p class="text-xs font-medium text-slate-400 mb-1">Total Overdue Amount</p>
                         <p class="text-xl font-bold text-rose-400">
-                            ZMW {{ number_format($arrearsData->sum('overdue_amount'), 2) }}
+                            ZMW {{ number_format($arrearsSummary['total_overdue_amount'], 2) }}
                         </p>
                     </div>
                     <div class="flex-shrink-0 ml-3">
@@ -59,9 +59,15 @@
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
-                        <p class="text-xs font-medium text-slate-400 mb-1">Avg Days Overdue</p>
+                        <p class="text-xs font-medium text-slate-400 mb-1">
+                            {{ request()->filled('days_overdue_min') && (int) request('days_overdue_min') < 0 ? 'Avg Days Until Due' : 'Avg Days Overdue' }}
+                        </p>
                         <p class="text-2xl font-bold text-amber-400">
-                            {{ $arrearsData->count() > 0 ? round($arrearsData->avg('days_overdue'), 1) : 0 }}
+                            @if(request()->filled('days_overdue_min') && (int) request('days_overdue_min') < 0)
+                                {{ $arrearsSummary['total_loans'] > 0 ? round(abs($arrearsSummary['avg_days_overdue']), 1) : 0 }}
+                            @else
+                                {{ $arrearsSummary['avg_days_overdue'] }}
+                            @endif
                         </p>
                         <p class="text-xs text-slate-500 mt-0.5">days</p>
                     </div>
@@ -79,7 +85,7 @@
                     <div class="flex-1">
                         <p class="text-xs font-medium text-slate-400 mb-1">PAR30+ Loans</p>
                         <p class="text-2xl font-bold text-orange-400">
-                            {{ number_format($arrearsData->where('par_status', '!=', null)->where('days_overdue', '>=', 30)->count()) }}
+                            {{ number_format($arrearsSummary['par30_plus']) }}
                         </p>
                     </div>
                     <div class="flex-shrink-0 ml-3">
@@ -135,8 +141,9 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-2">Min Days Overdue</label>
                         <input type="number" name="days_overdue_min" value="{{ request('days_overdue_min') }}" 
-                               placeholder="e.g. 30"
+                               placeholder="e.g. 30 or -30"
                                class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2 focus:border-cyan-400 focus:ring-cyan-400/40">
+                        <p class="mt-1 text-xs text-slate-500">Use a positive number for overdue loans (e.g. 30). Use a negative number to include upcoming dues (e.g. -30 = due within 30 days).</p>
                     </div>
                 </div>
 
@@ -215,9 +222,15 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-4 border-r border-white/5">
-                                    <span class="text-sm font-medium {{ $item['days_overdue'] >= 90 ? 'text-rose-400' : ($item['days_overdue'] >= 60 ? 'text-red-400' : ($item['days_overdue'] >= 30 ? 'text-orange-400' : 'text-amber-400')) }}">
-                                        {{ $item['days_overdue'] }} days
-                                    </span>
+                                    @if(!empty($item['is_upcoming']) || $item['days_overdue'] < 0)
+                                        <span class="text-sm font-medium text-cyan-300">
+                                            Due in {{ abs($item['days_overdue']) }} days
+                                        </span>
+                                    @else
+                                        <span class="text-sm font-medium {{ $item['days_overdue'] >= 90 ? 'text-rose-400' : ($item['days_overdue'] >= 60 ? 'text-red-400' : ($item['days_overdue'] >= 30 ? 'text-orange-400' : 'text-amber-400')) }}">
+                                            {{ $item['days_overdue'] }} days
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-4 border-r border-white/5">
                                     @if($item['par_status'])
@@ -242,7 +255,7 @@
                         @empty
                             <tr>
                                 <td colspan="12" class="px-4 py-8 text-center text-slate-400">
-                                    No loans with overdue installments found.
+                                    No loans matched the selected filters.
                                 </td>
                             </tr>
                         @endforelse

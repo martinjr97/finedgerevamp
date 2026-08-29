@@ -3,6 +3,11 @@
     @method('PUT')
     <input type="hidden" name="loan_product_id" value="{{ $product->id }}">
 
+    @include('partials.admin.customer-form-branch-section', [
+        'branches' => $branches,
+        'selectedBranchId' => old('branch_id', $customer->branch_id),
+    ])
+
     <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold text-white">Group Context</h2>
         <div class="grid gap-6 md:grid-cols-1">
@@ -46,18 +51,10 @@
                 <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260970000000">
                 @error('phone')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
             </div>
-            <div>
-                <label class="text-sm font-medium text-slate-300">Referred By</label>
-                <select name="referred_by" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">
-                    <option value="">No referral</option>
-                    @foreach ($referredByCustomers as $referrer)
-                        <option value="{{ $referrer->id }}" @selected(old('referred_by', $customer->referred_by) == $referrer->id)>
-                            {{ $referrer->full_name }}{{ $referrer->phone ? ' - '.$referrer->phone : '' }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('referred_by')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
-            </div>
+            @include('partials.admin.customer-referral-select', [
+                'referredByCustomers' => $referredByCustomers,
+                'selected' => old('referred_by', $customer->referred_by),
+            ])
             <div>
                 <label class="text-sm font-medium text-slate-300">Date of Birth</label>
                 <input type="date" name="date_of_birth" value="{{ old('date_of_birth', optional($customer->date_of_birth)->format('Y-m-d')) }}" max="{{ now()->subYears(16)->format('Y-m-d') }}" class="mt-2 w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40">

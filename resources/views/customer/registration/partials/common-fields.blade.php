@@ -45,10 +45,12 @@
         ])
     </div>
 
-    <div>
-        <label for="requested_loan_amount" class="block text-sm font-medium text-slate-800">Requested loan amount <span class="text-red-500">*</span></label>
-        <input id="requested_loan_amount" name="requested_loan_amount" type="number" step="0.01" min="1" value="{{ old('requested_loan_amount') }}" required
-            class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500/25">
-        @error('requested_loan_amount')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
-    </div>
+    @unless(!empty($hideRequestedLoanAmount))
+        <div>
+            <label for="requested_loan_amount" class="block text-sm font-medium text-slate-800">Requested loan amount <span class="text-red-500">*</span></label>
+            <input id="requested_loan_amount" name="requested_loan_amount" type="number" step="0.01" min="1" value="{{ old('requested_loan_amount') }}" required
+                class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500/25">
+            @error('requested_loan_amount')<p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p>@enderror
+        </div>
+    @endunless
 </div>

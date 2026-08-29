@@ -1,0 +1,14 @@
+{
+    "run_uuid": "2e45fd14-556a-4794-91e9-e5d4020c17de",
+    "migration_run_id": 67,
+    "promote": true,
+    "loans_scanned": 750,
+    "disbursement_corrected": 0,
+    "first_payment_dates_set": 0,
+    "schedules_created": 0,
+    "schedules_synced": 0,
+    "repayment_splits_updated": 0,
+    "repayment_splits_skipped": 0,
+    "loan_ledgers_synced": 666,
+    "repayment_snapshots_fixed": 6030
+}

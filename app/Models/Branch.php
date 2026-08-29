@@ -63,4 +63,9 @@ class Branch extends Model
     {
         return $this->hasMany(Market::class);
     }
+
+    public function customers(): HasMany
+    {
+        return $this->hasMany(Customer::class);
+    }
 }

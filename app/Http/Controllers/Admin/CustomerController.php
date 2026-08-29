@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
@@ -50,7 +51,10 @@ class CustomerController extends Controller
         $admin = auth('admin')->user();
         $companyFilterId = $admin->getCompanyFilterId();
 
-        $query = Customer::with(['company', 'loanProduct', 'customerGroup']);
+        $query = Customer::with(['company', 'loanProduct', 'customerGroup'])
+            ->withSum(['loans as outstanding_balance' => function ($q) {
+                $q->whereIn('status', ['approved', 'active']);
+            }], 'outstanding_balance');
 
         // Filter by company if not primary company admin
         if ($companyFilterId !== null) {
@@ -248,12 +252,9 @@ class CustomerController extends Controller
                 ->get();
         }
 
-        $referredByCustomers = Customer::query()
-            ->select(['id', 'first_name', 'last_name', 'registered_name', 'phone'])
-            ->orderBy('registered_name')
-            ->orderBy('first_name')
-            ->orderBy('last_name')
-            ->get();
+        $referredByCustomers = $this->referralCustomerOptions();
+
+        $branches = Branch::where('is_active', true)->orderBy('name')->get();
 
         // Check for pending failed upload batches
         $pendingFailedBatches = \App\Models\CustomerUploadBatch::where('status', 'completed')
@@ -274,6 +275,7 @@ class CustomerController extends Controller
             'markets' => $markets,
             'companyCustomers' => $companyCustomers,
             'referredByCustomers' => $referredByCustomers,
+            'branches' => $branches,
             'registrationRequestId' => $registrationRequestId ?? null,
             'pendingFailedBatches' => $pendingFailedBatches,
         ]);
@@ -291,6 +293,7 @@ class CustomerController extends Controller
         // Base validation rules
         $rules = [
             'loan_product_id' => 'required|exists:loan_products,id',
+            'branch_id' => 'required|exists:branches,id',
             'customer_type' => 'nullable|in:individual,company,representative',
             'parent_customer_id' => 'nullable|exists:customers,id',
             'referred_by' => 'nullable|exists:customers,id',
@@ -313,6 +316,7 @@ class CustomerController extends Controller
         if ($product->category === 'sme') {
             $rules = [
                 'loan_product_id' => 'required|exists:loan_products,id',
+                'branch_id' => 'required|exists:branches,id',
                 'customer_type' => 'required|in:company,representative',
                 'company_id' => 'required|exists:companies,id',
                 'parent_customer_id' => 'required_if:customer_type,representative|exists:customers,id',
@@ -477,6 +481,7 @@ class CustomerController extends Controller
 
             $customerData = [
                 'company_id' => in_array($product->category, ['government', 'character', 'collateral', 'group_loans'], true) ? null : ($validated['company_id'] ?? null),
+                'branch_id' => $validated['branch_id'],
                 'loan_product_id' => $validated['loan_product_id'],
                 'customer_type' => $validated['customer_type'] ?? 'individual',
                 'parent_customer_id' => $validated['parent_customer_id'] ?? null,
@@ -805,7 +810,7 @@ class CustomerController extends Controller
     public function show(Customer $customer): View
     {
         abort_unless(auth('admin')->user()?->can('customers.view'), 403);
-        $customer->load(['company', 'loanProduct', 'customerGroup', 'groupMemberTitle', 'verifier', 'ministry', 'workProvince', 'workDistrict', 'latestKycDocument', 'referredBy', 'approver', 'paymentDetail', 'loans.paymentSchedules']);
+        $customer->load(['company.relationshipManager', 'branch', 'loanProduct', 'customerGroup.relationshipManager', 'groupMemberTitle', 'verifier', 'ministry', 'workProvince', 'workDistrict', 'latestKycDocument', 'referredBy', 'approver', 'paymentDetail', 'loans.paymentSchedules']);
 
         $today = Carbon::today();
         $startOfToday = $today->copy()->startOfDay();
@@ -1009,13 +1014,9 @@ class CustomerController extends Controller
                 ->get();
         }
 
-        $referredByCustomers = Customer::query()
-            ->select(['id', 'first_name', 'last_name', 'registered_name', 'phone'])
-            ->whereKeyNot($customer->id)
-            ->orderBy('registered_name')
-            ->orderBy('first_name')
-            ->orderBy('last_name')
-            ->get();
+        $referredByCustomers = $this->referralCustomerOptions($customer->id);
+
+        $branches = Branch::where('is_active', true)->orderBy('name')->get();
 
         return view('admin.customers.edit', [
             'customer' => $customer,
@@ -1029,6 +1030,7 @@ class CustomerController extends Controller
             'markets' => $markets,
             'companyCustomers' => $companyCustomers,
             'referredByCustomers' => $referredByCustomers,
+            'branches' => $branches,
         ]);
     }
 
@@ -1038,6 +1040,7 @@ class CustomerController extends Controller
         $product = $customer->loanProduct;
         $rules = [
             'loan_product_id' => 'required|exists:loan_products,id',
+            'branch_id' => 'required|exists:branches,id',
             'customer_type' => 'nullable|in:individual,company,representative',
             'parent_customer_id' => 'nullable|exists:customers,id',
             'referred_by' => 'nullable|exists:customers,id|not_in:'.$customer->id,
@@ -1064,6 +1067,7 @@ class CustomerController extends Controller
         if ($productToUse && $productToUse->category === 'sme') {
             $rules = [
                 'loan_product_id' => 'required|exists:loan_products,id',
+                'branch_id' => 'required|exists:branches,id',
                 'customer_type' => 'required|in:company,representative',
                 'company_id' => 'required|exists:companies,id',
                 'parent_customer_id' => 'required_if:customer_type,representative|exists:customers,id',
@@ -1204,6 +1208,7 @@ class CustomerController extends Controller
 
             $updateData = [
                 'loan_product_id' => $validated['loan_product_id'],
+                'branch_id' => $validated['branch_id'],
                 'company_id' => in_array($newProduct->category, ['government', 'character', 'collateral', 'marketeer', 'group_loans'], true) ? null : ($validated['company_id'] ?? null),
                 'customer_type' => $validated['customer_type'] ?? $customer->customer_type,
                 'parent_customer_id' => $validated['parent_customer_id'] ?? null,
@@ -1947,5 +1952,16 @@ class CustomerController extends Controller
         ];
 
         return view('admin.customers.repayments', compact('customer', 'repayments', 'summary'));
+    }
+
+    private function referralCustomerOptions(?int $excludeCustomerId = null)
+    {
+        return Customer::query()
+            ->select(['id', 'first_name', 'last_name', 'registered_name', 'phone', 'national_id', 'email'])
+            ->when($excludeCustomerId, fn ($query) => $query->whereKeyNot($excludeCustomerId))
+            ->orderBy('registered_name')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
     }
 }

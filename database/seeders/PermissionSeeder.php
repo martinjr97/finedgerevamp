@@ -83,6 +83,7 @@ class PermissionSeeder extends Seeder
             'loan-applications' => ['view', 'create'],
             'faqs' => ['view', 'create', 'update', 'delete'],
             'backups' => ['view', 'create', 'download'],
+            'migration' => ['view', 'manage'],
         ];
     }
 

@@ -10,6 +10,11 @@
     @method('PUT')
     <input type="hidden" name="loan_product_id" value="{{ $product->id }}">
 
+    @include('partials.admin.customer-form-branch-section', [
+        'branches' => $branches,
+        'selectedBranchId' => old('branch_id', $customer->branch_id),
+    ])
+
     <div class="grid gap-4 md:grid-cols-2">
         <div class="rounded-2xl border border-muted bg-soft-white p-4 space-y-3">
             <p class="text-sm font-semibold text-primary">Customer Type</p>

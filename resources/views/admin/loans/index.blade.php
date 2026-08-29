@@ -24,8 +24,11 @@
             ]
         ])
 
-        {{-- Filters --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+        <x-admin.collapsible-filters
+            panel-id="loan-filters-panel"
+            :filter-keys="['search', 'status', 'disbursement_status', 'loan_product_id', 'customer_group_id', 'accrual_type', 'date_from', 'date_to']"
+            expanded-hint="Refine the loan list below."
+        >
             <form method="GET" action="{{ route('admin.loans.index') }}" class="space-y-4">
                 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {{-- Search --}}
@@ -123,7 +126,7 @@
                     </a>
                 </div>
             </form>
-        </div>
+        </x-admin.collapsible-filters>
 
         {{-- Loans Table --}}
         <div class="admin-data-table">

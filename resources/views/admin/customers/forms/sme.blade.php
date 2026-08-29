@@ -24,6 +24,10 @@
         @error('customer_type') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
     </div>
 
+    @include('partials.admin.customer-form-branch-section', [
+        'branches' => $branches,
+    ])
+
     {{-- Company borrower panel --}}
     <div id="company-panel" class="space-y-4 rounded-2xl border border-muted bg-soft-white p-4">
         <div>
@@ -139,18 +143,14 @@
         </div>
     </div>
 
-    <div>
-        <label class="block text-sm font-semibold text-primary">Referred By</label>
-        <select name="referred_by" class="w-full rounded-xl border border-muted px-3 py-2 text-primary">
-            <option value="">No referral</option>
-            @foreach($referredByCustomers as $referrer)
-                <option value="{{ $referrer->id }}" {{ old('referred_by') == $referrer->id ? 'selected' : '' }}>
-                    {{ $referrer->full_name }}{{ $referrer->phone ? ' - '.$referrer->phone : '' }}
-                </option>
-            @endforeach
-        </select>
-        @error('referred_by') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
-    </div>
+    @include('partials.admin.customer-referral-select', [
+        'referredByCustomers' => $referredByCustomers,
+        'inputClass' => 'border border-muted',
+        'inputFocusClass' => 'focus:border-primary focus:ring-primary/20',
+        'labelClass' => 'text-primary font-semibold',
+        'errorClass' => 'text-red-500',
+        'selectClass' => 'w-full rounded-xl px-3 py-2 text-primary',
+    ])
 
     <div class="grid gap-4 md:grid-cols-2">
         <div>

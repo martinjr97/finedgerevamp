@@ -388,5 +388,103 @@ class LoanExtensionReportingRegressionTest extends TestCase
             'reminder_type' => 'missed_1',
         ]);
     }
+
+    public function test_arrears_summary_reflects_all_filtered_rows_not_current_page(): void
+    {
+        $suffix = Str::lower(Str::random(6));
+        $company = $this->makeCompany($suffix);
+        $product = $this->makeLoanProduct($company, $suffix);
+        $channel = $this->makeChannel($suffix);
+        $customer = $this->makeCustomer($company, $product, $suffix);
+        $admin = $this->makeAdminWithPermissions(['reports.view']);
+
+        for ($i = 1; $i <= 25; $i++) {
+            $loan = $this->makeLoan($customer, $product, $channel, $suffix.$i);
+            $this->makeSchedule(
+                $loan,
+                1,
+                Carbon::today()->subDays(10),
+                500,
+                0,
+                500,
+                'overdue',
+                false,
+                10
+            );
+        }
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('admin.reports.arrears', ['page' => 1]));
+
+        $response->assertStatus(200);
+        $response->assertViewHas('arrearsSummary', function (array $summary) {
+            return $summary['total_loans'] === 25
+                && $summary['total_overdue_amount'] === 12500.0
+                && $summary['par30_plus'] === 0;
+        });
+        $response->assertViewHas('arrearsData', function ($paginator) {
+            return $paginator->count() === 20 && $paginator->total() === 25;
+        });
+    }
+
+    public function test_arrears_negative_min_days_includes_upcoming_dues(): void
+    {
+        $suffix = Str::lower(Str::random(6));
+        $company = $this->makeCompany($suffix);
+        $product = $this->makeLoanProduct($company, $suffix);
+        $channel = $this->makeChannel($suffix);
+        $customer = $this->makeCustomer($company, $product, $suffix);
+        $admin = $this->makeAdminWithPermissions(['reports.view']);
+
+        $upcomingLoan = $this->makeLoan($customer, $product, $channel, $suffix.'up');
+        $this->makeSchedule(
+            $upcomingLoan,
+            1,
+            Carbon::today()->addDays(10),
+            400,
+            0,
+            400,
+            'upcoming',
+            false,
+            0
+        );
+
+        $overdueLoan = $this->makeLoan($customer, $product, $channel, $suffix.'od');
+        $this->makeSchedule(
+            $overdueLoan,
+            1,
+            Carbon::today()->subDays(45),
+            600,
+            0,
+            600,
+            'overdue',
+            false,
+            45
+        );
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.reports.arrears', ['days_overdue_min' => -30]))
+            ->assertStatus(200)
+            ->assertViewHas('arrearsSummary', function (array $summary) {
+                return $summary['total_loans'] === 1
+                    && $summary['total_overdue_amount'] === 400.0
+                    && $summary['par30_plus'] === 0;
+            })
+            ->assertViewHas('arrearsData', function ($paginator) use ($upcomingLoan) {
+                return $paginator->count() === 1
+                    && $paginator->first()['loan']->id === $upcomingLoan->id
+                    && $paginator->first()['is_upcoming'] === true
+                    && $paginator->first()['days_overdue'] < 0;
+            });
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.reports.arrears'))
+            ->assertStatus(200)
+            ->assertViewHas('arrearsSummary', function (array $summary) {
+                return $summary['total_loans'] === 1
+                    && $summary['total_overdue_amount'] === 600.0
+                    && $summary['par30_plus'] === 1;
+            });
+    }
 }
 

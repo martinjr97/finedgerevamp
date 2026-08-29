@@ -26,13 +26,13 @@
                 name: @js(old('name', '')),
                 email: @js(old('email', '')),
                 phone: @js(old('phone', '')),
-                applyCustomer(option) {
-                    if (!option || !option.value) {
+                applyCustomer(data) {
+                    if (!data) {
                         return;
                     }
-                    this.name = option.dataset.name || this.name;
-                    this.email = option.dataset.email || this.email;
-                    this.phone = option.dataset.phone || this.phone;
+                    this.name = data.name || this.name;
+                    this.email = data.email || this.email;
+                    this.phone = data.phone || this.phone;
                 }
             }"
         >
@@ -48,23 +48,24 @@
                             <select
                                 id="customer_id"
                                 name="customer_id"
-                                x-model="customerId"
-                                @change="applyCustomer($event.target.selectedOptions[0])"
+                                data-no-select-search="true"
+                                data-search-placeholder="Search by name, phone, NRC, employee no…"
                                 class="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-2.5 text-sm text-slate-100 focus:border-cyan-400 focus:ring-cyan-400/40 focus:outline-none"
                             >
                                 <option value="">— Guest / manual entry —</option>
-                                @foreach ($customers as $customer)
+                                @if ($selectedCustomer)
                                     <option
-                                        value="{{ $customer->id }}"
-                                        data-name="{{ $customer->full_name }}"
-                                        data-email="{{ $customer->email ?? '' }}"
-                                        data-phone="{{ $customer->phone ?? '' }}"
-                                        @selected((string) old('customer_id') === (string) $customer->id)
+                                        value="{{ $selectedCustomer->id }}"
+                                        data-name="{{ $selectedCustomer->full_name }}"
+                                        data-email="{{ $selectedCustomer->email ?? '' }}"
+                                        data-phone="{{ $selectedCustomer->phone ?? '' }}"
+                                        selected
                                     >
-                                        {{ $customer->full_name }} @if($customer->phone)({{ $customer->phone }})@endif
+                                        {{ $selectedCustomer->full_name }} @if($selectedCustomer->phone)({{ $selectedCustomer->phone }})@endif
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
+                            <p class="mt-1 text-xs text-slate-400">Type at least 2 characters to search all customers.</p>
                             @error('customer_id')<p class="mt-1 text-sm text-rose-400">{{ $message }}</p>@enderror
                         </div>
 
@@ -157,3 +158,164 @@
         </form>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+(() => {
+    const initCustomerSearch = () => {
+        const select = document.getElementById('customer_id');
+        if (!select || typeof TomSelect === 'undefined' || select.tomselect) {
+            return;
+        }
+
+        const form = select.closest('form');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const searchUrl = @js(route('admin.support-tickets.search-customers'));
+
+        const alpineData = () => {
+            if (!form || typeof Alpine === 'undefined' || typeof Alpine.$data !== 'function') {
+                return null;
+            }
+
+            try {
+                return Alpine.$data(form);
+            } catch (e) {
+                return null;
+            }
+        };
+
+        const fillRequesterFields = (option) => {
+            if (!option) {
+                return;
+            }
+
+            const name = option.name || '';
+            const email = option.email || '';
+            const phone = option.phone || '';
+
+            if (nameInput) {
+                nameInput.value = name;
+                nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (emailInput) {
+                emailInput.value = email;
+                emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (phoneInput) {
+                phoneInput.value = phone;
+                phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            const data = alpineData();
+            if (data) {
+                data.customerId = String(option.id || '');
+                data.name = name;
+                data.email = email;
+                data.phone = phone;
+            }
+        };
+
+        const clearCustomerBinding = () => {
+            const data = alpineData();
+            if (data) {
+                data.customerId = '';
+            }
+        };
+
+        new TomSelect(select, {
+            create: false,
+            maxItems: 1,
+            allowEmptyOption: true,
+            valueField: 'id',
+            labelField: 'text',
+            searchField: ['text', 'phone', 'email', 'national_id', 'name'],
+            preload: false,
+            loadThrottle: 300,
+            placeholder: select.dataset.searchPlaceholder || 'Search customers…',
+            load(query, callback) {
+                if (!query || query.length < 2) {
+                    callback();
+                    return;
+                }
+
+                const url = new URL(searchUrl, window.location.origin);
+                url.searchParams.set('q', query);
+
+                fetch(url.toString(), {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                })
+                    .then((response) => response.json())
+                    .then((payload) => callback(payload.customers || []))
+                    .catch(() => callback());
+            },
+            render: {
+                option(data, escape) {
+                    const meta = [data.phone, data.national_id].filter(Boolean).join(' · ');
+                    return `<div>
+                        <div class="font-medium">${escape(data.name || data.text || '')}</div>
+                        ${meta ? `<div class="text-xs opacity-70">${escape(meta)}</div>` : ''}
+                    </div>`;
+                },
+                item(data, escape) {
+                    return `<div>${escape(data.text || data.name || '')}</div>`;
+                },
+                no_results(data, escape) {
+                    return `<div class="no-results">No matches for "${escape(data.input)}"</div>`;
+                },
+            },
+            onItemAdd(value) {
+                const option = this.options[value];
+                if (option) {
+                    // Ensure name/phone exist even if Tom Select only kept text from a native <option>
+                    if (!option.name && option.$option) {
+                        option.name = option.$option.dataset.name || '';
+                        option.email = option.$option.dataset.email || '';
+                        option.phone = option.$option.dataset.phone || '';
+                    }
+                    fillRequesterFields(option);
+                }
+            },
+            onClear() {
+                clearCustomerBinding();
+            },
+            onChange(value) {
+                if (!value) {
+                    clearCustomerBinding();
+                    return;
+                }
+
+                const option = this.options[value];
+                if (option) {
+                    if (!option.name && option.$option) {
+                        option.name = option.$option.dataset.name || '';
+                        option.email = option.$option.dataset.email || '';
+                        option.phone = option.$option.dataset.phone || '';
+                    }
+                    fillRequesterFields(option);
+                }
+            },
+        });
+
+        select.dataset.selectSearchInit = 'true';
+    };
+
+    const start = () => {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCustomerSearch, { once: true });
+        } else {
+            initCustomerSearch();
+        }
+    };
+
+    document.addEventListener('alpine:initialized', initCustomerSearch, { once: true });
+    window.addEventListener('load', initCustomerSearch, { once: true });
+    start();
+})();
+</script>
+@endpush

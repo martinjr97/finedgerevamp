@@ -1,0 +1,3797 @@
+{
+    "generated_at": "2026-08-22T08:57:53+02:00",
+    "database": "finedge",
+    "version": "10.11.16-MariaDB-ubu2204",
+    "counts": {
+        "users": 1957,
+        "customers": 1936,
+        "clients": 38,
+        "loans": 17372,
+        "repayments": 30893,
+        "loans_accounts": 1870,
+        "transactions": 17800,
+        "loan_refinances": 0,
+        "loan_account_balance_adjustments": 146,
+        "marketize_loan_schedules": 284
+    },
+    "loans_by_status": [
+        {
+            "status_code": "305",
+            "cnt": 9486
+        },
+        {
+            "status_code": "300",
+            "cnt": 6892
+        },
+        {
+            "status_code": "301",
+            "cnt": 752
+        },
+        {
+            "status_code": "308",
+            "cnt": 237
+        },
+        {
+            "status_code": "303",
+            "cnt": 3
+        },
+        {
+            "status_code": "309",
+            "cnt": 1
+        },
+        {
+            "status_code": "307",
+            "cnt": 1
+        }
+    ],
+    "loans_by_flags": [
+        {
+            "salary_based": 1,
+            "gvnt_loan": 1,
+            "cnt": 6279
+        },
+        {
+            "salary_based": 0,
+            "gvnt_loan": 0,
+            "cnt": 6033
+        },
+        {
+            "salary_based": 1,
+            "gvnt_loan": 0,
+            "cnt": 3186
+        },
+        {
+            "salary_based": 0,
+            "gvnt_loan": 1,
+            "cnt": 1874
+        }
+    ],
+    "product_composition": [
+        {
+            "product_type": "salary_based",
+            "loan_count": 12008,
+            "active_loans": "586",
+            "settled_loans": "4000",
+            "salary_based_flag": "9465",
+            "gvnt_flag": "8152"
+        },
+        {
+            "product_type": "character_based",
+            "loan_count": 5293,
+            "active_loans": "142",
+            "settled_loans": "2862",
+            "salary_based_flag": "0",
+            "gvnt_flag": "1"
+        },
+        {
+            "product_type": "marketize_based",
+            "loan_count": 71,
+            "active_loans": "24",
+            "settled_loans": "30",
+            "salary_based_flag": "0",
+            "gvnt_flag": "0"
+        }
+    ],
+    "active_loans": 752,
+    "settled_loans": 6892,
+    "duplicates": {
+        "customers.nrc": [
+            {
+                "k": "631351/11/1",
+                "cnt": 2,
+                "sample_ids": "115,116"
+            },
+            {
+                "k": "730989/11/1",
+                "cnt": 2,
+                "sample_ids": "5,8"
+            }
+        ],
+        "users.nrc": [
+            {
+                "k": "730989/11/1",
+                "cnt": 3,
+                "sample_ids": "14,18,19"
+            },
+            {
+                "k": "292389/71/1",
+                "cnt": 2,
+                "sample_ids": "1575,1586"
+            },
+            {
+                "k": "440509/16/1",
+                "cnt": 2,
+                "sample_ids": "1606,1608"
+            },
+            {
+                "k": "553364/10/1",
+                "cnt": 2,
+                "sample_ids": "192,450"
+            },
+            {
+                "k": "572325/10/1",
+                "cnt": 2,
+                "sample_ids": "1576,1580"
+            },
+            {
+                "k": "631351/11/1",
+                "cnt": 2,
+                "sample_ids": "126,127"
+            }
+        ],
+        "users.emp_number": [
+            {
+                "k": "Ross2011",
+                "cnt": 4,
+                "sample_ids": "1700,1701,1702,1703"
+            },
+            {
+                "k": "0013",
+                "cnt": 3,
+                "sample_ids": "1147,1603,1604"
+            },
+            {
+                "k": "008",
+                "cnt": 3,
+                "sample_ids": "1122,1137,1138"
+            },
+            {
+                "k": "C0016",
+                "cnt": 3,
+                "sample_ids": "1774,1780,1781"
+            },
+            {
+                "k": "Chris173",
+                "cnt": 3,
+                "sample_ids": "454,504,516"
+            },
+            {
+                "k": "CICI70",
+                "cnt": 3,
+                "sample_ids": "2054,2055,2058"
+            },
+            {
+                "k": "Mangogrove0012",
+                "cnt": 3,
+                "sample_ids": "1679,1752,1882"
+            },
+            {
+                "k": "PETKU0024",
+                "cnt": 3,
+                "sample_ids": "1867,1884,1979"
+            },
+            {
+                "k": "PETKU0026",
+                "cnt": 3,
+                "sample_ids": "1868,1874,1974"
+            },
+            {
+                "k": "TT09",
+                "cnt": 3,
+                "sample_ids": "1665,1688,1805"
+            },
+            {
+                "k": "00000022",
+                "cnt": 2,
+                "sample_ids": "1092,1093"
+            },
+            {
+                "k": "00002",
+                "cnt": 2,
+                "sample_ids": "902,1591"
+            },
+            {
+                "k": "0008",
+                "cnt": 2,
+                "sample_ids": "1597,1598"
+            },
+            {
+                "k": "001",
+                "cnt": 2,
+                "sample_ids": "1124,1130"
+            },
+            {
+                "k": "002",
+                "cnt": 2,
+                "sample_ids": "1131,2020"
+            },
+            {
+                "k": "00245935",
+                "cnt": 2,
+                "sample_ids": "738,753"
+            },
+            {
+                "k": "00378512",
+                "cnt": 2,
+                "sample_ids": "1023,1025"
+            },
+            {
+                "k": "004",
+                "cnt": 2,
+                "sample_ids": "1123,1133"
+            },
+            {
+                "k": "010",
+                "cnt": 2,
+                "sample_ids": "1121,1141"
+            },
+            {
+                "k": "Chris035",
+                "cnt": 2,
+                "sample_ids": "96,915"
+            }
+        ],
+        "users.phone_number": [
+            {
+                "k": "260760554531",
+                "cnt": 2,
+                "sample_ids": "1622,1789"
+            },
+            {
+                "k": "260763556053",
+                "cnt": 2,
+                "sample_ids": "1072,1162"
+            },
+            {
+                "k": "260954020710",
+                "cnt": 2,
+                "sample_ids": "451,694"
+            },
+            {
+                "k": "260967990241",
+                "cnt": 2,
+                "sample_ids": "1895,1903"
+            },
+            {
+                "k": "260969783759",
+                "cnt": 2,
+                "sample_ids": "2,1892"
+            },
+            {
+                "k": "260976867227",
+                "cnt": 2,
+                "sample_ids": "1575,1586"
+            }
+        ]
+    },
+    "duplicate_key_counts": {
+        "customers.nrc": 2,
+        "users.nrc": 6,
+        "users.emp_number": 56,
+        "users.phone_number": 6
+    },
+    "identity_gaps": {
+        "customers_without_users": 0,
+        "users_with_loans_no_customer": 0,
+        "customers_without_clients": 0,
+        "loans_missing_users": 0
+    },
+    "multi_loan": {
+        "historical_gt1_customers": 1336,
+        "historical_gt1_pct": 71.37,
+        "active_gt1_customers": 28,
+        "active_gt1_pct": 1.5,
+        "total_customers_with_loans": 1872,
+        "multi_active_same_product": 28,
+        "multi_active_different_product": 0,
+        "refinance_customers": 0
+    },
+    "multi_loan_samples": [
+        {
+            "user_id": 73,
+            "fname": "Melody",
+            "lname": "Tilimboyi",
+            "loan_ids": "1524,2148,2149,2422,15704,16395,16755,18316,18423",
+            "status_codes": "300,305,300,300,300,300,300,301,301",
+            "loan_count": 9
+        },
+        {
+            "user_id": 115,
+            "fname": "Rodgers",
+            "lname": "Mulenga",
+            "loan_ids": "676,836,955,1010,1058,1266,1317,1350,1437,1546,1562,1731,1746,1780,1963,1969,1989,2002,2114,2116,2128,2138,2150,2154,2202,2307,2350,2399,2420,2454,2478,2594,2601,2830,2976,2977,3340,3341,3418,3881,4056,4252,4253,4254,4255,4256,4257,4258,4260,4261,4262,4263,4264,4548,4549,4550,4551,4693,4847,5293,5698,5957,6400,6872,6951,7342,7376,7579,7745,8069,8292,8713,9439,9886,10312,10353,10822,10823,10824,10826,10829,10832,10833,10834,10835,11154,11561,11698,11932,12049,12252,12253,12254,12255,12258,12260,12262,12263,12264,12279,12282,12316,12332,12336,12340,12344,12350,12373,12375,12378,12388,12410,12445,12523,12573,12580,12628,12687,13228,13229,13230,13231,13232,13244,13245,13248,13271,13558,13565,13567,13569,13572,13576,13685,13996,14023,14200,14533,15253,15471,15947,15948,15949,15950,16026,16211,16259,16451,16759,16942,17111,17192,17259,17394,17564,17676,17764,17901,18004,18264,18284,18380,18397",
+            "status_codes": "300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,305,300,305,300,300,300,300,305,305,305,305,305,305,305,305,305,305,305,300,305,305,305,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,305,305,305,305,305,305,305,305,300,300,300,300,300,300,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,300,305,305,305,305,300,305,305,305,305,305,305,305,300,300,305,305,305,305,305,300,300,300,300,300,300,300,300,305,305,305,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,301,301",
+            "loan_count": 163
+        },
+        {
+            "user_id": 246,
+            "fname": "Earnest",
+            "lname": "Bwalya",
+            "loan_ids": "1300,1318,1504,1523,1657,1865,2022,2023,2024,2025,2026,2027,2028,2029,2044,2151,2253,2321,2421,2505,2506,2507,2508,2509,2510,2512,2739,3186,3187,3188,3189,3190,3197,3198,3337,3526,3836,4083,4771,4995,5702,5703,5965,5967,6335,6394,6720,6721,7363,7364,7365,7731,8112,8775,10224,10225,10858,10860,10861,10862,10867,10871,10886,10896,10905,10907,10914,10915,10916,10920,10921,10924,10928,10929,10930,10933,10936,10947,10953,10956,10957,10959,10964,11661,11669,12117,12150,13169,13810,14593,14594,14609,14618,14619,14620,14621,14622,14623,14626,14629,14631,14635,14637,14640,14652,14654,14656,14657,14658,15664,16052,16053,16273,16339,16590,16791,17005,17201,17314,17317,17388,17420,17476,17681,17994,18033,18035,18140,18234,18235,18288,18410,18414",
+            "status_codes": "300,300,300,300,300,300,305,305,305,305,305,305,305,305,300,300,300,300,300,305,305,305,305,305,305,300,300,305,305,305,305,305,305,300,300,300,300,300,300,300,305,300,305,300,300,300,300,300,305,305,300,300,300,300,305,300,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,300,300,300,300,300,300,300,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,300,300,305,300,300,300,300,300,300,300,305,300,300,300,300,300,300,305,300,300,305,300,301,301,301",
+            "loan_count": 133
+        },
+        {
+            "user_id": 293,
+            "fname": "Samuel",
+            "lname": "Muzata",
+            "loan_ids": "2300,2301,12130,12220,17021,17138,17594,18265,18323,18324",
+            "status_codes": "300,305,300,300,300,305,300,300,301,301",
+            "loan_count": 10
+        },
+        {
+            "user_id": 308,
+            "fname": "Tonny",
+            "lname": "Hulushomo",
+            "loan_ids": "2274,2387,2620,2863,16000,16253,16492,16761,16788",
+            "status_codes": "300,300,300,300,300,300,300,301,301",
+            "loan_count": 9
+        },
+        {
+            "user_id": 336,
+            "fname": "Mubita",
+            "lname": "Muhau",
+            "loan_ids": "2519,2875,3215,3768,3786,3835,3897,3898,4048,5188,5190,5192,5243,5267,5271,5426,5438,5439,5509,5527,5531,5541,5649,5658,5718,5726,5878,6871,7194,7852,10260,12206,12232,12233,12234,12235,12236,12237,12241,12242,12243,12245,12246,12247,12248,12249,12250,12251,12443,12605,12909,12911,13486,13844,15783,15785,15789,17742,18251,18252",
+            "status_codes": "300,300,300,300,300,300,305,305,300,305,305,305,305,305,305,305,305,305,300,305,305,300,300,300,300,300,300,300,300,300,300,300,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,300,300,300,300,305,300,305,305,300,300,301,301",
+            "loan_count": 60
+        },
+        {
+            "user_id": 596,
+            "fname": "Jane",
+            "lname": "Nambela",
+            "loan_ids": "3146,3147,3593,3594,3595,3598,5790,5975,5976,5979,6436,6437,7062,7802,7803,17787",
+            "status_codes": "305,300,305,305,305,300,300,305,305,300,305,300,300,305,301,301",
+            "loan_count": 16
+        },
+        {
+            "user_id": 900,
+            "fname": "Brian",
+            "lname": "Mulenga",
+            "loan_ids": "6261,7259,7260,7261,7262,7263,18081,18082,18105",
+            "status_codes": "300,305,305,305,305,300,301,301,301",
+            "loan_count": 9
+        },
+        {
+            "user_id": 916,
+            "fname": "Maleka",
+            "lname": "Nsalamu",
+            "loan_ids": "6407,7744,10350,14114,15281,15282,15283,15294,15307,15331,15332,15392,15398,15409,15427,15429,15430,15431,15432,15434,15435,15436,15439,17236,17753,18369",
+            "status_codes": "300,300,300,300,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,305,300,300,301,301",
+            "loan_count": 26
+        },
+        {
+            "user_id": 918,
+            "fname": "Nathan",
+            "lname": "Sinkala",
+            "loan_ids": "6449,7100,7659,8983,11670,12104,12134,12960,12961,12970,13091,13092,13095,13903,13904,13905,13907,14162,15038,15045,15062,15063,15066,15104,15179,15254,16090,16091,16093,16094,16095,16304,16568,16753,16949,16953,16982,17862,18146,18150,18161,18163,18182",
+            "status_codes": "300,300,300,300,300,305,300,305,305,305,305,305,305,305,305,305,300,300,305,305,305,305,305,305,305,300,305,305,305,305,300,300,300,300,300,308,300,300,301,305,305,305,301",
+            "loan_count": 43
+        }
+    ],
+    "repayments_by_status": [
+        {
+            "status_code": 215,
+            "cnt": 24516,
+            "total_amount": "26375402.93"
+        },
+        {
+            "status_code": 214,
+            "cnt": 5653,
+            "total_amount": "11582481.90"
+        },
+        {
+            "status_code": 700,
+            "cnt": 611,
+            "total_amount": "965872.75"
+        },
+        {
+            "status_code": 216,
+            "cnt": 113,
+            "total_amount": "90403.85"
+        }
+    ],
+    "repayments_attribution": {
+        "successful": 24516,
+        "with_affected_loan_ids": 9312,
+        "without_affected_loan_ids": 15204,
+        "pct_with_affected": 37.98,
+        "with_pi_split": 9310,
+        "waivers": 115,
+        "first_affected_repayment_at": "2025-01-01 08:12:54"
+    },
+    "repayments_by_year": [
+        {
+            "yr": 2021,
+            "total": 509,
+            "successful": "330",
+            "with_affected": "0",
+            "without_affected": "330",
+            "pct_attributable": "0.00"
+        },
+        {
+            "yr": 2022,
+            "total": 2316,
+            "successful": "1678",
+            "with_affected": "0",
+            "without_affected": "1678",
+            "pct_attributable": "0.00"
+        },
+        {
+            "yr": 2023,
+            "total": 6354,
+            "successful": "4843",
+            "with_affected": "0",
+            "without_affected": "4843",
+            "pct_attributable": "0.00"
+        },
+        {
+            "yr": 2024,
+            "total": 10305,
+            "successful": "7831",
+            "with_affected": "0",
+            "without_affected": "7831",
+            "pct_attributable": "0.00"
+        },
+        {
+            "yr": 2025,
+            "total": 9065,
+            "successful": "7865",
+            "with_affected": "7343",
+            "without_affected": "522",
+            "pct_attributable": "93.36"
+        },
+        {
+            "yr": 2026,
+            "total": 2344,
+            "successful": "1969",
+            "with_affected": "1969",
+            "without_affected": "0",
+            "pct_attributable": "100.00"
+        }
+    ],
+    "ambiguous_mou": {
+        "customer_count": 7,
+        "repayment_count": 102,
+        "total_repayment_amount": "157594.66"
+    },
+    "ambiguous_mou_samples": [
+        {
+            "user_id": 916,
+            "fname": "Maleka",
+            "lname": "Nsalamu",
+            "ambiguous_repayment_count": 13,
+            "total_amount": "57374.10",
+            "first_repayment": "2023-11-04 10:18:53",
+            "last_repayment": "2025-10-31 20:15:37"
+        },
+        {
+            "user_id": 73,
+            "fname": "Melody",
+            "lname": "Tilimboyi",
+            "ambiguous_repayment_count": 12,
+            "total_amount": "36874.30",
+            "first_repayment": "2022-03-18 14:06:05",
+            "last_repayment": "2023-11-03 10:25:35"
+        },
+        {
+            "user_id": 941,
+            "fname": "Lwimbo",
+            "lname": "Kupeta",
+            "ambiguous_repayment_count": 15,
+            "total_amount": "26966.15",
+            "first_repayment": "2023-11-04 10:18:53",
+            "last_repayment": "2024-11-14 15:00:58"
+        },
+        {
+            "user_id": 1835,
+            "fname": "Chiti",
+            "lname": "Mporokoso",
+            "ambiguous_repayment_count": 2,
+            "total_amount": "10000.00",
+            "first_repayment": "2025-09-30 00:00:00",
+            "last_repayment": "2025-11-06 12:04:47"
+        },
+        {
+            "user_id": 596,
+            "fname": "Jane",
+            "lname": "Nambela",
+            "ambiguous_repayment_count": 17,
+            "total_amount": "9375.33",
+            "first_repayment": "2022-11-27 17:53:10",
+            "last_repayment": "2025-10-30 16:35:32"
+        },
+        {
+            "user_id": 1662,
+            "fname": "Elizabeth",
+            "lname": "Nkunika",
+            "ambiguous_repayment_count": 4,
+            "total_amount": "9266.78",
+            "first_repayment": "2024-08-08 12:38:44",
+            "last_repayment": "2024-11-30 22:09:22"
+        },
+        {
+            "user_id": 336,
+            "fname": "Mubita",
+            "lname": "Muhau",
+            "ambiguous_repayment_count": 39,
+            "total_amount": "7738.00",
+            "first_repayment": "2022-08-03 11:01:20",
+            "last_repayment": "2024-10-03 22:33:34"
+        }
+    ],
+    "account_reconciliation": {
+        "customers_with_accounts": 1870,
+        "buckets": {
+            "exact_match": 1226,
+            "lt_0_01": 0,
+            "lte_1": 214,
+            "lte_10": 22,
+            "lte_100": 47,
+            "gt_100": 361
+        },
+        "total_absolute_variance": 967750.13,
+        "largest_variance": {
+            "user_id": 2085,
+            "variance": 120000,
+            "account_balance": "0.00",
+            "sum_active_effective": 120000
+        },
+        "top_variances": [
+            {
+                "user_id": 2085,
+                "account_balance": "0.00",
+                "sum_active_effective": 120000,
+                "variance": 120000
+            },
+            {
+                "user_id": 1120,
+                "account_balance": "104924.00",
+                "sum_active_effective": 149450,
+                "variance": 44526
+            },
+            {
+                "user_id": 184,
+                "account_balance": "67500.00",
+                "sum_active_effective": 43700,
+                "variance": 23800
+            },
+            {
+                "user_id": 916,
+                "account_balance": "32400.00",
+                "sum_active_effective": 54226.990000000005,
+                "variance": 21826.990000000005
+            },
+            {
+                "user_id": 859,
+                "account_balance": "30500.00",
+                "sum_active_effective": 8766,
+                "variance": 21734
+            },
+            {
+                "user_id": 1991,
+                "account_balance": "13000.00",
+                "sum_active_effective": 32000.02,
+                "variance": 19000.02
+            },
+            {
+                "user_id": 2022,
+                "account_balance": "9800.00",
+                "sum_active_effective": 24450,
+                "variance": 14650
+            },
+            {
+                "user_id": 998,
+                "account_balance": "12412.00",
+                "sum_active_effective": 0,
+                "variance": 12412
+            },
+            {
+                "user_id": 957,
+                "account_balance": "11139.80",
+                "sum_active_effective": 0,
+                "variance": 11139.8
+            },
+            {
+                "user_id": 990,
+                "account_balance": "10198.32",
+                "sum_active_effective": 0,
+                "variance": 10198.32
+            }
+        ]
+    },
+    "balance_adjustments": {
+        "adjustment_count": 146,
+        "customers_affected": 129,
+        "total_positive": "198249.99",
+        "total_negative": "-174387.71"
+    },
+    "balance_adjustment_samples": [
+        {
+            "id": 20,
+            "customer_id": 2085,
+            "old_balance": "240000.00",
+            "new_balance": "120000.00",
+            "adjustment_amount": "-120000.00",
+            "reason": "Error after first migration was wrong",
+            "created_at": "2026-01-23 07:57:37"
+        },
+        {
+            "id": 45,
+            "customer_id": 345,
+            "old_balance": "0.00",
+            "new_balance": "23319.00",
+            "adjustment_amount": "23319.00",
+            "reason": null,
+            "created_at": "2026-02-03 17:16:18"
+        },
+        {
+            "id": 32,
+            "customer_id": 1955,
+            "old_balance": "65800.00",
+            "new_balance": "44800.00",
+            "adjustment_amount": "-21000.00",
+            "reason": null,
+            "created_at": "2026-01-30 07:44:16"
+        },
+        {
+            "id": 9,
+            "customer_id": 916,
+            "old_balance": "0.00",
+            "new_balance": "15094.00",
+            "adjustment_amount": "15094.00",
+            "reason": "Balance went to zero after the payment was run. Just restoring the current balance",
+            "created_at": "2025-12-25 19:43:49"
+        },
+        {
+            "id": 15,
+            "customer_id": 1948,
+            "old_balance": "0.00",
+            "new_balance": "13670.00",
+            "adjustment_amount": "13670.00",
+            "reason": "Money was sent to the mobile money so i have actived this rejected loan. putting the agreed loan repayment",
+            "created_at": "2026-01-10 11:14:53"
+        },
+        {
+            "id": 53,
+            "customer_id": 1676,
+            "old_balance": "23620.00",
+            "new_balance": "35700.00",
+            "adjustment_amount": "12080.00",
+            "reason": "Cash out but didnt reflect due to Kazang error",
+            "created_at": "2026-02-18 15:14:18"
+        },
+        {
+            "id": 7,
+            "customer_id": 2072,
+            "old_balance": "0.00",
+            "new_balance": "11900.00",
+            "adjustment_amount": "11900.00",
+            "reason": null,
+            "created_at": "2025-12-22 17:04:35"
+        },
+        {
+            "id": 11,
+            "customer_id": 2022,
+            "old_balance": "1220.00",
+            "new_balance": "12220.00",
+            "adjustment_amount": "11000.00",
+            "reason": null,
+            "created_at": "2025-12-31 11:39:58"
+        },
+        {
+            "id": 10,
+            "customer_id": 2022,
+            "old_balance": "11870.00",
+            "new_balance": "1220.00",
+            "adjustment_amount": "-10650.00",
+            "reason": "Additional Interest",
+            "created_at": "2025-12-31 11:38:25"
+        },
+        {
+            "id": 26,
+            "customer_id": 48,
+            "old_balance": "41000.00",
+            "new_balance": "51000.00",
+            "adjustment_amount": "10000.00",
+            "reason": "Wrong Bulk Repayment",
+            "created_at": "2026-01-29 17:00:28"
+        }
+    ],
+    "refinances": {
+        "count": 0,
+        "broken_chains": {
+            "missing_old_loan": null,
+            "missing_new_loan": null,
+            "customer_mismatch": null,
+            "old_loan_still_active": null,
+            "total": 0
+        }
+    },
+    "refinance_samples": [],
+    "exceptions": {
+        "loans_missing_users": {
+            "count": 0,
+            "classification": "BLOCKING"
+        },
+        "customers_missing_users": {
+            "count": 0,
+            "classification": "MANUAL REVIEW"
+        },
+        "customers_without_clients": {
+            "count": 0,
+            "classification": "REQUIRES RULE"
+        },
+        "repayments_without_users": {
+            "count": 0,
+            "classification": "BLOCKING"
+        },
+        "successful_zero_or_negative_amount": {
+            "count": 4,
+            "classification": "MANUAL REVIEW"
+        },
+        "duplicate_repayment_references": {
+            "count": 5,
+            "classification": "MANUAL REVIEW"
+        },
+        "repayment_before_loan_creation": {
+            "count": 179805,
+            "classification": "MANUAL REVIEW"
+        },
+        "settled_with_positive_effective": {
+            "count": 1117,
+            "classification": "REQUIRES RULE"
+        },
+        "active_with_zero_balance": {
+            "count": 0,
+            "classification": "REQUIRES RULE"
+        },
+        "negative_effective_balance": {
+            "count": 0,
+            "classification": "MANUAL REVIEW"
+        },
+        "repaid_exceeds_loan_amount": {
+            "count": 1661,
+            "classification": "MANUAL REVIEW"
+        },
+        "loans_missing_client": {
+            "count": 0,
+            "classification": "REQUIRES RULE"
+        },
+        "invalid_affected_loan_ids_json": {
+            "count": 0,
+            "classification": "MANUAL REVIEW"
+        },
+        "affected_refs_nonexistent_loan": {
+            "count": 0,
+            "classification": "MANUAL REVIEW"
+        },
+        "loans_accounts_without_users": {
+            "count": 0,
+            "classification": "BLOCKING"
+        },
+        "users_multiple_loans_accounts": {
+            "count": 0,
+            "classification": "MANUAL REVIEW"
+        }
+    },
+    "product_population": [
+        {
+            "legacy_product": "MOU/Salary (accrual)",
+            "customers": 1555,
+            "loans": 12009,
+            "active_loans": "586",
+            "active_outstanding": 2623668.3399999985,
+            "total_repaid": 14185775.199999997,
+            "total_loan_amount": "44371426.10"
+        },
+        {
+            "legacy_product": "Character",
+            "customers": 328,
+            "loans": 5292,
+            "active_loans": "142",
+            "active_outstanding": 1609296.02,
+            "total_repaid": 12189613.8,
+            "total_loan_amount": "24792172.24"
+        },
+        {
+            "legacy_product": "Marketize",
+            "customers": 32,
+            "loans": 71,
+            "active_loans": "24",
+            "active_outstanding": 32625,
+            "total_repaid": 61085,
+            "total_loan_amount": "117460.00"
+        }
+    ],
+    "portfolio_totals": [
+        {
+            "product": "Character",
+            "status_code": "300",
+            "loan_count": 2861,
+            "original_principal": "9692077.00",
+            "loan_obligation": "11843515.81",
+            "repaid": 11645417.82,
+            "effective_outstanding": 1970010.0899999999
+        },
+        {
+            "product": "Character",
+            "status_code": "301",
+            "loan_count": 142,
+            "original_principal": "1308929.00",
+            "loan_obligation": "1899344.00",
+            "repaid": 544195.98,
+            "effective_outstanding": 1609296.02
+        },
+        {
+            "product": "Character",
+            "status_code": "305",
+            "loan_count": 2243,
+            "original_principal": "8886871.00",
+            "loan_obligation": "10790956.43",
+            "repaid": 0,
+            "effective_outstanding": 10767156.43
+        },
+        {
+            "product": "Character",
+            "status_code": "307",
+            "loan_count": 1,
+            "original_principal": "2500.00",
+            "loan_obligation": "2968.00",
+            "repaid": 0,
+            "effective_outstanding": 2968
+        },
+        {
+            "product": "Character",
+            "status_code": "308",
+            "loan_count": 45,
+            "original_principal": "203783.00",
+            "loan_obligation": "255388.00",
+            "repaid": 0,
+            "effective_outstanding": 255388
+        },
+        {
+            "product": "Marketize",
+            "status_code": "300",
+            "loan_count": 30,
+            "original_principal": "35100.00",
+            "loan_obligation": "49140.00",
+            "repaid": 48840,
+            "effective_outstanding": 17640
+        },
+        {
+            "product": "Marketize",
+            "status_code": "301",
+            "loan_count": 24,
+            "original_principal": "29300.00",
+            "loan_obligation": "41020.00",
+            "repaid": 12245,
+            "effective_outstanding": 32625
+        },
+        {
+            "product": "Marketize",
+            "status_code": "305",
+            "loan_count": 8,
+            "original_principal": "8700.00",
+            "loan_obligation": "12180.00",
+            "repaid": 0,
+            "effective_outstanding": 12180
+        },
+        {
+            "product": "Marketize",
+            "status_code": "308",
+            "loan_count": 9,
+            "original_principal": "10800.00",
+            "loan_obligation": "15120.00",
+            "repaid": 0,
+            "effective_outstanding": 15120
+        },
+        {
+            "product": "MOU/Salary",
+            "status_code": "300",
+            "loan_count": 4001,
+            "original_principal": "8850997.00",
+            "loan_obligation": "12805224.10",
+            "repaid": 12308788.76,
+            "effective_outstanding": 908382.7599999992
+        },
+        {
+            "product": "MOU/Salary",
+            "status_code": "301",
+            "loan_count": 586,
+            "original_principal": "1974705.00",
+            "loan_obligation": "2957857.00",
+            "repaid": 1876972.4399999997,
+            "effective_outstanding": 2623668.3399999985
+        },
+        {
+            "product": "MOU/Salary",
+            "status_code": "303",
+            "loan_count": 3,
+            "original_principal": "3300.00",
+            "loan_obligation": "4674.00",
+            "repaid": 0,
+            "effective_outstanding": 3641.2200000000003
+        },
+        {
+            "product": "MOU/Salary",
+            "status_code": "305",
+            "loan_count": 7235,
+            "original_principal": "19197334.00",
+            "loan_obligation": "28182508.00",
+            "repaid": 14,
+            "effective_outstanding": 21295369.010000132
+        },
+        {
+            "product": "MOU/Salary",
+            "status_code": "308",
+            "loan_count": 183,
+            "original_principal": "285706.00",
+            "loan_obligation": "406967.00",
+            "repaid": 0,
+            "effective_outstanding": 315356.79000000027
+        },
+        {
+            "product": "MOU/Salary",
+            "status_code": "309",
+            "loan_count": 1,
+            "original_principal": "10000.00",
+            "loan_obligation": "14196.00",
+            "repaid": 0,
+            "effective_outstanding": 11034
+        }
+    ],
+    "loans_accounts_total_balance": 4198925.69,
+    "character_reconstruction": [
+        {
+            "user_id": 76,
+            "loan_count": 167,
+            "repayment_count": 143,
+            "mismatches": [
+                {
+                    "loan_id": 584,
+                    "stored_repaid": 9375,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 924,
+                    "stored_repaid": 13275,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1313,
+                    "stored_repaid": 1187,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1519,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1588,
+                    "stored_repaid": 13670,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1837,
+                    "stored_repaid": 1785,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1922,
+                    "stored_repaid": 13640,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2264,
+                    "stored_repaid": 13580,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2280,
+                    "stored_repaid": 2856,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2359,
+                    "stored_repaid": 4748,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2428,
+                    "stored_repaid": 7122,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2514,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2556,
+                    "stored_repaid": 7140,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2754,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2783,
+                    "stored_repaid": 9520,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2966,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3082,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3303,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3361,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3523,
+                    "stored_repaid": 10683,
+                    "reconstructed_repaid": 0,
+                    "effective": 11900,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3687,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3825,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4084,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4139,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4352,
+                    "stored_repaid": 11810,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4505,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4835,
+                    "stored_repaid": 10090,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4864,
+                    "stored_repaid": 10683,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5062,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5199,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5452,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5538,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5852,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5869,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5958,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6242,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6337,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6339,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6733,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6734,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7783,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7819,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8089,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8392,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8612,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 9559,
+                    "stored_repaid": 11840,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 10136,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 10389,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 10815,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11230,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11480,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11715,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11734,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12058,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12074,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12519,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12918,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13278,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13649,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13655,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14027,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14073,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14583,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17492,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 3900,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 18430,
+                    "stored_repaid": 0,
+                    "reconstructed_repaid": 51415,
+                    "effective": 51415,
+                    "status": "301"
+                }
+            ],
+            "allocations_sample": [
+                {
+                    "repayment_id": 516,
+                    "loan_id": 18430,
+                    "amount": 3000,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 566,
+                    "loan_id": 18430,
+                    "amount": 1700,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 643,
+                    "loan_id": 18430,
+                    "amount": 4675,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 931,
+                    "loan_id": 18430,
+                    "amount": 4425,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 1177,
+                    "loan_id": 18430,
+                    "amount": 3000,
+                    "source": "waterfall_replay"
+                }
+            ]
+        },
+        {
+            "user_id": 115,
+            "loan_count": 163,
+            "repayment_count": 94,
+            "mismatches": [
+                {
+                    "loan_id": 676,
+                    "stored_repaid": 1172.5,
+                    "reconstructed_repaid": 14546,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 836,
+                    "stored_repaid": 1407,
+                    "reconstructed_repaid": 12935.5,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 955,
+                    "stored_repaid": 1785,
+                    "reconstructed_repaid": 744.5,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1010,
+                    "stored_repaid": 595,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1058,
+                    "stored_repaid": 178.5,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1266,
+                    "stored_repaid": 1424.4,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1317,
+                    "stored_repaid": 712.2,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1350,
+                    "stored_repaid": 356.1,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1437,
+                    "stored_repaid": 1904,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1546,
+                    "stored_repaid": 1785,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1562,
+                    "stored_repaid": 595,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1731,
+                    "stored_repaid": 2618,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1746,
+                    "stored_repaid": 1904,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1780,
+                    "stored_repaid": 1666,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1963,
+                    "stored_repaid": 2208.47,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1969,
+                    "stored_repaid": 118.1,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1989,
+                    "stored_repaid": 708.6,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2002,
+                    "stored_repaid": 649.55,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2114,
+                    "stored_repaid": 1964,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2116,
+                    "stored_repaid": 238,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2128,
+                    "stored_repaid": 250,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2138,
+                    "stored_repaid": 476,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2150,
+                    "stored_repaid": 357,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2154,
+                    "stored_repaid": 60,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2202,
+                    "stored_repaid": 1187,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2307,
+                    "stored_repaid": 595,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2350,
+                    "stored_repaid": 119,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2399,
+                    "stored_repaid": 2398,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2420,
+                    "stored_repaid": 363,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2454,
+                    "stored_repaid": 1785,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2478,
+                    "stored_repaid": 631,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2594,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2601,
+                    "stored_repaid": 357,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2830,
+                    "stored_repaid": 2731,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2977,
+                    "stored_repaid": 238,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3341,
+                    "stored_repaid": 6545,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3418,
+                    "stored_repaid": 713,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3881,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4056,
+                    "stored_repaid": 475,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4264,
+                    "stored_repaid": 2599,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4551,
+                    "stored_repaid": 2499,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4693,
+                    "stored_repaid": 714,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4847,
+                    "stored_repaid": 3324,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5293,
+                    "stored_repaid": 1309,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5698,
+                    "stored_repaid": 594,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5957,
+                    "stored_repaid": 952,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6400,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6872,
+                    "stored_repaid": 1190,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6951,
+                    "stored_repaid": 2142,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7342,
+                    "stored_repaid": 1187,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7376,
+                    "stored_repaid": 713,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7579,
+                    "stored_repaid": 2137,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7745,
+                    "stored_repaid": 774,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8069,
+                    "stored_repaid": 714,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8292,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8713,
+                    "stored_repaid": 714,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 9439,
+                    "stored_repaid": 2368,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 9886,
+                    "stored_repaid": 1190,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 10312,
+                    "stored_repaid": 2975,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 10353,
+                    "stored_repaid": 1309,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 10835,
+                    "stored_repaid": 3561,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11154,
+                    "stored_repaid": 1306,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11561,
+                    "stored_repaid": 3451,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11698,
+                    "stored_repaid": 1190,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11932,
+                    "stored_repaid": 1781,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12049,
+                    "stored_repaid": 1009,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12445,
+                    "stored_repaid": 2618,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12687,
+                    "stored_repaid": 1012,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13248,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13271,
+                    "stored_repaid": 1071,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13576,
+                    "stored_repaid": 2374,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13685,
+                    "stored_repaid": 1781,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13996,
+                    "stored_repaid": 2975,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14023,
+                    "stored_repaid": 1785,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14200,
+                    "stored_repaid": 2374,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14533,
+                    "stored_repaid": 1662,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 15253,
+                    "stored_repaid": 2499,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 15471,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 15950,
+                    "stored_repaid": 2023,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16026,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16211,
+                    "stored_repaid": 2008,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16259,
+                    "stored_repaid": 2008,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16451,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16759,
+                    "stored_repaid": 1428,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16942,
+                    "stored_repaid": 3324,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17111,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17192,
+                    "stored_repaid": 476,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17259,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17394,
+                    "stored_repaid": 5120,
+                    "reconstructed_repaid": 2560,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 18380,
+                    "stored_repaid": 0,
+                    "reconstructed_repaid": 2380,
+                    "effective": 2380,
+                    "status": "301"
+                },
+                {
+                    "loan_id": 18397,
+                    "stored_repaid": 0,
+                    "reconstructed_repaid": 1904,
+                    "effective": 1904,
+                    "status": "301"
+                }
+            ],
+            "allocations_sample": [
+                {
+                    "repayment_id": 654,
+                    "loan_id": 18380,
+                    "amount": 1172.5,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 657,
+                    "loan_id": 18380,
+                    "amount": 1207.5,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 657,
+                    "loan_id": 18397,
+                    "amount": 199.5,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 869,
+                    "loan_id": 18397,
+                    "amount": 1704.5,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 20663,
+                    "loan_id": 676,
+                    "amount": 1172.5,
+                    "source": "affected_loan_ids"
+                }
+            ]
+        },
+        {
+            "user_id": 257,
+            "loan_count": 139,
+            "repayment_count": 38,
+            "mismatches": [
+                {
+                    "loan_id": 1415,
+                    "stored_repaid": 2611.4,
+                    "reconstructed_repaid": 13855,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2423,
+                    "stored_repaid": 342,
+                    "reconstructed_repaid": 1710,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2824,
+                    "stored_repaid": 1781,
+                    "reconstructed_repaid": 6846.2,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3124,
+                    "stored_repaid": 2202,
+                    "reconstructed_repaid": 3900.7999999999997,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3232,
+                    "stored_repaid": 304,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3410,
+                    "stored_repaid": 2196,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3487,
+                    "stored_repaid": 1187,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3575,
+                    "stored_repaid": 1247,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3707,
+                    "stored_repaid": 1547,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3964,
+                    "stored_repaid": 1785,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4052,
+                    "stored_repaid": 484,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4161,
+                    "stored_repaid": 2481,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4271,
+                    "stored_repaid": 1512,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4413,
+                    "stored_repaid": 2953,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4592,
+                    "stored_repaid": 1190,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4769,
+                    "stored_repaid": 2975,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5050,
+                    "stored_repaid": 3324,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5614,
+                    "stored_repaid": 2137,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5763,
+                    "stored_repaid": 2553,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5934,
+                    "stored_repaid": 798,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 10970,
+                    "stored_repaid": 1009,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11174,
+                    "stored_repaid": 713,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11772,
+                    "stored_repaid": 298,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11791,
+                    "stored_repaid": 2097,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12020,
+                    "stored_repaid": 1042,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12447,
+                    "stored_repaid": 802,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12962,
+                    "stored_repaid": 1785,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13256,
+                    "stored_repaid": 630,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13313,
+                    "stored_repaid": 3213,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13435,
+                    "stored_repaid": 2256,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13722,
+                    "stored_repaid": 5461,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13902,
+                    "stored_repaid": 610,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14105,
+                    "stored_repaid": 4036,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14222,
+                    "stored_repaid": 230,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 15433,
+                    "stored_repaid": 2099,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 15644,
+                    "stored_repaid": 2072,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 15827,
+                    "stored_repaid": 2675,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16043,
+                    "stored_repaid": 564,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16086,
+                    "stored_repaid": 3332,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16176,
+                    "stored_repaid": 2559,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16290,
+                    "stored_repaid": 4488,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16356,
+                    "stored_repaid": 1775,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16542,
+                    "stored_repaid": 5950,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17167,
+                    "stored_repaid": 798,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                }
+            ],
+            "allocations_sample": [
+                {
+                    "repayment_id": 20630,
+                    "loan_id": 1415,
+                    "amount": 2611.4,
+                    "source": "affected_loan_ids"
+                },
+                {
+                    "repayment_id": 20630,
+                    "loan_id": 2423,
+                    "amount": 342,
+                    "source": "affected_loan_ids"
+                },
+                {
+                    "repayment_id": 20630,
+                    "loan_id": 2824,
+                    "amount": 1217.6,
+                    "source": "affected_loan_ids"
+                },
+                {
+                    "repayment_id": 20630,
+                    "loan_id": 3124,
+                    "amount": 0,
+                    "source": "affected_loan_ids"
+                },
+                {
+                    "repayment_id": 20630,
+                    "loan_id": 3232,
+                    "amount": 0,
+                    "source": "affected_loan_ids"
+                }
+            ]
+        },
+        {
+            "user_id": 246,
+            "loan_count": 133,
+            "repayment_count": 58,
+            "mismatches": [
+                {
+                    "loan_id": 1300,
+                    "stored_repaid": 1780.5,
+                    "reconstructed_repaid": 16024.5,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1318,
+                    "stored_repaid": 237.4,
+                    "reconstructed_repaid": 2136.6000000000004,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1504,
+                    "stored_repaid": 1547,
+                    "reconstructed_repaid": 12998.1,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1523,
+                    "stored_repaid": 2558.5,
+                    "reconstructed_repaid": 18494.8,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1657,
+                    "stored_repaid": 3332,
+                    "reconstructed_repaid": 8575.000000000002,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1865,
+                    "stored_repaid": 3332,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2044,
+                    "stored_repaid": 3543,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2151,
+                    "stored_repaid": 2856,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2253,
+                    "stored_repaid": 3324,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2321,
+                    "stored_repaid": 3332,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2421,
+                    "stored_repaid": 3443,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2512,
+                    "stored_repaid": 3570,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2739,
+                    "stored_repaid": 4165,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3198,
+                    "stored_repaid": 4165,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3337,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3526,
+                    "stored_repaid": 4748,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3836,
+                    "stored_repaid": 5236,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4083,
+                    "stored_repaid": 7644,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4771,
+                    "stored_repaid": 6400,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4995,
+                    "stored_repaid": 7040,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5703,
+                    "stored_repaid": 4748,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5967,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6335,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6394,
+                    "stored_repaid": 3094,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6720,
+                    "stored_repaid": 5935,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6721,
+                    "stored_repaid": 5935,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7365,
+                    "stored_repaid": 8309,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7731,
+                    "stored_repaid": 8309,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8112,
+                    "stored_repaid": 8330,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8775,
+                    "stored_repaid": 8288,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 10225,
+                    "stored_repaid": 8330,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 10964,
+                    "stored_repaid": 8309,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11661,
+                    "stored_repaid": 1785,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 11669,
+                    "stored_repaid": 1190,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12117,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12150,
+                    "stored_repaid": 1547,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13169,
+                    "stored_repaid": 7140,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13810,
+                    "stored_repaid": 8330,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14658,
+                    "stored_repaid": 8330,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 15664,
+                    "stored_repaid": 7140,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16053,
+                    "stored_repaid": 7140,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16273,
+                    "stored_repaid": 4724,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16339,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16590,
+                    "stored_repaid": 8309,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16791,
+                    "stored_repaid": 8330,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17005,
+                    "stored_repaid": 8309,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17201,
+                    "stored_repaid": 5950,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17317,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17388,
+                    "stored_repaid": 1187,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 18288,
+                    "stored_repaid": 0,
+                    "reconstructed_repaid": 11810,
+                    "effective": 11810,
+                    "status": "301"
+                },
+                {
+                    "loan_id": 18410,
+                    "stored_repaid": 0,
+                    "reconstructed_repaid": 2975,
+                    "effective": 2975,
+                    "status": "301"
+                },
+                {
+                    "loan_id": 18414,
+                    "stored_repaid": 0,
+                    "reconstructed_repaid": 1190,
+                    "effective": 1190,
+                    "status": "301"
+                }
+            ],
+            "allocations_sample": [
+                {
+                    "repayment_id": 1053,
+                    "loan_id": 18288,
+                    "amount": 800,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 1081,
+                    "loan_id": 18288,
+                    "amount": 700,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 1139,
+                    "loan_id": 18288,
+                    "amount": 280.5,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 1150,
+                    "loan_id": 18288,
+                    "amount": 140,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 1152,
+                    "loan_id": 18288,
+                    "amount": 97.4,
+                    "source": "waterfall_replay"
+                }
+            ]
+        },
+        {
+            "user_id": 184,
+            "loan_count": 118,
+            "repayment_count": 76,
+            "mismatches": [
+                {
+                    "loan_id": 664,
+                    "stored_repaid": 585,
+                    "reconstructed_repaid": 11700,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 768,
+                    "stored_repaid": 820.75,
+                    "reconstructed_repaid": 16415,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 835,
+                    "stored_repaid": 3517.5,
+                    "reconstructed_repaid": 65775.25,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1176,
+                    "stored_repaid": 4035.8,
+                    "reconstructed_repaid": 32363.149999999998,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1397,
+                    "stored_repaid": 4510.6,
+                    "reconstructed_repaid": 3371.5999999999985,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1710,
+                    "stored_repaid": 5388.6,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 1864,
+                    "stored_repaid": 5474,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2047,
+                    "stored_repaid": 6370,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2290,
+                    "stored_repaid": 3927,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2349,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2443,
+                    "stored_repaid": 5950,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2550,
+                    "stored_repaid": 6664,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 2889,
+                    "stored_repaid": 5935,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3363,
+                    "stored_repaid": 7140,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3698,
+                    "stored_repaid": 7735,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 3871,
+                    "stored_repaid": 7973,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4167,
+                    "stored_repaid": 7441,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 4441,
+                    "stored_repaid": 7854,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5258,
+                    "stored_repaid": 3570,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 5835,
+                    "stored_repaid": 6426,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6248,
+                    "stored_repaid": 7140,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6365,
+                    "stored_repaid": 7140,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 6884,
+                    "stored_repaid": 7140,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7634,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 7674,
+                    "stored_repaid": 3087,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8074,
+                    "stored_repaid": 5355,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8217,
+                    "stored_repaid": 2380,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8855,
+                    "stored_repaid": 5920,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 8909,
+                    "stored_repaid": 4736,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 12163,
+                    "stored_repaid": 11305,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13151,
+                    "stored_repaid": 11900,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13379,
+                    "stored_repaid": 11870,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13651,
+                    "stored_repaid": 2374,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 13886,
+                    "stored_repaid": 9520,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14080,
+                    "stored_repaid": 5950,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14138,
+                    "stored_repaid": 9496,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14587,
+                    "stored_repaid": 4748,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 14747,
+                    "stored_repaid": 9520,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 15623,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 15676,
+                    "stored_repaid": 10710,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16076,
+                    "stored_repaid": 4879,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16100,
+                    "stored_repaid": 9877,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16277,
+                    "stored_repaid": 4819,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16300,
+                    "stored_repaid": 9448,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16508,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16526,
+                    "stored_repaid": 9282,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16666,
+                    "stored_repaid": 4748,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16676,
+                    "stored_repaid": 9496,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16857,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 16871,
+                    "stored_repaid": 9520,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17016,
+                    "stored_repaid": 4748,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17035,
+                    "stored_repaid": 9496,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17177,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17190,
+                    "stored_repaid": 9520,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17300,
+                    "stored_repaid": 4760,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 17320,
+                    "stored_repaid": 9282,
+                    "reconstructed_repaid": 0,
+                    "effective": 0,
+                    "status": "300"
+                },
+                {
+                    "loan_id": 18367,
+                    "stored_repaid": 0,
+                    "reconstructed_repaid": 67500,
+                    "effective": 43700,
+                    "status": "301"
+                }
+            ],
+            "allocations_sample": [
+                {
+                    "repayment_id": 519,
+                    "loan_id": 18367,
+                    "amount": 585,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 538,
+                    "loan_id": 18367,
+                    "amount": 820.75,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 764,
+                    "loan_id": 18367,
+                    "amount": 3517.5,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 1021,
+                    "loan_id": 18367,
+                    "amount": 4035.8,
+                    "source": "waterfall_replay"
+                },
+                {
+                    "repayment_id": 1334,
+                    "loan_id": 18367,
+                    "amount": 4510.6,
+                    "source": "waterfall_replay"
+                }
+            ]
+        }
+    ],
+    "marketize_reconstruction": [
+        {
+            "loan_id": 18460,
+            "user_id": 2010,
+            "loan_amount": "1400",
+            "repaid_amount": null,
+            "status_code": "301",
+            "effective_outstanding": 1400,
+            "schedule_rows": 4,
+            "paid_schedules": "0",
+            "sum_weekly": "1400.00",
+            "sum_paid_amount": "0.00"
+        },
+        {
+            "loan_id": 18459,
+            "user_id": 2121,
+            "loan_amount": "700",
+            "repaid_amount": null,
+            "status_code": "301",
+            "effective_outstanding": 700,
+            "schedule_rows": 4,
+            "paid_schedules": "0",
+            "sum_weekly": "700.00",
+            "sum_paid_amount": "0.00"
+        },
+        {
+            "loan_id": 18458,
+            "user_id": 2123,
+            "loan_amount": "1400",
+            "repaid_amount": null,
+            "status_code": "301",
+            "effective_outstanding": 1400,
+            "schedule_rows": 4,
+            "paid_schedules": "0",
+            "sum_weekly": "1400.00",
+            "sum_paid_amount": "0.00"
+        },
+        {
+            "loan_id": 18457,
+            "user_id": 2119,
+            "loan_amount": "1400",
+            "repaid_amount": null,
+            "status_code": "301",
+            "effective_outstanding": 1400,
+            "schedule_rows": 4,
+            "paid_schedules": "0",
+            "sum_weekly": "1400.00",
+            "sum_paid_amount": "0.00"
+        },
+        {
+            "loan_id": 18456,
+            "user_id": 2120,
+            "loan_amount": "1400",
+            "repaid_amount": null,
+            "status_code": "301",
+            "effective_outstanding": 1400,
+            "schedule_rows": 4,
+            "paid_schedules": "0",
+            "sum_weekly": "1400.00",
+            "sum_paid_amount": "0.00"
+        },
+        {
+            "loan_id": 18455,
+            "user_id": 2122,
+            "loan_amount": "1400",
+            "repaid_amount": null,
+            "status_code": "301",
+            "effective_outstanding": 1400,
+            "schedule_rows": 4,
+            "paid_schedules": "0",
+            "sum_weekly": "1400.00",
+            "sum_paid_amount": "0.00"
+        },
+        {
+            "loan_id": 18237,
+            "user_id": 1999,
+            "loan_amount": "2100",
+            "repaid_amount": 800,
+            "status_code": "301",
+            "effective_outstanding": 1300,
+            "schedule_rows": 4,
+            "paid_schedules": "2",
+            "sum_weekly": "2100.00",
+            "sum_paid_amount": "300.00"
+        },
+        {
+            "loan_id": 18064,
+            "user_id": 1997,
+            "loan_amount": "2800",
+            "repaid_amount": 1400,
+            "status_code": "301",
+            "effective_outstanding": 1400,
+            "schedule_rows": 4,
+            "paid_schedules": "3",
+            "sum_weekly": "2800.00",
+            "sum_paid_amount": "900.00"
+        }
+    ],
+    "mou_balance_samples": [
+        {
+            "id": 18494,
+            "user_id": 921,
+            "status_code": "303",
+            "obtained_amount": "1100.00",
+            "loan_amount": "1558.00",
+            "principle_amount": "1100.00",
+            "accrued_interest": "113.74",
+            "current_loan_amount": "1213.74",
+            "repaid_amount": 0,
+            "effective_outstanding": 1213.74,
+            "account_balance": "0.00"
+        },
+        {
+            "id": 18493,
+            "user_id": 921,
+            "status_code": "303",
+            "obtained_amount": "1100.00",
+            "loan_amount": "1558.00",
+            "principle_amount": "1100.00",
+            "accrued_interest": "113.74",
+            "current_loan_amount": "1213.74",
+            "repaid_amount": 0,
+            "effective_outstanding": 1213.74,
+            "account_balance": "0.00"
+        },
+        {
+            "id": 18492,
+            "user_id": 921,
+            "status_code": "303",
+            "obtained_amount": "1100.00",
+            "loan_amount": "1558.00",
+            "principle_amount": "1100.00",
+            "accrued_interest": "113.74",
+            "current_loan_amount": "1213.74",
+            "repaid_amount": 0,
+            "effective_outstanding": 1213.74,
+            "account_balance": "0.00"
+        },
+        {
+            "id": 18490,
+            "user_id": 442,
+            "status_code": "308",
+            "obtained_amount": "1100.00",
+            "loan_amount": "1745.00",
+            "principle_amount": "1100.00",
+            "accrued_interest": "114.73",
+            "current_loan_amount": "1214.73",
+            "repaid_amount": 0,
+            "effective_outstanding": 1214.73,
+            "account_balance": "0.00"
+        },
+        {
+            "id": 18487,
+            "user_id": 442,
+            "status_code": "308",
+            "obtained_amount": "1100.00",
+            "loan_amount": "1750.00",
+            "principle_amount": "1100.00",
+            "accrued_interest": "114.73",
+            "current_loan_amount": "1214.73",
+            "repaid_amount": 0,
+            "effective_outstanding": 1214.73,
+            "account_balance": "0.00"
+        },
+        {
+            "id": 18486,
+            "user_id": 442,
+            "status_code": "305",
+            "obtained_amount": "1100.00",
+            "loan_amount": "1750.00",
+            "principle_amount": "1100.00",
+            "accrued_interest": "114.73",
+            "current_loan_amount": "1214.73",
+            "repaid_amount": 0,
+            "effective_outstanding": 1214.73,
+            "account_balance": "0.00"
+        },
+        {
+            "id": 18480,
+            "user_id": 2061,
+            "status_code": "305",
+            "obtained_amount": "4719.00",
+            "loan_amount": "6480.00",
+            "principle_amount": "4719.00",
+            "accrued_interest": "488.42",
+            "current_loan_amount": "5207.42",
+            "repaid_amount": 0,
+            "effective_outstanding": 5207.42,
+            "account_balance": "0.00"
+        },
+        {
+            "id": 18479,
+            "user_id": 2061,
+            "status_code": "305",
+            "obtained_amount": "4719.00",
+            "loan_amount": "6480.00",
+            "principle_amount": "4719.00",
+            "accrued_interest": "488.42",
+            "current_loan_amount": "5207.42",
+            "repaid_amount": 0,
+            "effective_outstanding": 5207.42,
+            "account_balance": "0.00"
+        },
+        {
+            "id": 18478,
+            "user_id": 2051,
+            "status_code": "301",
+            "obtained_amount": "3300.00",
+            "loan_amount": "4153.00",
+            "principle_amount": "3300.00",
+            "accrued_interest": "395.34",
+            "current_loan_amount": "3695.34",
+            "repaid_amount": 0,
+            "effective_outstanding": 3695.34,
+            "account_balance": "4207.45"
+        },
+        {
+            "id": 18477,
+            "user_id": 402,
+            "status_code": "305",
+            "obtained_amount": "500.00",
+            "loan_amount": "707.00",
+            "principle_amount": "500.00",
+            "accrued_interest": "52.15",
+            "current_loan_amount": "552.15",
+            "repaid_amount": 0,
+            "effective_outstanding": 552.15,
+            "account_balance": "0.00"
+        },
+        {
+            "id": 18476,
+            "user_id": 440,
+            "status_code": "301",
+            "obtained_amount": "500.00",
+            "loan_amount": "707.00",
+            "principle_amount": "500.00",
+            "accrued_interest": "62.90",
+            "current_loan_amount": "562.90",
+            "repaid_amount": 0,
+            "effective_outstanding": 562.9,
+            "account_balance": "563.75"
+        },
+        {
+            "id": 18475,
+            "user_id": 1617,
+            "status_code": "301",
+            "obtained_amount": "2182.00",
+            "loan_amount": "2996.00",
+            "principle_amount": "2182.00",
+            "accrued_interest": "264.02",
+            "current_loan_amount": "2446.02",
+            "repaid_amount": 0,
+            "effective_outstanding": 2446.02,
+            "account_balance": "3034.19"
+        }
+    ],
+    "pilot_loans": [
+        {
+            "legacy_loan_id": 2584,
+            "user_id": 374,
+            "category": "simple_mou",
+            "product": "salary_based",
+            "status_code": "301",
+            "principal": "2283",
+            "effective_outstanding": 2662.75,
+            "repayment_count": 20,
+            "repayments_with_affected": 8,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 2631,
+            "user_id": 392,
+            "category": "simple_mou",
+            "product": "salary_based",
+            "status_code": "301",
+            "principal": "2427",
+            "effective_outstanding": 1356.612,
+            "repayment_count": 16,
+            "repayments_with_affected": 2,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 2882,
+            "user_id": 491,
+            "category": "simple_mou",
+            "product": "salary_based",
+            "status_code": "301",
+            "principal": "2217",
+            "effective_outstanding": 1143.1065,
+            "repayment_count": 11,
+            "repayments_with_affected": 1,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 187,
+            "user_id": 52,
+            "category": "mou_with_repayments",
+            "product": "salary_based",
+            "status_code": "300",
+            "principal": "114",
+            "effective_outstanding": 0,
+            "repayment_count": 8,
+            "repayments_with_affected": 0,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 230,
+            "user_id": 52,
+            "category": "mou_with_repayments",
+            "product": "salary_based",
+            "status_code": "300",
+            "principal": "224",
+            "effective_outstanding": 0,
+            "repayment_count": 8,
+            "repayments_with_affected": 0,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 232,
+            "user_id": 52,
+            "category": "mou_with_repayments",
+            "product": "salary_based",
+            "status_code": "300",
+            "principal": "335.25",
+            "effective_outstanding": 0,
+            "repayment_count": 8,
+            "repayments_with_affected": 0,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 7803,
+            "user_id": 596,
+            "category": "mou_multi",
+            "product": "salary_based",
+            "status_code": "301",
+            "principal": "3976",
+            "effective_outstanding": 177,
+            "repayment_count": 31,
+            "repayments_with_affected": 14,
+            "migration_confidence": "LOW"
+        },
+        {
+            "legacy_loan_id": 14227,
+            "user_id": 941,
+            "category": "mou_multi",
+            "product": "salary_based",
+            "status_code": "301",
+            "principal": "13754",
+            "effective_outstanding": 1100.02,
+            "repayment_count": 21,
+            "repayments_with_affected": 6,
+            "migration_confidence": "LOW"
+        },
+        {
+            "legacy_loan_id": 14589,
+            "user_id": 941,
+            "category": "mou_multi",
+            "product": "salary_based",
+            "status_code": "301",
+            "principal": "11412",
+            "effective_outstanding": 13560.000000000127,
+            "repayment_count": 21,
+            "repayments_with_affected": 6,
+            "migration_confidence": "LOW"
+        },
+        {
+            "legacy_loan_id": 16171,
+            "user_id": 941,
+            "category": "mou_multi",
+            "product": "salary_based",
+            "status_code": "301",
+            "principal": "1396",
+            "effective_outstanding": 2130.2000000000276,
+            "repayment_count": 21,
+            "repayments_with_affected": 6,
+            "migration_confidence": "LOW"
+        },
+        {
+            "legacy_loan_id": 450,
+            "user_id": 10,
+            "category": "character",
+            "product": "character_based",
+            "status_code": "300",
+            "principal": "58.75",
+            "effective_outstanding": 0,
+            "repayment_count": 53,
+            "repayments_with_affected": 21,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 473,
+            "user_id": 10,
+            "category": "character",
+            "product": "character_based",
+            "status_code": "300",
+            "principal": "1.18",
+            "effective_outstanding": 0,
+            "repayment_count": 53,
+            "repayments_with_affected": 21,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 474,
+            "user_id": 10,
+            "category": "character",
+            "product": "character_based",
+            "status_code": "300",
+            "principal": "1.18",
+            "effective_outstanding": 0,
+            "repayment_count": 53,
+            "repayments_with_affected": 21,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 476,
+            "user_id": 14,
+            "category": "character",
+            "product": "character_based",
+            "status_code": "300",
+            "principal": "97.68",
+            "effective_outstanding": 0,
+            "repayment_count": 4,
+            "repayments_with_affected": 0,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 477,
+            "user_id": 14,
+            "category": "character",
+            "product": "character_based",
+            "status_code": "300",
+            "principal": "12.21",
+            "effective_outstanding": 0,
+            "repayment_count": 4,
+            "repayments_with_affected": 0,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 1,
+            "user_id": 12,
+            "category": "settled",
+            "product": "salary_based",
+            "status_code": "300",
+            "principal": "1",
+            "effective_outstanding": 0,
+            "repayment_count": 1,
+            "repayments_with_affected": 0,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 2,
+            "user_id": 14,
+            "category": "settled",
+            "product": "salary_based",
+            "status_code": "300",
+            "principal": "1",
+            "effective_outstanding": 0,
+            "repayment_count": 4,
+            "repayments_with_affected": 0,
+            "migration_confidence": "HIGH"
+        },
+        {
+            "legacy_loan_id": 1678,
+            "user_id": 48,
+            "category": "adjustment",
+            "product": "character_based",
+            "status_code": "300",
+            "principal": "5950",
+            "effective_outstanding": 0,
+            "repayment_count": 86,
+            "repayments_with_affected": 14,
+            "migration_confidence": "MANUAL REVIEW"
+        }
+    ],
+    "risk_metrics": {
+        "pct_repayments_auto_attributable": 37.98,
+        "pct_repayments_requiring_reconstruction": 62.02,
+        "ambiguous_mou_repayment_count": 102,
+        "ambiguous_mou_repayment_value": 157594.66,
+        "active_outstanding_total": 4265589.36,
+        "ambiguous_active_exposure": 213875.61,
+        "pct_active_outstanding_ambiguous": 5.01
+    }
+}

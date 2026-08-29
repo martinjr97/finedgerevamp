@@ -5,7 +5,6 @@
 @section('content')
     @php
         use App\Support\PublicRegistrationPaths;
-        $employment = $request->employment_details ?? [];
         $collateral = $request->collateral_details ?? [];
         $pathLabel = $request->registration_path
             ? PublicRegistrationPaths::label($request->registration_path)
@@ -75,6 +74,14 @@
                             @endphp
                             <dd class="font-semibold {{ $statusColor }}">{{ $statusLabel }}</dd>
                         </div>
+                        @if(filled($interactedOfficerName ?? null))
+                            <div class="flex justify-between items-start gap-2">
+                                <dt class="text-slate-400 shrink-0">Officer interacted with</dt>
+                                <dd class="text-right">
+                                    <span class="summary-officer-name">{{ $interactedOfficerName }}</span>
+                                </dd>
+                            </div>
+                        @endif
                         <div class="flex justify-between">
                             <dt class="text-slate-400">Submitted on</dt>
                             <dd>
@@ -397,20 +404,24 @@
                     </div>
                 </div>
 
-                @if($request->registration_path === PublicRegistrationPaths::GOVERNMENT_WORKER && !empty($employment))
+                @if($request->registration_path === PublicRegistrationPaths::GOVERNMENT_WORKER && !empty($employmentDisplay))
                     <div class="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg">
                         <h2 class="text-lg font-semibold text-white mb-4">Employment details</h2>
                         <div class="grid gap-3 md:grid-cols-2 text-sm text-slate-200">
-	                            @foreach($employment as $key => $value)
-	                                @if($value !== null && $value !== '')
-	                                    <div>
-	                                        <div class="text-slate-400 text-xs uppercase tracking-wide">{{ \Illuminate\Support\Str::of($key)->replace('_', ' ')->title() }}</div>
-	                                        <div class="mt-1 text-base">{{ $key !== 'employee_number' && is_numeric($value) ? number_format((float) $value, 2) : $value }}</div>
-	                                    </div>
-	                                @endif
-	                            @endforeach
-	                        </div>
-	                    </div>
+                            @foreach($employmentDisplay as $row)
+                                <div>
+                                    <div class="text-slate-400 text-xs uppercase tracking-wide">{{ $row['label'] }}</div>
+                                    <div class="mt-1 text-base">
+                                        @if(($row['format'] ?? null) === 'money')
+                                            {{ number_format((float) $row['value'], 2) }}
+                                        @else
+                                            {{ $row['value'] }}
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 @endif
 
                 @if($request->registration_path === PublicRegistrationPaths::COLLATERAL_BASED && !empty($collateral))

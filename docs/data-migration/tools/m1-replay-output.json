@@ -1,0 +1,5159 @@
+{
+    "migration_run_id": 12,
+    "attribution": {
+        "A_DIRECT": 6541,
+        "B_RECONSTRUCTED": 2600,
+        "C_AMBIGUOUS": 2,
+        "D_MANUAL": 4673
+    },
+    "loan_status": {
+        "PASS": 107,
+        "PASS_WITH_MIGRATION_ADJUSTMENT": 643,
+        "MANUAL_REVIEW": 2,
+        "FAIL": 0
+    },
+    "product_stats": {
+        "Government": {
+            "loans": 429,
+            "legacy_outstanding": 1694921.1487499957,
+            "reconstructed_outstanding": 1694921.1899999995,
+            "variance": 0.10999999999999999,
+            "PASS": 1,
+            "PASS_WITH_MIGRATION_ADJUSTMENT": 428,
+            "MANUAL_REVIEW": 0,
+            "FAIL": 0
+        },
+        "Character": {
+            "loans": 142,
+            "legacy_outstanding": 1609296.02,
+            "reconstructed_outstanding": 1609296.02,
+            "variance": 0,
+            "PASS": 82,
+            "PASS_WITH_MIGRATION_ADJUSTMENT": 60,
+            "MANUAL_REVIEW": 0,
+            "FAIL": 0
+        },
+        "MOU": {
+            "loans": 157,
+            "legacy_outstanding": 928747.1617232546,
+            "reconstructed_outstanding": 928747.2100000001,
+            "variance": 0.04,
+            "PASS": 6,
+            "PASS_WITH_MIGRATION_ADJUSTMENT": 149,
+            "MANUAL_REVIEW": 2,
+            "FAIL": 0
+        },
+        "Marketeer": {
+            "loans": 24,
+            "legacy_outstanding": 32625,
+            "reconstructed_outstanding": 32625,
+            "variance": 0,
+            "PASS": 18,
+            "PASS_WITH_MIGRATION_ADJUSTMENT": 6,
+            "MANUAL_REVIEW": 0,
+            "FAIL": 0
+        }
+    },
+    "conservation": {
+        "source_repayment_total": 14498236.88,
+        "staged_repayment_total": 14498236.88,
+        "allocation_total": 2028281.24,
+        "repayment_conservation_pass": true,
+        "allocation_conservation_pass": true
+    },
+    "largest_variance": {
+        "loanId": 3248,
+        "productClass": "Government",
+        "legacyEffective": 1148.5,
+        "simulated": 41.125,
+        "adjustment": 1107.38,
+        "reconstructed": 1148.51,
+        "variance": 0.01,
+        "reconciliation": "PASS_WITH_MIGRATION_ADJUSTMENT",
+        "promotion": "PROMOTABLE"
+    },
+    "ambiguous_cases": [
+        {
+            "legacy_repayment_id": 28303,
+            "legacy_user_id": 1835,
+            "repayment_date": "2025-09-30 00:00:00",
+            "amount": 5000,
+            "eligible_loan_ids": [
+                16969,
+                17617
+            ],
+            "affected_loan_ids": null,
+            "rule_used": "salary_based_accrual_multi_active_no_attribution",
+            "exception": "multiple eligible MOU loans without affected_loan_ids",
+            "eligible_balances": [
+                {
+                    "loan_id": 16969,
+                    "current_loan_amount": 14655,
+                    "loan_amount": "14655",
+                    "repaid_amount": 0
+                },
+                {
+                    "loan_id": 17617,
+                    "current_loan_amount": "10678",
+                    "loan_amount": "22678",
+                    "repaid_amount": 0
+                }
+            ]
+        },
+        {
+            "legacy_repayment_id": 28308,
+            "legacy_user_id": 1835,
+            "repayment_date": "2025-11-06 12:04:47",
+            "amount": 5000,
+            "eligible_loan_ids": [
+                16969,
+                17617
+            ],
+            "affected_loan_ids": null,
+            "rule_used": "salary_based_accrual_multi_active_no_attribution",
+            "exception": "multiple eligible MOU loans without affected_loan_ids",
+            "eligible_balances": [
+                {
+                    "loan_id": 16969,
+                    "current_loan_amount": 14655,
+                    "loan_amount": "14655",
+                    "repaid_amount": 0
+                },
+                {
+                    "loan_id": 17617,
+                    "current_loan_amount": "10678",
+                    "loan_amount": "22678",
+                    "repaid_amount": 0
+                }
+            ]
+        }
+    ],
+    "account_adjustments": {
+        "count_in_active_portfolio": 104,
+        "unallocated_flag": "ACCOUNT_ADJUSTMENT_UNALLOCATED",
+        "note": "Adjustments are customer/account-level with no loan_id; not auto-distributed. Active-loan reconciliation uses loan effective balances, not loans_accounts.balance.",
+        "sample_ids": [
+            2,
+            3,
+            4,
+            5,
+            6
+        ]
+    },
+    "promotable_loans": 750,
+    "manual_or_blocked": 2,
+    "customer_results": [
+        {
+            "user_id": 374,
+            "legacy_sum": 2662.75,
+            "reconstructed_sum": 2662.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 392,
+            "legacy_sum": 1356.612,
+            "reconstructed_sum": 1356.61,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 491,
+            "legacy_sum": 1143.1065,
+            "reconstructed_sum": 1143.11,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 401,
+            "legacy_sum": 2621.0995,
+            "reconstructed_sum": 2621.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 516,
+            "legacy_sum": 1458,
+            "reconstructed_sum": 1458,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 376,
+            "legacy_sum": 512,
+            "reconstructed_sum": 512,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 587,
+            "legacy_sum": 1147,
+            "reconstructed_sum": 1147,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 628,
+            "legacy_sum": 1148.5,
+            "reconstructed_sum": 1148.51,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 577,
+            "legacy_sum": 5703.5,
+            "reconstructed_sum": 5703.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 484,
+            "legacy_sum": 1976.75,
+            "reconstructed_sum": 1976.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 576,
+            "legacy_sum": 453,
+            "reconstructed_sum": 453,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 582,
+            "legacy_sum": 419.74,
+            "reconstructed_sum": 419.74,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 697,
+            "legacy_sum": 1433,
+            "reconstructed_sum": 1433,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 541,
+            "legacy_sum": 3675.665249999999,
+            "reconstructed_sum": 3675.66,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 703,
+            "legacy_sum": 1216.61,
+            "reconstructed_sum": 1216.61,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 261,
+            "legacy_sum": 538,
+            "reconstructed_sum": 538,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 584,
+            "legacy_sum": 304.0895,
+            "reconstructed_sum": 304.09,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 515,
+            "legacy_sum": 1382.5,
+            "reconstructed_sum": 1382.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 626,
+            "legacy_sum": 2068.5859999999993,
+            "reconstructed_sum": 2068.59,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 511,
+            "legacy_sum": 854.6500000000001,
+            "reconstructed_sum": 854.65,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 445,
+            "legacy_sum": 3696.625,
+            "reconstructed_sum": 3696.62,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 663,
+            "legacy_sum": 1121.6047499999995,
+            "reconstructed_sum": 1121.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 755,
+            "legacy_sum": 1304.34,
+            "reconstructed_sum": 1304.34,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 758,
+            "legacy_sum": 699.7,
+            "reconstructed_sum": 699.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 675,
+            "legacy_sum": 1623,
+            "reconstructed_sum": 1623,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 764,
+            "legacy_sum": 1064.54,
+            "reconstructed_sum": 1064.54,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 315,
+            "legacy_sum": 571,
+            "reconstructed_sum": 571,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 794,
+            "legacy_sum": 489.4,
+            "reconstructed_sum": 489.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 483,
+            "legacy_sum": 3122.7015,
+            "reconstructed_sum": 3122.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 311,
+            "legacy_sum": 800,
+            "reconstructed_sum": 800,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 804,
+            "legacy_sum": 684.19,
+            "reconstructed_sum": 684.19,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 613,
+            "legacy_sum": 1621.375,
+            "reconstructed_sum": 1621.38,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 814,
+            "legacy_sum": 836.15,
+            "reconstructed_sum": 836.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 639,
+            "legacy_sum": 747.05,
+            "reconstructed_sum": 747.05,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 720,
+            "legacy_sum": 2001,
+            "reconstructed_sum": 2001,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 389,
+            "legacy_sum": 223.75,
+            "reconstructed_sum": 223.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 343,
+            "legacy_sum": 5028.95,
+            "reconstructed_sum": 5028.95,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 657,
+            "legacy_sum": 1160.86325,
+            "reconstructed_sum": 1160.86,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 799,
+            "legacy_sum": 6194.4,
+            "reconstructed_sum": 6194.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 767,
+            "legacy_sum": 852.4499999999998,
+            "reconstructed_sum": 852.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 216,
+            "legacy_sum": 2445,
+            "reconstructed_sum": 2445,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 637,
+            "legacy_sum": 777.5,
+            "reconstructed_sum": 777.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 840,
+            "legacy_sum": 184.5,
+            "reconstructed_sum": 184.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 848,
+            "legacy_sum": 242.79999999999995,
+            "reconstructed_sum": 242.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 847,
+            "legacy_sum": 1114.75,
+            "reconstructed_sum": 1114.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 849,
+            "legacy_sum": 843.5999999999999,
+            "reconstructed_sum": 843.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 853,
+            "legacy_sum": 5428.5,
+            "reconstructed_sum": 5428.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 884,
+            "legacy_sum": 1111.775,
+            "reconstructed_sum": 1111.78,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 552,
+            "legacy_sum": 2643.5,
+            "reconstructed_sum": 2643.51,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 743,
+            "legacy_sum": 10118.75,
+            "reconstructed_sum": 10118.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 575,
+            "legacy_sum": 0.2100000000289981,
+            "reconstructed_sum": 0.21,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 404,
+            "legacy_sum": 2080.799999999914,
+            "reconstructed_sum": 2080.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 779,
+            "legacy_sum": 11800.450000000226,
+            "reconstructed_sum": 11800.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 717,
+            "legacy_sum": 3416.25,
+            "reconstructed_sum": 3416.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 247,
+            "legacy_sum": 2737,
+            "reconstructed_sum": 2737,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 775,
+            "legacy_sum": 3604.1000000000995,
+            "reconstructed_sum": 3604.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 834,
+            "legacy_sum": 9658.72000000003,
+            "reconstructed_sum": 9658.72,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 926,
+            "legacy_sum": 1020.6000000000222,
+            "reconstructed_sum": 1020.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 825,
+            "legacy_sum": 1028.5000000000111,
+            "reconstructed_sum": 1028.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 802,
+            "legacy_sum": 5833.1999999999125,
+            "reconstructed_sum": 5833.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 733,
+            "legacy_sum": 0.40999999996000724,
+            "reconstructed_sum": 0.41,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 623,
+            "legacy_sum": 6152.050000000125,
+            "reconstructed_sum": 6152.05,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 942,
+            "legacy_sum": 11297.25,
+            "reconstructed_sum": 11297.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 525,
+            "legacy_sum": 244.64,
+            "reconstructed_sum": 244.64,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 946,
+            "legacy_sum": 2810.7500000000937,
+            "reconstructed_sum": 2810.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 948,
+            "legacy_sum": 3780.79999999987,
+            "reconstructed_sum": 3780.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 952,
+            "legacy_sum": 1581.1500000000433,
+            "reconstructed_sum": 1581.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 962,
+            "legacy_sum": 4853.249999999922,
+            "reconstructed_sum": 4853.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 701,
+            "legacy_sum": 15392.25,
+            "reconstructed_sum": 15392.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 983,
+            "legacy_sum": 1460.7750000000265,
+            "reconstructed_sum": 1460.78,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 994,
+            "legacy_sum": 5056.250000000108,
+            "reconstructed_sum": 5056.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 995,
+            "legacy_sum": 585,
+            "reconstructed_sum": 585,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 873,
+            "legacy_sum": 11682.135000000042,
+            "reconstructed_sum": 11682.14,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1012,
+            "legacy_sum": 2619.119999999938,
+            "reconstructed_sum": 2619.12,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1015,
+            "legacy_sum": 6380.75,
+            "reconstructed_sum": 6380.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 850,
+            "legacy_sum": 6532.07500000001,
+            "reconstructed_sum": 6532.08,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 786,
+            "legacy_sum": 8845.675000000207,
+            "reconstructed_sum": 8845.68,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1038,
+            "legacy_sum": 2970.000000000002,
+            "reconstructed_sum": 2970,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 751,
+            "legacy_sum": 1443.9499999999748,
+            "reconstructed_sum": 1443.95,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1154,
+            "legacy_sum": 339.2000000000098,
+            "reconstructed_sum": 339.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 380,
+            "legacy_sum": 7815.155000000006,
+            "reconstructed_sum": 7815.16,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 596,
+            "legacy_sum": 3501,
+            "reconstructed_sum": 3501,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1188,
+            "legacy_sum": 1313.8000000000047,
+            "reconstructed_sum": 1313.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1198,
+            "legacy_sum": 1258.1999999999985,
+            "reconstructed_sum": 1258.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1206,
+            "legacy_sum": 1124.250000000015,
+            "reconstructed_sum": 1124.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 947,
+            "legacy_sum": 3133,
+            "reconstructed_sum": 3133,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1192,
+            "legacy_sum": 898.7499999999345,
+            "reconstructed_sum": 898.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 123,
+            "legacy_sum": 7241,
+            "reconstructed_sum": 7241,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1190,
+            "legacy_sum": 3159.324999999907,
+            "reconstructed_sum": 3159.32,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1236,
+            "legacy_sum": 21923,
+            "reconstructed_sum": 21923,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1237,
+            "legacy_sum": 1519.3000000000402,
+            "reconstructed_sum": 1519.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 669,
+            "legacy_sum": 4299.450000000093,
+            "reconstructed_sum": 4299.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1208,
+            "legacy_sum": 2940.8000000000557,
+            "reconstructed_sum": 2940.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1168,
+            "legacy_sum": 4409.5,
+            "reconstructed_sum": 4409.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1210,
+            "legacy_sum": 2001.1499999999537,
+            "reconstructed_sum": 2001.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1201,
+            "legacy_sum": 5009.5,
+            "reconstructed_sum": 5009.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 992,
+            "legacy_sum": 3379.549999999954,
+            "reconstructed_sum": 3379.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1213,
+            "legacy_sum": 8442.150000000049,
+            "reconstructed_sum": 8442.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1200,
+            "legacy_sum": 4795.154999999982,
+            "reconstructed_sum": 4795.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1058,
+            "legacy_sum": 5016.524999999783,
+            "reconstructed_sum": 5016.52,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1251,
+            "legacy_sum": 3712.770000000048,
+            "reconstructed_sum": 3712.77,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 774,
+            "legacy_sum": 7203.400000000154,
+            "reconstructed_sum": 7203.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1253,
+            "legacy_sum": 3171.2050000000477,
+            "reconstructed_sum": 3171.21,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 529,
+            "legacy_sum": 6852.100000000091,
+            "reconstructed_sum": 6852.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 959,
+            "legacy_sum": 13125.875,
+            "reconstructed_sum": 13125.88,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1275,
+            "legacy_sum": 1795.8499999999235,
+            "reconstructed_sum": 1795.85,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1276,
+            "legacy_sum": 6141.949999999847,
+            "reconstructed_sum": 6141.95,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1281,
+            "legacy_sum": 3010.099999999928,
+            "reconstructed_sum": 3010.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1282,
+            "legacy_sum": 20174,
+            "reconstructed_sum": 20174,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 954,
+            "legacy_sum": 4060,
+            "reconstructed_sum": 4060,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1092,
+            "legacy_sum": 7910.399999999911,
+            "reconstructed_sum": 7910.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1151,
+            "legacy_sum": 2740,
+            "reconstructed_sum": 2740,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1140,
+            "legacy_sum": 7116.599999999976,
+            "reconstructed_sum": 7116.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1293,
+            "legacy_sum": 7181.499999999849,
+            "reconstructed_sum": 7181.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1304,
+            "legacy_sum": 4923.600000000079,
+            "reconstructed_sum": 4923.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1309,
+            "legacy_sum": 2357.799999999991,
+            "reconstructed_sum": 2357.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1311,
+            "legacy_sum": 1579.1500000000406,
+            "reconstructed_sum": 1579.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1310,
+            "legacy_sum": 445.89999999995143,
+            "reconstructed_sum": 445.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1314,
+            "legacy_sum": 940.0000000000468,
+            "reconstructed_sum": 940,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1316,
+            "legacy_sum": 5855.97499999985,
+            "reconstructed_sum": 5855.98,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1319,
+            "legacy_sum": 2198,
+            "reconstructed_sum": 2198,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1129,
+            "legacy_sum": 20934,
+            "reconstructed_sum": 20934,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1331,
+            "legacy_sum": 4966.800000000067,
+            "reconstructed_sum": 4966.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1334,
+            "legacy_sum": 91.34999999997785,
+            "reconstructed_sum": 91.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1150,
+            "legacy_sum": 20891,
+            "reconstructed_sum": 20891,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1321,
+            "legacy_sum": 2427.919999999974,
+            "reconstructed_sum": 2427.92,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1336,
+            "legacy_sum": 501.1499999999255,
+            "reconstructed_sum": 501.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1337,
+            "legacy_sum": 2923.1499999999264,
+            "reconstructed_sum": 2923.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1340,
+            "legacy_sum": 1018,
+            "reconstructed_sum": 1018,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1202,
+            "legacy_sum": 7923.950000000032,
+            "reconstructed_sum": 7923.95,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 970,
+            "legacy_sum": 4983.144999999822,
+            "reconstructed_sum": 4983.15,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1199,
+            "legacy_sum": 7938.540000000052,
+            "reconstructed_sum": 7938.54,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1254,
+            "legacy_sum": 3056.2000000000407,
+            "reconstructed_sum": 3056.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1189,
+            "legacy_sum": 7038.174999999853,
+            "reconstructed_sum": 7038.18,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1179,
+            "legacy_sum": 7428.590000000024,
+            "reconstructed_sum": 7428.59,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1242,
+            "legacy_sum": 4749.2,
+            "reconstructed_sum": 4749.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1241,
+            "legacy_sum": 4635.799999999857,
+            "reconstructed_sum": 4635.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1299,
+            "legacy_sum": 6705.5,
+            "reconstructed_sum": 6705.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1204,
+            "legacy_sum": 6413.4999999998545,
+            "reconstructed_sum": 6413.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1356,
+            "legacy_sum": 1299.8999999999287,
+            "reconstructed_sum": 1299.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1306,
+            "legacy_sum": 4829.924999999857,
+            "reconstructed_sum": 4829.92,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1358,
+            "legacy_sum": 1905.3724999999563,
+            "reconstructed_sum": 1905.37,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1357,
+            "legacy_sum": 841.9499999999825,
+            "reconstructed_sum": 841.95,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1362,
+            "legacy_sum": 2931.574999999956,
+            "reconstructed_sum": 2931.57,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1365,
+            "legacy_sum": 413.75,
+            "reconstructed_sum": 413.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1368,
+            "legacy_sum": 487.44999999996344,
+            "reconstructed_sum": 487.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1259,
+            "legacy_sum": 9539.625,
+            "reconstructed_sum": 9539.63,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1371,
+            "legacy_sum": 1902.5,
+            "reconstructed_sum": 1902.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1239,
+            "legacy_sum": 6851.899999999877,
+            "reconstructed_sum": 6851.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1376,
+            "legacy_sum": 2785.3499999999794,
+            "reconstructed_sum": 2785.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1375,
+            "legacy_sum": 1910.75,
+            "reconstructed_sum": 1910.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1378,
+            "legacy_sum": 2660,
+            "reconstructed_sum": 2660,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1184,
+            "legacy_sum": 6575.699999999877,
+            "reconstructed_sum": 6575.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1260,
+            "legacy_sum": 4821.149999999965,
+            "reconstructed_sum": 4821.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1385,
+            "legacy_sum": 1584.550000000021,
+            "reconstructed_sum": 1584.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1392,
+            "legacy_sum": 175.59999999996853,
+            "reconstructed_sum": 175.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1230,
+            "legacy_sum": 2636.4249999998983,
+            "reconstructed_sum": 2636.42,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1178,
+            "legacy_sum": 12653.5,
+            "reconstructed_sum": 12653.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1180,
+            "legacy_sum": 14448.5,
+            "reconstructed_sum": 14448.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1279,
+            "legacy_sum": 6043.49999999992,
+            "reconstructed_sum": 6043.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1419,
+            "legacy_sum": 4707.299999999928,
+            "reconstructed_sum": 4707.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1425,
+            "legacy_sum": 1293.3999999999583,
+            "reconstructed_sum": 1293.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1431,
+            "legacy_sum": 3293,
+            "reconstructed_sum": 3293,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 777,
+            "legacy_sum": 16116.570000000069,
+            "reconstructed_sum": 16116.57,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1433,
+            "legacy_sum": 4488,
+            "reconstructed_sum": 4488,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1437,
+            "legacy_sum": 4462.539999999899,
+            "reconstructed_sum": 4462.54,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 542,
+            "legacy_sum": 4163.399999999977,
+            "reconstructed_sum": 4163.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1441,
+            "legacy_sum": 2501.149999999958,
+            "reconstructed_sum": 2501.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1445,
+            "legacy_sum": 2309.840000000051,
+            "reconstructed_sum": 2309.84,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1305,
+            "legacy_sum": 5888.049999999861,
+            "reconstructed_sum": 5888.05,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1463,
+            "legacy_sum": 1571,
+            "reconstructed_sum": 1571,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1461,
+            "legacy_sum": 439.75,
+            "reconstructed_sum": 439.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1469,
+            "legacy_sum": 33.249999999978854,
+            "reconstructed_sum": 33.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1194,
+            "legacy_sum": 7890.000000000078,
+            "reconstructed_sum": 7890,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1472,
+            "legacy_sum": 683.6299999999958,
+            "reconstructed_sum": 683.63,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1484,
+            "legacy_sum": 1536.449999999932,
+            "reconstructed_sum": 1536.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1483,
+            "legacy_sum": 4769.269999999939,
+            "reconstructed_sum": 4769.27,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1487,
+            "legacy_sum": 2669.1999999999302,
+            "reconstructed_sum": 2669.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1477,
+            "legacy_sum": 3219.2000000000335,
+            "reconstructed_sum": 3219.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1496,
+            "legacy_sum": 3532.549999999931,
+            "reconstructed_sum": 3532.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1497,
+            "legacy_sum": 1866.0700000000083,
+            "reconstructed_sum": 1866.07,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1492,
+            "legacy_sum": 8011.099999999862,
+            "reconstructed_sum": 8011.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1191,
+            "legacy_sum": 3887.400000000067,
+            "reconstructed_sum": 3887.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1499,
+            "legacy_sum": 2938.1499999999583,
+            "reconstructed_sum": 2938.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1504,
+            "legacy_sum": 283.1000000000072,
+            "reconstructed_sum": 283.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1506,
+            "legacy_sum": 3622.1999999999316,
+            "reconstructed_sum": 3622.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1507,
+            "legacy_sum": 2005.9499999999312,
+            "reconstructed_sum": 2005.95,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1512,
+            "legacy_sum": 1520.0300000000498,
+            "reconstructed_sum": 1520.03,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1514,
+            "legacy_sum": 1124.1500000000497,
+            "reconstructed_sum": 1124.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1517,
+            "legacy_sum": 6103.249999999863,
+            "reconstructed_sum": 6103.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1323,
+            "legacy_sum": 7280.669999999802,
+            "reconstructed_sum": 7280.67,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1521,
+            "legacy_sum": 2295.1499999999587,
+            "reconstructed_sum": 2295.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1297,
+            "legacy_sum": 6852.200000000001,
+            "reconstructed_sum": 6852.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1430,
+            "legacy_sum": 9114.300000000088,
+            "reconstructed_sum": 9114.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1524,
+            "legacy_sum": 3755.050000000032,
+            "reconstructed_sum": 3755.05,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1280,
+            "legacy_sum": 24671,
+            "reconstructed_sum": 24671,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1389,
+            "legacy_sum": 4277.75,
+            "reconstructed_sum": 4277.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1464,
+            "legacy_sum": 559.8499999999403,
+            "reconstructed_sum": 559.85,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1465,
+            "legacy_sum": 2437.549999999959,
+            "reconstructed_sum": 2437.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1409,
+            "legacy_sum": 6372.449999999863,
+            "reconstructed_sum": 6372.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1233,
+            "legacy_sum": 3177.7,
+            "reconstructed_sum": 3177.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1460,
+            "legacy_sum": 7308.149999999963,
+            "reconstructed_sum": 7308.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1181,
+            "legacy_sum": 5248.875000000001,
+            "reconstructed_sum": 5248.88,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1183,
+            "legacy_sum": 21786.150000000216,
+            "reconstructed_sum": 21786.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1491,
+            "legacy_sum": 424.49999999999136,
+            "reconstructed_sum": 424.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1363,
+            "legacy_sum": 5333.5,
+            "reconstructed_sum": 5333.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1530,
+            "legacy_sum": 2645.000000000048,
+            "reconstructed_sum": 2645,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1262,
+            "legacy_sum": 2423.849999999943,
+            "reconstructed_sum": 2423.85,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1532,
+            "legacy_sum": 1333.7999999999324,
+            "reconstructed_sum": 1333.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1536,
+            "legacy_sum": 548,
+            "reconstructed_sum": 548,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1274,
+            "legacy_sum": 17221.125,
+            "reconstructed_sum": 17221.13,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1541,
+            "legacy_sum": 2398.599999999956,
+            "reconstructed_sum": 2398.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1442,
+            "legacy_sum": 471.67999999999347,
+            "reconstructed_sum": 471.68,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1350,
+            "legacy_sum": 28192.75,
+            "reconstructed_sum": 28192.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1263,
+            "legacy_sum": 2717.5499999999674,
+            "reconstructed_sum": 2717.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1182,
+            "legacy_sum": 17670.78999999987,
+            "reconstructed_sum": 17670.79,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1549,
+            "legacy_sum": 91.84999999997967,
+            "reconstructed_sum": 91.85,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1364,
+            "legacy_sum": 4122.200000000004,
+            "reconstructed_sum": 4122.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1553,
+            "legacy_sum": 895.0999999999797,
+            "reconstructed_sum": 895.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1295,
+            "legacy_sum": 586.3499999999594,
+            "reconstructed_sum": 586.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1278,
+            "legacy_sum": 2410.6899999999523,
+            "reconstructed_sum": 2410.69,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1562,
+            "legacy_sum": 786.074999999933,
+            "reconstructed_sum": 786.07,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 567,
+            "legacy_sum": 1350.599999999993,
+            "reconstructed_sum": 1350.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1565,
+            "legacy_sum": 961.9199999999919,
+            "reconstructed_sum": 961.92,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1386,
+            "legacy_sum": 5891.300000000081,
+            "reconstructed_sum": 5891.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1570,
+            "legacy_sum": 2626.3499999999713,
+            "reconstructed_sum": 2626.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1240,
+            "legacy_sum": 6060.4999999998845,
+            "reconstructed_sum": 6060.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1193,
+            "legacy_sum": 19005.750000000287,
+            "reconstructed_sum": 19005.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1187,
+            "legacy_sum": 18789.80000000013,
+            "reconstructed_sum": 18789.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1186,
+            "legacy_sum": 14726.674999999903,
+            "reconstructed_sum": 14726.68,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1374,
+            "legacy_sum": 609.3500000000486,
+            "reconstructed_sum": 609.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1258,
+            "legacy_sum": 9463.810000000192,
+            "reconstructed_sum": 9463.81,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1571,
+            "legacy_sum": 407.8499999999799,
+            "reconstructed_sum": 407.85,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 691,
+            "legacy_sum": 4557.429999999984,
+            "reconstructed_sum": 4557.43,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 495,
+            "legacy_sum": 105.66,
+            "reconstructed_sum": 105.66,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1485,
+            "legacy_sum": 5069.400000000012,
+            "reconstructed_sum": 5069.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1405,
+            "legacy_sum": 205.9499999999805,
+            "reconstructed_sum": 205.95,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1351,
+            "legacy_sum": 12927.25,
+            "reconstructed_sum": 12927.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 708,
+            "legacy_sum": 5354.299999999916,
+            "reconstructed_sum": 5354.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1579,
+            "legacy_sum": 11900,
+            "reconstructed_sum": 11900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1212,
+            "legacy_sum": 1138.4499999999616,
+            "reconstructed_sum": 1138.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1546,
+            "legacy_sum": 1865.8999999999442,
+            "reconstructed_sum": 1865.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1244,
+            "legacy_sum": 6508.049999999876,
+            "reconstructed_sum": 6508.05,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1443,
+            "legacy_sum": 3143.2500000000146,
+            "reconstructed_sum": 3143.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1583,
+            "legacy_sum": 5324.150000000076,
+            "reconstructed_sum": 5324.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 413,
+            "legacy_sum": 2040.2000000000075,
+            "reconstructed_sum": 2040.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1312,
+            "legacy_sum": 3049.2999999999392,
+            "reconstructed_sum": 3049.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1543,
+            "legacy_sum": 1140.2200000000075,
+            "reconstructed_sum": 1140.22,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1294,
+            "legacy_sum": 1252.1999999999857,
+            "reconstructed_sum": 1252.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1243,
+            "legacy_sum": 7380.61999999997,
+            "reconstructed_sum": 7380.62,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1359,
+            "legacy_sum": 4032.4000000000506,
+            "reconstructed_sum": 4032.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1360,
+            "legacy_sum": 6311.650000000133,
+            "reconstructed_sum": 6311.65,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1471,
+            "legacy_sum": 1612.0799999999795,
+            "reconstructed_sum": 1612.08,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 116,
+            "legacy_sum": 4435,
+            "reconstructed_sum": 4435,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1410,
+            "legacy_sum": 1918.7499999999418,
+            "reconstructed_sum": 1918.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1474,
+            "legacy_sum": 6517.399999999985,
+            "reconstructed_sum": 6517.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1412,
+            "legacy_sum": 2940.350000000015,
+            "reconstructed_sum": 2940.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1429,
+            "legacy_sum": 1890.3999999999123,
+            "reconstructed_sum": 1890.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1400,
+            "legacy_sum": 2414.7900000000445,
+            "reconstructed_sum": 2414.79,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1589,
+            "legacy_sum": 4660.25,
+            "reconstructed_sum": 4660.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1450,
+            "legacy_sum": 8860.000000000038,
+            "reconstructed_sum": 8860,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 91,
+            "legacy_sum": 1603,
+            "reconstructed_sum": 1603,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1516,
+            "legacy_sum": 1529.2999999999638,
+            "reconstructed_sum": 1529.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1271,
+            "legacy_sum": 4047.0900000000256,
+            "reconstructed_sum": 4047.09,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1523,
+            "legacy_sum": 4769.870000000064,
+            "reconstructed_sum": 4769.87,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1605,
+            "legacy_sum": 154.549999999982,
+            "reconstructed_sum": 154.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 749,
+            "legacy_sum": 656.815,
+            "reconstructed_sum": 656.82,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1511,
+            "legacy_sum": 2390.5500000000357,
+            "reconstructed_sum": 2390.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1435,
+            "legacy_sum": 7510.100000000048,
+            "reconstructed_sum": 7510.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1292,
+            "legacy_sum": 23128.75,
+            "reconstructed_sum": 23128.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1185,
+            "legacy_sum": 24514.75,
+            "reconstructed_sum": 24514.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1238,
+            "legacy_sum": 3504.5499999999292,
+            "reconstructed_sum": 3504.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1388,
+            "legacy_sum": 2558.149999999967,
+            "reconstructed_sum": 2558.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1540,
+            "legacy_sum": 880.5999999999649,
+            "reconstructed_sum": 880.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 447,
+            "legacy_sum": 1625.7700000000218,
+            "reconstructed_sum": 1625.77,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1393,
+            "legacy_sum": 2703.850000000014,
+            "reconstructed_sum": 2703.85,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1307,
+            "legacy_sum": 5540.00000000007,
+            "reconstructed_sum": 5540,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1267,
+            "legacy_sum": 7109.65000000014,
+            "reconstructed_sum": 7109.65,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1272,
+            "legacy_sum": 4043.400000000026,
+            "reconstructed_sum": 4043.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1584,
+            "legacy_sum": 6255,
+            "reconstructed_sum": 6255,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1287,
+            "legacy_sum": 1497.2000000000235,
+            "reconstructed_sum": 1497.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1473,
+            "legacy_sum": 987.9999999999827,
+            "reconstructed_sum": 988,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1612,
+            "legacy_sum": 4998,
+            "reconstructed_sum": 4998,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1361,
+            "legacy_sum": 20410.42499999982,
+            "reconstructed_sum": 20410.43,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 504,
+            "legacy_sum": 3280,
+            "reconstructed_sum": 3280,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 397,
+            "legacy_sum": 9020.40399999992,
+            "reconstructed_sum": 9020.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1256,
+            "legacy_sum": 2494.699999999929,
+            "reconstructed_sum": 2494.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1555,
+            "legacy_sum": 6293.599999999935,
+            "reconstructed_sum": 6293.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1427,
+            "legacy_sum": 4417.039999999976,
+            "reconstructed_sum": 4417.04,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1268,
+            "legacy_sum": 15194.70000000013,
+            "reconstructed_sum": 15194.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1590,
+            "legacy_sum": 3967.399999999934,
+            "reconstructed_sum": 3967.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1344,
+            "legacy_sum": 4303.9,
+            "reconstructed_sum": 4303.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1325,
+            "legacy_sum": 777.4000000000324,
+            "reconstructed_sum": 777.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1643,
+            "legacy_sum": 1313.4166666666702,
+            "reconstructed_sum": 1313.42,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1587,
+            "legacy_sum": 9221.3888888889,
+            "reconstructed_sum": 9221.39,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1610,
+            "legacy_sum": 438.16666666667004,
+            "reconstructed_sum": 438.17,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1468,
+            "legacy_sum": 157.69999999998413,
+            "reconstructed_sum": 157.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 902,
+            "legacy_sum": 5532,
+            "reconstructed_sum": 5532,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1209,
+            "legacy_sum": 13386.599999999811,
+            "reconstructed_sum": 13386.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1647,
+            "legacy_sum": 3814.50917067971,
+            "reconstructed_sum": 3814.51,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1682,
+            "legacy_sum": 4259.5335709581195,
+            "reconstructed_sum": 4259.53,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1684,
+            "legacy_sum": 1416.413428383265,
+            "reconstructed_sum": 1416.41,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1685,
+            "legacy_sum": 878.4134283832587,
+            "reconstructed_sum": 878.41,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 379,
+            "legacy_sum": 1400.1999999999703,
+            "reconstructed_sum": 1400.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1423,
+            "legacy_sum": 3179.25,
+            "reconstructed_sum": 3179.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1498,
+            "legacy_sum": 385.59999999997,
+            "reconstructed_sum": 385.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 901,
+            "legacy_sum": 1190,
+            "reconstructed_sum": 1190,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 980,
+            "legacy_sum": 3048.4499999999557,
+            "reconstructed_sum": 3048.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 98,
+            "legacy_sum": 2442,
+            "reconstructed_sum": 2442,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1558,
+            "legacy_sum": 2812.75,
+            "reconstructed_sum": 2812.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1569,
+            "legacy_sum": 1464.000000000029,
+            "reconstructed_sum": 1464,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1446,
+            "legacy_sum": 3542.300000000004,
+            "reconstructed_sum": 3542.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1277,
+            "legacy_sum": 146.04000000000838,
+            "reconstructed_sum": 146.04,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 605,
+            "legacy_sum": 275.58,
+            "reconstructed_sum": 275.58,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1411,
+            "legacy_sum": 2492.399999999973,
+            "reconstructed_sum": 2492.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1528,
+            "legacy_sum": 4757,
+            "reconstructed_sum": 4757,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1479,
+            "legacy_sum": 1252,
+            "reconstructed_sum": 1252,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1426,
+            "legacy_sum": 1444.5999999999613,
+            "reconstructed_sum": 1444.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 754,
+            "legacy_sum": 1577.1999999999866,
+            "reconstructed_sum": 1577.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 117,
+            "legacy_sum": 2023,
+            "reconstructed_sum": 2023,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1424,
+            "legacy_sum": 5992.19999999995,
+            "reconstructed_sum": 5992.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1686,
+            "legacy_sum": 1340.6250000000095,
+            "reconstructed_sum": 1340.63,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1609,
+            "legacy_sum": 8190,
+            "reconstructed_sum": 8190,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 709,
+            "legacy_sum": 348.1999999999939,
+            "reconstructed_sum": 348.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 453,
+            "legacy_sum": 847.3,
+            "reconstructed_sum": 847.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 46,
+            "legacy_sum": 3500,
+            "reconstructed_sum": 3500,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1753,
+            "legacy_sum": 4118.400000000055,
+            "reconstructed_sum": 4118.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1520,
+            "legacy_sum": 3553.5,
+            "reconstructed_sum": 3553.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 505,
+            "legacy_sum": 178.18999999999005,
+            "reconstructed_sum": 178.19,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1339,
+            "legacy_sum": 3873.650000000094,
+            "reconstructed_sum": 3873.65,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1764,
+            "legacy_sum": 1084.0800000000027,
+            "reconstructed_sum": 1084.08,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1767,
+            "legacy_sum": 599.5000000000086,
+            "reconstructed_sum": 599.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1020,
+            "legacy_sum": 262.45000000000005,
+            "reconstructed_sum": 262.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1768,
+            "legacy_sum": 8105.3288888889,
+            "reconstructed_sum": 8105.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1769,
+            "legacy_sum": 7219.3288888889,
+            "reconstructed_sum": 7219.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1658,
+            "legacy_sum": 7930.328888888898,
+            "reconstructed_sum": 7930.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 465,
+            "legacy_sum": 3215.25,
+            "reconstructed_sum": 3215.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1660,
+            "legacy_sum": 7931.328888888898,
+            "reconstructed_sum": 7931.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1661,
+            "legacy_sum": 7931.328888888898,
+            "reconstructed_sum": 7931.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1535,
+            "legacy_sum": 9723.99999999991,
+            "reconstructed_sum": 9724,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 503,
+            "legacy_sum": 626.899999999989,
+            "reconstructed_sum": 626.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 737,
+            "legacy_sum": 2245.799999999978,
+            "reconstructed_sum": 2245.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1482,
+            "legacy_sum": 3014.1299999999646,
+            "reconstructed_sum": 3014.13,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1343,
+            "legacy_sum": 3267.9000000000433,
+            "reconstructed_sum": 3267.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1090,
+            "legacy_sum": 906.2699999999913,
+            "reconstructed_sum": 906.27,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1614,
+            "legacy_sum": 8892.636201236159,
+            "reconstructed_sum": 8892.64,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1591,
+            "legacy_sum": 12892.636201236159,
+            "reconstructed_sum": 12892.64,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1594,
+            "legacy_sum": 16642.636201236157,
+            "reconstructed_sum": 16642.64,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1613,
+            "legacy_sum": 11605.034891409761,
+            "reconstructed_sum": 11605.04,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1600,
+            "legacy_sum": 11405.034891409763,
+            "reconstructed_sum": 11405.04,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1597,
+            "legacy_sum": 13126.89519284801,
+            "reconstructed_sum": 13126.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1671,
+            "legacy_sum": 10540.58618622506,
+            "reconstructed_sum": 10540.59,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1604,
+            "legacy_sum": 13126.89519284801,
+            "reconstructed_sum": 13126.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1603,
+            "legacy_sum": 14999.739645919532,
+            "reconstructed_sum": 14999.74,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1599,
+            "legacy_sum": 13126.89519284801,
+            "reconstructed_sum": 13126.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1670,
+            "legacy_sum": 14107.908953980655,
+            "reconstructed_sum": 14107.9,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1369,
+            "legacy_sum": 1148.0999999999892,
+            "reconstructed_sum": 1148.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1601,
+            "legacy_sum": 11343.233808970323,
+            "reconstructed_sum": 11343.24,
+            "variance": 0.01,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1598,
+            "legacy_sum": 13126.89519284801,
+            "reconstructed_sum": 13126.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1672,
+            "legacy_sum": 13216.078262041883,
+            "reconstructed_sum": 13216.08,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1668,
+            "legacy_sum": 7476.328888888898,
+            "reconstructed_sum": 7476.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1615,
+            "legacy_sum": 16209.230961930682,
+            "reconstructed_sum": 16209.23,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 883,
+            "legacy_sum": 2646.02,
+            "reconstructed_sum": 2646.02,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1786,
+            "legacy_sum": 3732.328888888902,
+            "reconstructed_sum": 3732.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1447,
+            "legacy_sum": 4029.080000000051,
+            "reconstructed_sum": 4029.08,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1229,
+            "legacy_sum": 3759.7600000000175,
+            "reconstructed_sum": 3759.76,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1669,
+            "legacy_sum": 8031.3288888889,
+            "reconstructed_sum": 8031.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1387,
+            "legacy_sum": 1027.2999999999895,
+            "reconstructed_sum": 1027.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 501,
+            "legacy_sum": 667.9999999999791,
+            "reconstructed_sum": 668,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1440,
+            "legacy_sum": 1429.9300000000167,
+            "reconstructed_sum": 1429.93,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1794,
+            "legacy_sum": 9100,
+            "reconstructed_sum": 9100,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1250,
+            "legacy_sum": 11907.400000000081,
+            "reconstructed_sum": 11907.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1801,
+            "legacy_sum": 250,
+            "reconstructed_sum": 250,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1659,
+            "legacy_sum": 6671.3288888889,
+            "reconstructed_sum": 6671.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 507,
+            "legacy_sum": 412.39999999998145,
+            "reconstructed_sum": 412.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1488,
+            "legacy_sum": 2461.78,
+            "reconstructed_sum": 2461.78,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1408,
+            "legacy_sum": 1577.3499999999772,
+            "reconstructed_sum": 1577.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 686,
+            "legacy_sum": 1296.8029999999949,
+            "reconstructed_sum": 1296.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1802,
+            "legacy_sum": 2989.3599999999933,
+            "reconstructed_sum": 2989.36,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1653,
+            "legacy_sum": 3771.1999999999643,
+            "reconstructed_sum": 3771.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 604,
+            "legacy_sum": 1068.5400000000018,
+            "reconstructed_sum": 1068.54,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 941,
+            "legacy_sum": 16790.220000000154,
+            "reconstructed_sum": 16790.22,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1843,
+            "legacy_sum": 481.37999999998647,
+            "reconstructed_sum": 481.38,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 620,
+            "legacy_sum": 4724.399999999964,
+            "reconstructed_sum": 4724.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 674,
+            "legacy_sum": 1744,
+            "reconstructed_sum": 1744,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1857,
+            "legacy_sum": 689.4799999999968,
+            "reconstructed_sum": 689.48,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1860,
+            "legacy_sum": 887.7599999999638,
+            "reconstructed_sum": 887.76,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 553,
+            "legacy_sum": 7887,
+            "reconstructed_sum": 7887,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 502,
+            "legacy_sum": 2582.4600000000246,
+            "reconstructed_sum": 2582.46,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1681,
+            "legacy_sum": 4088.5999999999112,
+            "reconstructed_sum": 4088.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1747,
+            "legacy_sum": 9239.20000000006,
+            "reconstructed_sum": 9239.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1677,
+            "legacy_sum": 4537.60000000003,
+            "reconstructed_sum": 4537.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1772,
+            "legacy_sum": 6034.700000000061,
+            "reconstructed_sum": 6034.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1452,
+            "legacy_sum": 4134,
+            "reconstructed_sum": 4134,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1257,
+            "legacy_sum": 3197.96000000006,
+            "reconstructed_sum": 3197.96,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1823,
+            "legacy_sum": 1363.7999999999925,
+            "reconstructed_sum": 1363.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 632,
+            "legacy_sum": 231.33100000002787,
+            "reconstructed_sum": 231.33,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 969,
+            "legacy_sum": 2902.699999999969,
+            "reconstructed_sum": 2902.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 960,
+            "legacy_sum": 8891.8000000001,
+            "reconstructed_sum": 8891.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 326,
+            "legacy_sum": 7616,
+            "reconstructed_sum": 7616,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 647,
+            "legacy_sum": 455.199999999993,
+            "reconstructed_sum": 455.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 118,
+            "legacy_sum": 184,
+            "reconstructed_sum": 184,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 359,
+            "legacy_sum": 595,
+            "reconstructed_sum": 595,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 724,
+            "legacy_sum": 4083.3550000000173,
+            "reconstructed_sum": 4083.36,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1784,
+            "legacy_sum": 3961.6899999999887,
+            "reconstructed_sum": 3961.69,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1798,
+            "legacy_sum": 1212.2000000000055,
+            "reconstructed_sum": 1212.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 499,
+            "legacy_sum": 12266.709999999912,
+            "reconstructed_sum": 12266.71,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1897,
+            "legacy_sum": 6900,
+            "reconstructed_sum": 6900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1762,
+            "legacy_sum": 4375.25,
+            "reconstructed_sum": 4375.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1748,
+            "legacy_sum": 610.38000000001,
+            "reconstructed_sum": 610.38,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1898,
+            "legacy_sum": 33495,
+            "reconstructed_sum": 33495,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1561,
+            "legacy_sum": 320.625,
+            "reconstructed_sum": 320.62,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1904,
+            "legacy_sum": 1411.7000000000276,
+            "reconstructed_sum": 1411.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1800,
+            "legacy_sum": 2975.2000000000207,
+            "reconstructed_sum": 2975.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 563,
+            "legacy_sum": 1069.3500000000138,
+            "reconstructed_sum": 1069.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 387,
+            "legacy_sum": 4175.700000000018,
+            "reconstructed_sum": 4175.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1918,
+            "legacy_sum": 7170.699999999918,
+            "reconstructed_sum": 7170.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1919,
+            "legacy_sum": 3922,
+            "reconstructed_sum": 3922,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1909,
+            "legacy_sum": 6922,
+            "reconstructed_sum": 6922,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1394,
+            "legacy_sum": 425.4499999999938,
+            "reconstructed_sum": 425.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1008,
+            "legacy_sum": 3077.510000000022,
+            "reconstructed_sum": 3077.51,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1922,
+            "legacy_sum": 4515.799999999997,
+            "reconstructed_sum": 4515.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1116,
+            "legacy_sum": 1075.6000000000108,
+            "reconstructed_sum": 1075.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1930,
+            "legacy_sum": 5461,
+            "reconstructed_sum": 5461,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 370,
+            "legacy_sum": 791.3049999999839,
+            "reconstructed_sum": 791.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1705,
+            "legacy_sum": 9340.19999999989,
+            "reconstructed_sum": 9340.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1718,
+            "legacy_sum": 4129.599999999945,
+            "reconstructed_sum": 4129.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1342,
+            "legacy_sum": 2251.599999999945,
+            "reconstructed_sum": 2251.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 369,
+            "legacy_sum": 5832.760000000022,
+            "reconstructed_sum": 5832.76,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 899,
+            "legacy_sum": 1744.3500000000138,
+            "reconstructed_sum": 1744.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 308,
+            "legacy_sum": 17850,
+            "reconstructed_sum": 17850,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1014,
+            "legacy_sum": 3049.2199999999357,
+            "reconstructed_sum": 3049.22,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1819,
+            "legacy_sum": 3429.050000000056,
+            "reconstructed_sum": 3429.05,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1941,
+            "legacy_sum": 4686.43999999997,
+            "reconstructed_sum": 4686.44,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 430,
+            "legacy_sum": 1626.8999999999862,
+            "reconstructed_sum": 1626.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1942,
+            "legacy_sum": 2828.349999999959,
+            "reconstructed_sum": 2828.35,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1946,
+            "legacy_sum": 617.4800000000099,
+            "reconstructed_sum": 617.48,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1754,
+            "legacy_sum": 4270.090000000046,
+            "reconstructed_sum": 4270.09,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 875,
+            "legacy_sum": 10092.180000000026,
+            "reconstructed_sum": 10092.18,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1950,
+            "legacy_sum": 3570,
+            "reconstructed_sum": 3570,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1951,
+            "legacy_sum": 1600,
+            "reconstructed_sum": 1600,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1046,
+            "legacy_sum": 8235.469999999934,
+            "reconstructed_sum": 8235.47,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1956,
+            "legacy_sum": 3308.9299999999835,
+            "reconstructed_sum": 3308.93,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 993,
+            "legacy_sum": 752,
+            "reconstructed_sum": 752,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 642,
+            "legacy_sum": 1626.8999999999862,
+            "reconstructed_sum": 1626.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1777,
+            "legacy_sum": 10816.040987742888,
+            "reconstructed_sum": 10816.04,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1958,
+            "legacy_sum": 13434.051234678598,
+            "reconstructed_sum": 13434.05,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1835,
+            "legacy_sum": 15121,
+            "reconstructed_sum": 15121,
+            "variance": 0,
+            "status": "MANUAL_REVIEW"
+        },
+        {
+            "user_id": 1827,
+            "legacy_sum": 6370.799999999899,
+            "reconstructed_sum": 6370.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1960,
+            "legacy_sum": 3009.4499999999593,
+            "reconstructed_sum": 3009.45,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1175,
+            "legacy_sum": 2783.1999999999607,
+            "reconstructed_sum": 2783.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1931,
+            "legacy_sum": 4870,
+            "reconstructed_sum": 4870,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1961,
+            "legacy_sum": 7240,
+            "reconstructed_sum": 7240,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1796,
+            "legacy_sum": 2843.200000000026,
+            "reconstructed_sum": 2843.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 349,
+            "legacy_sum": 2346.0099999999898,
+            "reconstructed_sum": 2346.01,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 944,
+            "legacy_sum": 5935,
+            "reconstructed_sum": 5935,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1943,
+            "legacy_sum": 10598.559999999972,
+            "reconstructed_sum": 10598.56,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1962,
+            "legacy_sum": 4988.134449884852,
+            "reconstructed_sum": 4988.13,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1971,
+            "legacy_sum": 5697,
+            "reconstructed_sum": 5697,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1944,
+            "legacy_sum": 10701,
+            "reconstructed_sum": 10701,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1972,
+            "legacy_sum": 4198.5,
+            "reconstructed_sum": 4198.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1973,
+            "legacy_sum": 2419.040000000047,
+            "reconstructed_sum": 2419.04,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1974,
+            "legacy_sum": 2439.1519999999664,
+            "reconstructed_sum": 2439.15,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1862,
+            "legacy_sum": 1811.1960000000363,
+            "reconstructed_sum": 1811.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1945,
+            "legacy_sum": 5466.4999999999345,
+            "reconstructed_sum": 5466.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1720,
+            "legacy_sum": 3146.560000000057,
+            "reconstructed_sum": 3146.56,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 530,
+            "legacy_sum": 3933.249999999989,
+            "reconstructed_sum": 3933.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1416,
+            "legacy_sum": 3844.079999999958,
+            "reconstructed_sum": 3844.08,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 771,
+            "legacy_sum": 2729.3999999999705,
+            "reconstructed_sum": 2729.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1824,
+            "legacy_sum": 2370.4999999999777,
+            "reconstructed_sum": 2370.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1983,
+            "legacy_sum": 4608.099999999982,
+            "reconstructed_sum": 4608.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1984,
+            "legacy_sum": 2061.600000000022,
+            "reconstructed_sum": 2061.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1985,
+            "legacy_sum": 3185.7999999999697,
+            "reconstructed_sum": 3185.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1717,
+            "legacy_sum": 3059.7999999999874,
+            "reconstructed_sum": 3059.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1913,
+            "legacy_sum": 7443,
+            "reconstructed_sum": 7443,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1841,
+            "legacy_sum": 944.7999999999893,
+            "reconstructed_sum": 944.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1940,
+            "legacy_sum": 54447,
+            "reconstructed_sum": 54447,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 372,
+            "legacy_sum": 2373.199999999965,
+            "reconstructed_sum": 2373.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 759,
+            "legacy_sum": 1407.580000000008,
+            "reconstructed_sum": 1407.58,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1949,
+            "legacy_sum": 2326.0999999999744,
+            "reconstructed_sum": 2326.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1840,
+            "legacy_sum": 2332.5499999999743,
+            "reconstructed_sum": 2332.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 646,
+            "legacy_sum": 1128.0200000000002,
+            "reconstructed_sum": 1128.02,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 479,
+            "legacy_sum": 212.3199999999972,
+            "reconstructed_sum": 212.32,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1481,
+            "legacy_sum": 4251.600000000042,
+            "reconstructed_sum": 4251.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 259,
+            "legacy_sum": 10000,
+            "reconstructed_sum": 10000,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1318,
+            "legacy_sum": 5989.999999999952,
+            "reconstructed_sum": 5990,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 696,
+            "legacy_sum": 770.9699999999966,
+            "reconstructed_sum": 770.97,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 245,
+            "legacy_sum": 4842,
+            "reconstructed_sum": 4842,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1917,
+            "legacy_sum": 462.25,
+            "reconstructed_sum": 462.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 643,
+            "legacy_sum": 1673.0000000000164,
+            "reconstructed_sum": 1673,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 893,
+            "legacy_sum": 965.099999999991,
+            "reconstructed_sum": 965.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1902,
+            "legacy_sum": 7275,
+            "reconstructed_sum": 7275,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1248,
+            "legacy_sum": 3986.5,
+            "reconstructed_sum": 3986.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 923,
+            "legacy_sum": 6780.000000000064,
+            "reconstructed_sum": 6780,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1084,
+            "legacy_sum": 593.5,
+            "reconstructed_sum": 593.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1906,
+            "legacy_sum": 1593.0000000000155,
+            "reconstructed_sum": 1593,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1075,
+            "legacy_sum": 3923.999999999969,
+            "reconstructed_sum": 3924,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1907,
+            "legacy_sum": 2661.9999999999845,
+            "reconstructed_sum": 2662,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2008,
+            "legacy_sum": 9127,
+            "reconstructed_sum": 9127,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1910,
+            "legacy_sum": 1826.6999999999923,
+            "reconstructed_sum": 1826.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2007,
+            "legacy_sum": 2000,
+            "reconstructed_sum": 2000,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2001,
+            "legacy_sum": 3700,
+            "reconstructed_sum": 3700,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1989,
+            "legacy_sum": 13710,
+            "reconstructed_sum": 13710,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2018,
+            "legacy_sum": 710,
+            "reconstructed_sum": 710,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1934,
+            "legacy_sum": 4760,
+            "reconstructed_sum": 4760,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 917,
+            "legacy_sum": 2955.3033333333005,
+            "reconstructed_sum": 2955.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1112,
+            "legacy_sum": 3414,
+            "reconstructed_sum": 3414,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 903,
+            "legacy_sum": 7910.550000000056,
+            "reconstructed_sum": 7910.55,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1844,
+            "legacy_sum": 3189.5,
+            "reconstructed_sum": 3189.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 955,
+            "legacy_sum": 2130.8444444444967,
+            "reconstructed_sum": 2130.84,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1894,
+            "legacy_sum": 10298,
+            "reconstructed_sum": 10298,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1926,
+            "legacy_sum": 29646,
+            "reconstructed_sum": 29646,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2023,
+            "legacy_sum": 6900,
+            "reconstructed_sum": 6900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 323,
+            "legacy_sum": 10098,
+            "reconstructed_sum": 10098,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 716,
+            "legacy_sum": 16778,
+            "reconstructed_sum": 16778,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 122,
+            "legacy_sum": 6428,
+            "reconstructed_sum": 6428,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 600,
+            "legacy_sum": 2726.480000000016,
+            "reconstructed_sum": 2726.48,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2003,
+            "legacy_sum": 2300,
+            "reconstructed_sum": 2300,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1079,
+            "legacy_sum": 6321.000000000026,
+            "reconstructed_sum": 6321,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1085,
+            "legacy_sum": 4889.5,
+            "reconstructed_sum": 4889.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1991,
+            "legacy_sum": 32000.02,
+            "reconstructed_sum": 32000.02,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 859,
+            "legacy_sum": 8766,
+            "reconstructed_sum": 8766,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1454,
+            "legacy_sum": 389,
+            "reconstructed_sum": 389,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1976,
+            "legacy_sum": 1442,
+            "reconstructed_sum": 1442,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2022,
+            "legacy_sum": 24450,
+            "reconstructed_sum": 24450,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2026,
+            "legacy_sum": 2424.7499999999895,
+            "reconstructed_sum": 2424.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1954,
+            "legacy_sum": 11870,
+            "reconstructed_sum": 11870,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1081,
+            "legacy_sum": 6990,
+            "reconstructed_sum": 6990,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2014,
+            "legacy_sum": 1400,
+            "reconstructed_sum": 1400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2030,
+            "legacy_sum": 9900,
+            "reconstructed_sum": 9900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 934,
+            "legacy_sum": 308.25599999999974,
+            "reconstructed_sum": 308.26,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 916,
+            "legacy_sum": 54226.9898755556,
+            "reconstructed_sum": 54226.99,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2027,
+            "legacy_sum": 1400,
+            "reconstructed_sum": 1400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2028,
+            "legacy_sum": 1400,
+            "reconstructed_sum": 1400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1998,
+            "legacy_sum": 2500,
+            "reconstructed_sum": 2500,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1493,
+            "legacy_sum": 11127,
+            "reconstructed_sum": 11127,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2041,
+            "legacy_sum": 500,
+            "reconstructed_sum": 500,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 950,
+            "legacy_sum": 265.13499999999937,
+            "reconstructed_sum": 265.13,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2064,
+            "legacy_sum": 1123.0666666666623,
+            "reconstructed_sum": 1123.07,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2006,
+            "legacy_sum": 1900,
+            "reconstructed_sum": 1900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2004,
+            "legacy_sum": 1000,
+            "reconstructed_sum": 1000,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 806,
+            "legacy_sum": 15888,
+            "reconstructed_sum": 15888,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1804,
+            "legacy_sum": 1548.6999999999894,
+            "reconstructed_sum": 1548.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1703,
+            "legacy_sum": 1998,
+            "reconstructed_sum": 1998,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 787,
+            "legacy_sum": 7623.004000000048,
+            "reconstructed_sum": 7623,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2017,
+            "legacy_sum": 840,
+            "reconstructed_sum": 840,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2009,
+            "legacy_sum": 920,
+            "reconstructed_sum": 920,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2069,
+            "legacy_sum": 11900,
+            "reconstructed_sum": 11900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1811,
+            "legacy_sum": 2686.09999999999,
+            "reconstructed_sum": 2686.1,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1022,
+            "legacy_sum": 6352.199999999984,
+            "reconstructed_sum": 6352.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1073,
+            "legacy_sum": 3412.20000000002,
+            "reconstructed_sum": 3412.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2071,
+            "legacy_sum": 706.9999999999928,
+            "reconstructed_sum": 707,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2031,
+            "legacy_sum": 705.1999999999931,
+            "reconstructed_sum": 705.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2070,
+            "legacy_sum": 800,
+            "reconstructed_sum": 800,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2000,
+            "legacy_sum": 355,
+            "reconstructed_sum": 355,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2012,
+            "legacy_sum": 500,
+            "reconstructed_sum": 500,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1061,
+            "legacy_sum": 34.49999999999714,
+            "reconstructed_sum": 34.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 913,
+            "legacy_sum": 24300,
+            "reconstructed_sum": 24300,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 48,
+            "legacy_sum": 28390,
+            "reconstructed_sum": 28390,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1407,
+            "legacy_sum": 2136.950000000012,
+            "reconstructed_sum": 2136.95,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 974,
+            "legacy_sum": 2243.3999999999974,
+            "reconstructed_sum": 2243.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 361,
+            "legacy_sum": 902.9999999999959,
+            "reconstructed_sum": 903,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 366,
+            "legacy_sum": 454.69999999999635,
+            "reconstructed_sum": 454.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 865,
+            "legacy_sum": 553.5999999999984,
+            "reconstructed_sum": 553.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1994,
+            "legacy_sum": 1843.7333333334084,
+            "reconstructed_sum": 1843.73,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 896,
+            "legacy_sum": 460.533333333342,
+            "reconstructed_sum": 460.53,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 922,
+            "legacy_sum": 690.7999999999953,
+            "reconstructed_sum": 690.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2066,
+            "legacy_sum": 13670,
+            "reconstructed_sum": 13670,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2078,
+            "legacy_sum": 1867,
+            "reconstructed_sum": 1867,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2081,
+            "legacy_sum": 2041.0500000000036,
+            "reconstructed_sum": 2041.05,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2083,
+            "legacy_sum": 474.5,
+            "reconstructed_sum": 474.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 10,
+            "legacy_sum": 32400,
+            "reconstructed_sum": 32400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2085,
+            "legacy_sum": 120000,
+            "reconstructed_sum": 120000,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1997,
+            "legacy_sum": 1400,
+            "reconstructed_sum": 1400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1948,
+            "legacy_sum": 95800,
+            "reconstructed_sum": 95800,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 296,
+            "legacy_sum": 2461,
+            "reconstructed_sum": 2461,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1915,
+            "legacy_sum": 5950,
+            "reconstructed_sum": 5950,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 900,
+            "legacy_sum": 23800,
+            "reconstructed_sum": 23800,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 907,
+            "legacy_sum": 8202,
+            "reconstructed_sum": 8202,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1955,
+            "legacy_sum": 44800,
+            "reconstructed_sum": 44800,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1264,
+            "legacy_sum": 8867,
+            "reconstructed_sum": 8867,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1417,
+            "legacy_sum": 564.8000000000031,
+            "reconstructed_sum": 564.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1923,
+            "legacy_sum": 13730,
+            "reconstructed_sum": 13730,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2091,
+            "legacy_sum": 19182,
+            "reconstructed_sum": 19182,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1852,
+            "legacy_sum": 1655.319999999992,
+            "reconstructed_sum": 1655.32,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2094,
+            "legacy_sum": 1994.800000000006,
+            "reconstructed_sum": 1994.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2093,
+            "legacy_sum": 12121.800000000007,
+            "reconstructed_sum": 12121.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1611,
+            "legacy_sum": 4191.199999999977,
+            "reconstructed_sum": 4191.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1921,
+            "legacy_sum": 873.5999999999948,
+            "reconstructed_sum": 873.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 918,
+            "legacy_sum": 23620,
+            "reconstructed_sum": 23620,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1395,
+            "legacy_sum": 3854.250000000012,
+            "reconstructed_sum": 3854.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1778,
+            "legacy_sum": 3427.25,
+            "reconstructed_sum": 3427.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 991,
+            "legacy_sum": 5615,
+            "reconstructed_sum": 5615,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 914,
+            "legacy_sum": 1971.2066666666071,
+            "reconstructed_sum": 1971.21,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1071,
+            "legacy_sum": 1002.280000000004,
+            "reconstructed_sum": 1002.28,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1914,
+            "legacy_sum": 16800,
+            "reconstructed_sum": 16800,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1120,
+            "legacy_sum": 149450,
+            "reconstructed_sum": 149450,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1080,
+            "legacy_sum": 4569.5,
+            "reconstructed_sum": 4569.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1999,
+            "legacy_sum": 1300,
+            "reconstructed_sum": 1300,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 735,
+            "legacy_sum": 1018.8000000000037,
+            "reconstructed_sum": 1018.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 292,
+            "legacy_sum": 6820,
+            "reconstructed_sum": 6820,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2076,
+            "legacy_sum": 7007,
+            "reconstructed_sum": 7007,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2099,
+            "legacy_sum": 6532,
+            "reconstructed_sum": 6532,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2100,
+            "legacy_sum": 3213.75,
+            "reconstructed_sum": 3213.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 336,
+            "legacy_sum": 15758.599999999995,
+            "reconstructed_sum": 15758.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 756,
+            "legacy_sum": 4706.800000000008,
+            "reconstructed_sum": 4706.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2079,
+            "legacy_sum": 11810,
+            "reconstructed_sum": 11810,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2087,
+            "legacy_sum": 8184,
+            "reconstructed_sum": 8184,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2103,
+            "legacy_sum": 18903,
+            "reconstructed_sum": 18903,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 246,
+            "legacy_sum": 15975,
+            "reconstructed_sum": 15975,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 660,
+            "legacy_sum": 1193.6400000000003,
+            "reconstructed_sum": 1193.64,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2042,
+            "legacy_sum": 17097,
+            "reconstructed_sum": 17097,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1822,
+            "legacy_sum": 1020.2000000000016,
+            "reconstructed_sum": 1020.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1662,
+            "legacy_sum": 36815,
+            "reconstructed_sum": 36815,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1083,
+            "legacy_sum": 3154,
+            "reconstructed_sum": 3154,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1952,
+            "legacy_sum": 11660,
+            "reconstructed_sum": 11660,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 73,
+            "legacy_sum": 21456,
+            "reconstructed_sum": 21456,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 911,
+            "legacy_sum": 579.7500000000008,
+            "reconstructed_sum": 579.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 371,
+            "legacy_sum": 7332.999999999987,
+            "reconstructed_sum": 7333,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 437,
+            "legacy_sum": 2488.75,
+            "reconstructed_sum": 2488.75,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 293,
+            "legacy_sum": 17850,
+            "reconstructed_sum": 17850,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 659,
+            "legacy_sum": 2500.999999999997,
+            "reconstructed_sum": 2501,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 345,
+            "legacy_sum": 26800,
+            "reconstructed_sum": 26800,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1970,
+            "legacy_sum": 17017,
+            "reconstructed_sum": 17017,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2104,
+            "legacy_sum": 1212.200000000003,
+            "reconstructed_sum": 1212.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2105,
+            "legacy_sum": 1818.299999999997,
+            "reconstructed_sum": 1818.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2106,
+            "legacy_sum": 1212.200000000003,
+            "reconstructed_sum": 1212.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 882,
+            "legacy_sum": 1818.299999999997,
+            "reconstructed_sum": 1818.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 761,
+            "legacy_sum": 6865,
+            "reconstructed_sum": 6865,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1606,
+            "legacy_sum": 2990.8800000000056,
+            "reconstructed_sum": 2990.88,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2097,
+            "legacy_sum": 11900,
+            "reconstructed_sum": 11900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1896,
+            "legacy_sum": 10984,
+            "reconstructed_sum": 10984,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 881,
+            "legacy_sum": 1818.299999999997,
+            "reconstructed_sum": 1818.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2107,
+            "legacy_sum": 1818.299999999997,
+            "reconstructed_sum": 1818.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2108,
+            "legacy_sum": 787.9300000000012,
+            "reconstructed_sum": 787.93,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2109,
+            "legacy_sum": 1090.9799999999982,
+            "reconstructed_sum": 1090.98,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2110,
+            "legacy_sum": 1818.299999999997,
+            "reconstructed_sum": 1818.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2112,
+            "legacy_sum": 1454.6399999999976,
+            "reconstructed_sum": 1454.64,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2111,
+            "legacy_sum": 1212.200000000003,
+            "reconstructed_sum": 1212.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2113,
+            "legacy_sum": 1454.6399999999976,
+            "reconstructed_sum": 1454.64,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2075,
+            "legacy_sum": 11900,
+            "reconstructed_sum": 11900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2114,
+            "legacy_sum": 1212.200000000003,
+            "reconstructed_sum": 1212.2,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 342,
+            "legacy_sum": 4087,
+            "reconstructed_sum": 4087,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1893,
+            "legacy_sum": 6135.900000000011,
+            "reconstructed_sum": 6135.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 184,
+            "legacy_sum": 43700,
+            "reconstructed_sum": 43700,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 868,
+            "legacy_sum": 1434.239999999998,
+            "reconstructed_sum": 1434.24,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2116,
+            "legacy_sum": 19800,
+            "reconstructed_sum": 19800,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1963,
+            "legacy_sum": 4998,
+            "reconstructed_sum": 4998,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1042,
+            "legacy_sum": 6059,
+            "reconstructed_sum": 6059,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2117,
+            "legacy_sum": 1143.700000000002,
+            "reconstructed_sum": 1143.7,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 282,
+            "legacy_sum": 3570,
+            "reconstructed_sum": 3570,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 115,
+            "legacy_sum": 4284,
+            "reconstructed_sum": 4284,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1756,
+            "legacy_sum": 4712.800000000008,
+            "reconstructed_sum": 4712.8,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 467,
+            "legacy_sum": 1198.899999999999,
+            "reconstructed_sum": 1198.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 790,
+            "legacy_sum": 537.5699999999993,
+            "reconstructed_sum": 537.57,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1349,
+            "legacy_sum": 13730,
+            "reconstructed_sum": 13730,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2118,
+            "legacy_sum": 3570,
+            "reconstructed_sum": 3570,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2102,
+            "legacy_sum": 3570,
+            "reconstructed_sum": 3570,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 927,
+            "legacy_sum": 1746.8999999999983,
+            "reconstructed_sum": 1746.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 861,
+            "legacy_sum": 1630.4399999999998,
+            "reconstructed_sum": 1630.44,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 870,
+            "legacy_sum": 1334.9200000000012,
+            "reconstructed_sum": 1334.92,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 278,
+            "legacy_sum": 4760,
+            "reconstructed_sum": 4760,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2077,
+            "legacy_sum": 8925,
+            "reconstructed_sum": 8925,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 337,
+            "legacy_sum": 4165,
+            "reconstructed_sum": 4165,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 417,
+            "legacy_sum": 3808,
+            "reconstructed_sum": 3808,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 524,
+            "legacy_sum": 1407.4000000000015,
+            "reconstructed_sum": 1407.4,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1576,
+            "legacy_sum": 5822.5,
+            "reconstructed_sum": 5822.5,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2088,
+            "legacy_sum": 15589,
+            "reconstructed_sum": 15589,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 929,
+            "legacy_sum": 2023,
+            "reconstructed_sum": 2023,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1082,
+            "legacy_sum": 8565,
+            "reconstructed_sum": 8565,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 609,
+            "legacy_sum": 1704,
+            "reconstructed_sum": 1704,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 348,
+            "legacy_sum": 2975,
+            "reconstructed_sum": 2975,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 593,
+            "legacy_sum": 1835.6800000000012,
+            "reconstructed_sum": 1835.68,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1968,
+            "legacy_sum": 11900,
+            "reconstructed_sum": 11900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1995,
+            "legacy_sum": 4119,
+            "reconstructed_sum": 4119,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2098,
+            "legacy_sum": 11900,
+            "reconstructed_sum": 11900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2125,
+            "legacy_sum": 11900,
+            "reconstructed_sum": 11900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2073,
+            "legacy_sum": 9109.599999999997,
+            "reconstructed_sum": 9109.6,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2092,
+            "legacy_sum": 3570,
+            "reconstructed_sum": 3570,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 76,
+            "legacy_sum": 51415,
+            "reconstructed_sum": 51415,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2090,
+            "legacy_sum": 3570,
+            "reconstructed_sum": 3570,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2015,
+            "legacy_sum": 8921,
+            "reconstructed_sum": 8921,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1992,
+            "legacy_sum": 11900,
+            "reconstructed_sum": 11900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2115,
+            "legacy_sum": 7122,
+            "reconstructed_sum": 7122,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1927,
+            "legacy_sum": 29735,
+            "reconstructed_sum": 29735,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2126,
+            "legacy_sum": 11900,
+            "reconstructed_sum": 11900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2082,
+            "legacy_sum": 2811.25,
+            "reconstructed_sum": 2811.25,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1093,
+            "legacy_sum": 3919.300000000001,
+            "reconstructed_sum": 3919.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2084,
+            "legacy_sum": 1113.3000000000006,
+            "reconstructed_sum": 1113.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2127,
+            "legacy_sum": 11870,
+            "reconstructed_sum": 11870,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 258,
+            "legacy_sum": 1900,
+            "reconstructed_sum": 1900,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1676,
+            "legacy_sum": 27480,
+            "reconstructed_sum": 27480,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2122,
+            "legacy_sum": 1400,
+            "reconstructed_sum": 1400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2120,
+            "legacy_sum": 1400,
+            "reconstructed_sum": 1400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2119,
+            "legacy_sum": 1400,
+            "reconstructed_sum": 1400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2123,
+            "legacy_sum": 1400,
+            "reconstructed_sum": 1400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2121,
+            "legacy_sum": 700,
+            "reconstructed_sum": 700,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2010,
+            "legacy_sum": 1400,
+            "reconstructed_sum": 1400,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1987,
+            "legacy_sum": 26180,
+            "reconstructed_sum": 26180,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2046,
+            "legacy_sum": 3695.3399999999992,
+            "reconstructed_sum": 3695.34,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1620,
+            "legacy_sum": 2831.6459999999993,
+            "reconstructed_sum": 2831.65,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1632,
+            "legacy_sum": 3667.62,
+            "reconstructed_sum": 3667.62,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1633,
+            "legacy_sum": 6754.024999999998,
+            "reconstructed_sum": 6754.02,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2045,
+            "legacy_sum": 4162.296599999999,
+            "reconstructed_sum": 4162.3,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1621,
+            "legacy_sum": 2831.6459999999993,
+            "reconstructed_sum": 2831.65,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1617,
+            "legacy_sum": 2446.022000000001,
+            "reconstructed_sum": 2446.02,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 440,
+            "legacy_sum": 562.8999999999999,
+            "reconstructed_sum": 562.9,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2051,
+            "legacy_sum": 3695.3399999999992,
+            "reconstructed_sum": 3695.34,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2074,
+            "legacy_sum": 11870,
+            "reconstructed_sum": 11870,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2128,
+            "legacy_sum": 5935,
+            "reconstructed_sum": 5935,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 1146,
+            "legacy_sum": 4748,
+            "reconstructed_sum": 4748,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2089,
+            "legacy_sum": 5935,
+            "reconstructed_sum": 5935,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 328,
+            "legacy_sum": 13700,
+            "reconstructed_sum": 13700,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 304,
+            "legacy_sum": 2612,
+            "reconstructed_sum": 2612,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 2067,
+            "legacy_sum": 5935,
+            "reconstructed_sum": 5935,
+            "variance": 0,
+            "status": "PASS"
+        },
+        {
+            "user_id": 821,
+            "legacy_sum": 4986,
+            "reconstructed_sum": 4986,
+            "variance": 0,
+            "status": "PASS"
+        }
+    ]
+}

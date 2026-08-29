@@ -25,6 +25,20 @@
     @method('PUT')
     <input type="hidden" name="loan_product_id" value="{{ old('loan_product_id', $customer->loan_product_id) }}">
 
+    @include('partials.admin.customer-form-branch-section', [
+        'branches' => $branches,
+        'selectedBranchId' => old('branch_id', $customer->branch_id),
+        'sectionClass' => $sectionClass,
+        'headingClass' => $headingClass,
+        'headingAccentClass' => 'bg-' . $colors['input_focus_border'],
+        'inputClass' => $inputClass,
+        'inputFocusClass' => $inputFocusClass,
+        'labelClass' => $labelClass,
+        'errorClass' => $errorClass,
+        'helpClass' => $helpClass,
+        'requiredClass' => $requiredClass,
+    ])
+
     {{-- Market Selection Section --}}
     <div class="rounded-3xl {{ $sectionClass }} p-6 shadow-lg">
         <h2 class="mb-6 text-xl font-semibold {{ $headingClass }} flex items-center gap-2">

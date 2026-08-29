@@ -23,8 +23,11 @@
             ]
         ])
 
-        {{-- Filters --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+        <x-admin.collapsible-filters
+            panel-id="customer-filters-panel"
+            :filter-keys="['search', 'status', 'approval_status', 'loan_product_id', 'customer_group_id', 'company_id', 'date_from', 'date_to']"
+            expanded-hint="Refine the customer list below."
+        >
             <form method="GET" action="{{ route('admin.customers.index') }}" class="space-y-4">
                 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {{-- Search --}}
@@ -121,7 +124,7 @@
                     </a>
                 </div>
             </form>
-        </div>
+        </x-admin.collapsible-filters>
 
         <div class="admin-data-table">
             <div class="admin-data-table__scroll">
@@ -135,7 +138,7 @@
                             <th>Product</th>
                             <th>Company / Group</th>
                             <th>Account Status</th>
-                            <th>Approval Status</th>
+                            <th>Balance</th>
                             <th scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
@@ -168,8 +171,8 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="text-sm font-medium {{ $customer->approval_status === 'approved' ? 'text-emerald-400' : ($customer->approval_status === 'pending' ? 'text-amber-400' : 'text-rose-400') }}">
-                                        {{ ucfirst($customer->approval_status ?? 'unknown') }}
+                                    <span class="font-medium text-rose-400">
+                                        ZMW {{ number_format((float) ($customer->outstanding_balance ?? 0), 2) }}
                                     </span>
                                 </td>
                                 <td>

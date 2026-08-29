@@ -23,6 +23,7 @@ class Customer extends Authenticatable
      */
     protected $fillable = [
         'company_id',
+        'branch_id',
         'loan_product_id',
         'customer_group_id',
         'group_member_title_id',
@@ -193,6 +194,11 @@ class Customer extends Authenticatable
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function loanProduct(): BelongsTo

@@ -8,6 +8,13 @@
             'title' => 'Physical Assets',
             'buttons' => [
                 [
+                    'action' => 'secondary',
+                    'text' => 'Manage Employees',
+                    'href' => route('admin.employees.index'),
+                    'icon' => '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
+                    'can' => auth('admin')->user()?->can('assets.view'),
+                ],
+                [
                     'action' => 'create',
                     'text' => 'Add Asset',
                     'href' => route('admin.assets.create'),
@@ -32,6 +39,7 @@
                     <tr class="font-semibold uppercase text-white/80 text-center">
                         <th scope="col">Type</th>
                         <th scope="col">Name</th>
+                        <th scope="col">Owner</th>
                         <th scope="col">Value</th>
                         <th scope="col">Acquired</th>
                         <th scope="col">Status</th>
@@ -43,6 +51,7 @@
                         <tr class="text-center">
                             <td class="font-medium text-white">{{ $asset->asset_type }}</td>
                             <td class="text-left">{{ $asset->name }}</td>
+                            <td>{{ $asset->employee?->full_name ?? '—' }}</td>
                             <td class="font-semibold">{{ number_format($asset->value, 2) }}</td>
                             <td>{{ $asset->acquisition_date ? $asset->acquisition_date->format('M d, Y') : '—' }}</td>
                             <td>
@@ -61,17 +70,29 @@
                                     <a href="{{ route('admin.assets.edit', $asset) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-purple-400/50 bg-purple-500/10 px-2.5 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-500/20 transition">
                                         Edit
                                     </a>
+                                    <button type="button"
+                                            class="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/50 bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-700 hover:bg-cyan-500/20 transition js-open-asset-transfer-modal"
+                                            data-asset-id="{{ $asset->id }}">
+                                        Transfer
+                                    </button>
                                     @endcan
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-8 text-center text-slate-400">No physical assets found.</td>
+                            <td colspan="7" class="py-8 text-center text-slate-400">No physical assets found.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
+
+    @can('assets.update')
+        @include('admin.assets.partials.transfer-modal', [
+            'employees' => $employees,
+            'assets' => $assets,
+        ])
+    @endcan
 @endsection

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\Loan;
 use App\Models\Repayment;
+use App\Models\SupportTicket;
+use App\Models\Communication;
 use App\Sms\Services\SmsTemplateService;
 use App\Support\CommunicationLogger;
 use Illuminate\Support\Facades\Log;
@@ -308,6 +310,118 @@ class CustomerNotificationService
 
         $this->sendEmail($customer, $subject, $emailMessage, $metadata);
         $this->sendRawSms($customer, $smsMessage, 'loan_payment_details_changed', $metadata, $loan->id);
+    }
+
+    public function sendSupportTicketStatusChanged(
+        SupportTicket $ticket,
+        Customer $customer,
+        string $previousStatus,
+        string $newStatus,
+        ?string $staffComment = null,
+        ?\App\Models\Admin $updatedBy = null,
+    ): void {
+        if ($previousStatus === $newStatus) {
+            return;
+        }
+
+        $previousLabel = ucwords(str_replace('_', ' ', $previousStatus));
+        $newLabel = ucwords(str_replace('_', ' ', $newStatus));
+        $ticketUrl = route('customer.support-tickets.show', $ticket);
+        $subject = 'Support ticket #'.$ticket->id.' updated';
+
+        $messageLines = [
+            'Dear '.$customer->first_name.',',
+            '',
+            'Your support request "'.$ticket->subject.'" has been updated.',
+            '',
+            'Status: '.$previousLabel.' → '.$newLabel,
+        ];
+
+        if (filled($staffComment)) {
+            $messageLines[] = '';
+            $messageLines[] = 'Message from our team:';
+            $messageLines[] = $staffComment;
+        }
+
+        $messageLines[] = '';
+        $messageLines[] = 'View your ticket: '.$ticketUrl;
+        $messageLines[] = '';
+        $messageLines[] = config('app.name').' Team';
+
+        $message = implode("\n", $messageLines);
+
+        $metadata = [
+            'notification_type' => 'support_ticket_status_changed',
+            'support_ticket_id' => $ticket->id,
+            'previous_status' => $previousStatus,
+            'new_status' => $newStatus,
+            'ticket_url' => $ticketUrl,
+        ];
+
+        if ($customer->email) {
+            try {
+                $customer->notify(new \App\Notifications\SupportTicketStatusChangedNotification(
+                    $ticket,
+                    $customer,
+                    $previousStatus,
+                    $newStatus,
+                    $staffComment,
+                    $updatedBy
+                ));
+            } catch (\Throwable $e) {
+                Log::error('Failed to queue support ticket status email', [
+                    'customer_id' => $customer->id,
+                    'support_ticket_id' => $ticket->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $this->logCustomerInAppNotification($customer, $subject, $message, $metadata, $updatedBy?->id);
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    private function logCustomerInAppNotification(
+        Customer $customer,
+        string $subject,
+        string $message,
+        array $metadata = [],
+        ?int $createdBy = null,
+    ): void {
+        try {
+            Communication::create([
+                'subject' => $subject,
+                'message' => $message,
+                'type' => 'email',
+                'filters' => ['customer_id' => $customer->id, 'system_generated' => true],
+                'recipients_count' => 1,
+                'sent_count' => 1,
+                'failed_count' => 0,
+                'status' => 'completed',
+                'sent_at' => now(),
+                'created_by' => $createdBy,
+                'is_sensitive' => false,
+                'metadata' => array_merge($metadata, [
+                    'recipient' => [
+                        'type' => Customer::class,
+                        'id' => $customer->id,
+                        'email' => $customer->email,
+                        'phone' => $customer->phone,
+                        'name' => $customer->full_name,
+                    ],
+                    'is_system_generated' => true,
+                    'delivery_channels' => ['email', 'in_app'],
+                ]),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to log customer in-app notification', [
+                'customer_id' => $customer->id,
+                'subject' => $subject,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

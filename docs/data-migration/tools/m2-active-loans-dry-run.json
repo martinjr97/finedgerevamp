@@ -1,0 +1,13 @@
+{
+    "run_uuid": "461a404a-1114-4106-a1c1-86ba65868654",
+    "migration_run_id": 52,
+    "promote": false,
+    "legacy_active_loans": 752,
+    "would_create": 0,
+    "created": 0,
+    "matched_existing": 750,
+    "blocked_missing_customer": 0,
+    "manual_review": 2,
+    "promotable": 0,
+    "blocked": 0
+}

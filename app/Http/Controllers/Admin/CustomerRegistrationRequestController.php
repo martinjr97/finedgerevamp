@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\CustomerGroup;
 use App\Models\CustomerRegistrationRequest;
+use App\Models\District;
 use App\Models\LoanProduct;
-use App\Models\Customer;
+use App\Models\Ministry;
+use App\Models\Province;
 use App\Notifications\CustomerRegistrationRequestRevertedNotification;
 use App\Support\PublicRegistrationPaths;
 use Illuminate\Http\RedirectResponse;
@@ -151,12 +154,22 @@ class CustomerRegistrationRequestController extends Controller
         $hasDuplicates = collect($duplicateMatches)
             ->some(fn (array $entry) => $entry['customers']->isNotEmpty());
 
+        $employmentDisplay = $registrationRequest->registration_path === PublicRegistrationPaths::GOVERNMENT_WORKER
+            ? $this->formatEmploymentDetailsForDisplay($registrationRequest->employment_details)
+            : [];
+
+        $interactedOfficerName = filled($registrationRequest->employment_details['interacted_officer_name'] ?? null)
+            ? (string) $registrationRequest->employment_details['interacted_officer_name']
+            : null;
+
         return view('admin.customer-requests.show', [
             'request' => $registrationRequest,
             'payload' => $payload,
             'kycDocuments' => $kycDocuments,
             'duplicateMatches' => $duplicateMatches,
             'hasDuplicates' => $hasDuplicates,
+            'employmentDisplay' => $employmentDisplay,
+            'interactedOfficerName' => $interactedOfficerName,
         ]);
     }
 
@@ -280,6 +293,118 @@ class CustomerRegistrationRequestController extends Controller
                 ? 'Request reverted for editing and emailed to the applicant.'
                 : 'Request reverted for editing. (No email sent)'
             );
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $employment
+     * @return list<array{label: string, value: string, highlight?: bool, format?: string}>
+     */
+    private function formatEmploymentDetailsForDisplay(?array $employment): array
+    {
+        if (empty($employment)) {
+            return [];
+        }
+
+        $rows = [];
+
+        $ministry = null;
+        if (! empty($employment['ministry_is_other']) && filled($employment['employer_name'] ?? null)) {
+            $ministry = (string) $employment['employer_name'];
+        } elseif (filled($employment['ministry_id'] ?? null)) {
+            $ministry = Ministry::find((int) $employment['ministry_id'])?->name;
+        } elseif (filled($employment['employer_name'] ?? null)) {
+            $ministry = (string) $employment['employer_name'];
+        }
+
+        if ($ministry) {
+            $rows[] = ['label' => 'Ministry', 'value' => $ministry];
+        }
+
+        $textFields = [
+            'department' => 'Department',
+            'employee_number' => 'Employee / payroll number',
+            'date_of_employment' => 'Date of employment',
+            'address_line1' => 'Home address',
+            'city' => 'Home city',
+            'postal_code' => 'Home postal code',
+            'country' => 'Home country',
+            'work_address_line1' => 'Work address',
+            'work_city' => 'Work city',
+            'bank_name' => 'Bank',
+            'bank_branch' => 'Bank branch',
+            'bank_account_name' => 'Bank account name',
+            'bank_account_number' => 'Bank account number',
+        ];
+
+        foreach ($textFields as $key => $label) {
+            if (filled($employment[$key] ?? null)) {
+                $rows[] = ['label' => $label, 'value' => (string) $employment[$key]];
+            }
+        }
+
+        $homeProvince = $this->resolveRegistrationPlaceName(
+            $employment['province_name'] ?? null,
+            $employment['province_id'] ?? null,
+            Province::class,
+        );
+        if ($homeProvince) {
+            $rows[] = ['label' => 'Home province', 'value' => $homeProvince];
+        }
+
+        $homeDistrict = $this->resolveRegistrationPlaceName(
+            $employment['district_name'] ?? null,
+            $employment['district_id'] ?? null,
+            District::class,
+        );
+        if ($homeDistrict) {
+            $rows[] = ['label' => 'Home district', 'value' => $homeDistrict];
+        }
+
+        $workProvince = $this->resolveRegistrationPlaceName(
+            $employment['work_province_name'] ?? null,
+            $employment['work_province_id'] ?? null,
+            Province::class,
+        );
+        if ($workProvince) {
+            $rows[] = ['label' => 'Work province', 'value' => $workProvince];
+        }
+
+        $workDistrict = $this->resolveRegistrationPlaceName(
+            $employment['work_district_name'] ?? null,
+            $employment['work_district_id'] ?? null,
+            District::class,
+        );
+        if ($workDistrict) {
+            $rows[] = ['label' => 'Work district', 'value' => $workDistrict];
+        }
+
+        foreach (['gross_salary' => 'Gross salary', 'net_salary' => 'Net salary'] as $key => $label) {
+            if (filled($employment[$key] ?? null)) {
+                $rows[] = [
+                    'label' => $label,
+                    'value' => (string) $employment[$key],
+                    'format' => 'money',
+                ];
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param  class-string<Province|District|Ministry>  $modelClass
+     */
+    private function resolveRegistrationPlaceName(?string $storedName, mixed $id, string $modelClass): ?string
+    {
+        if (filled($storedName)) {
+            return (string) $storedName;
+        }
+
+        if ($id === null || $id === '') {
+            return null;
+        }
+
+        return $modelClass::find((int) $id)?->name;
     }
 
     /**

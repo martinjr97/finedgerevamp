@@ -231,6 +231,9 @@ class AdminSidebarNavigation
             'menu-backups' => [
                 '_self' => ['admin.backups.*', 'admin.system.backup.*'],
             ],
+            'menu-migration-dashboard' => [
+                '_self' => ['legacy.migration-dashboard.*'],
+            ],
         ];
     }
 

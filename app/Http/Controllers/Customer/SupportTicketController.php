@@ -23,9 +23,7 @@ class SupportTicketController extends Controller
         $this->authorizeForUser($customer, 'viewAsCustomer', $supportTicket);
 
         $supportTicket->load([
-            'comments' => fn ($query) => $query->customerVisible()->orderBy('created_at'),
-            'comments.customer',
-            'comments.admin',
+            'comments' => fn ($query) => $query->customerVisible()->with(['customer', 'admin'])->orderByDesc('created_at'),
             'customerVisibleAttachments',
         ]);
 
