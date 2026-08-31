@@ -83,4 +83,76 @@ class MigrationDashboardSupport
     {
         return 'ZMW '.number_format((float) ($amount ?? 0), 2);
     }
+
+    /**
+     * @return array{title: string, description: string, guidance: string}
+     */
+    public static function customerExceptionMeta(?string $exception): array
+    {
+        $catalog = [
+            'national_id' => [
+                'title' => 'Possible duplicate — national ID',
+                'description' => 'More than one revamp customer shares this NRC. The system cannot pick a unique match automatically.',
+                'guidance' => 'Compare names and loan history. If same person, resolve under Identity (merge) or map to the correct target customer. If different people sharing an NRC, use keep-separate resolution.',
+            ],
+            'uncertain_national_id' => [
+                'title' => 'Uncertain match — national ID',
+                'description' => 'A single revamp customer matches this NRC but confidence was not high enough to auto-link.',
+                'guidance' => 'Verify the candidate below is the same person, then add an entity map or re-run promotion after confirming.',
+            ],
+            'email' => [
+                'title' => 'Possible duplicate — email address',
+                'description' => 'A revamp customer already uses this email. Email matches are treated as ambiguous because legacy data often reuses addresses.',
+                'guidance' => 'Compare full name, NRC, and employee number with the candidate below. If they are different people, keep separate (do not merge). If same person, map legacy user to the existing customer.',
+            ],
+            'uncertain_email' => [
+                'title' => 'Uncertain match — email address',
+                'description' => 'An email match was found but confidence was medium — promotion was held for verification.',
+                'guidance' => 'Confirm whether the candidate customer is the same person before mapping.',
+            ],
+            'missing_user_row' => [
+                'title' => 'Broken legacy relation',
+                'description' => 'The legacy customer row references a user ID that no longer exists in the legacy users table.',
+                'guidance' => 'Inspect legacy data integrity. This record may need exclusion or a manual legacy fix before migration.',
+            ],
+            'missing_product' => [
+                'title' => 'Missing loan product',
+                'description' => 'The resolved product code does not exist in the revamp loan_products table.',
+                'guidance' => 'Run reference-data migration or create the missing product, then re-run customer promotion for this user.',
+            ],
+            'marketeer_missing_market' => [
+                'title' => 'Marketeer without market mapping',
+                'description' => 'This MARK-001 customer has no mapped target market.',
+                'guidance' => 'Complete marketeer / market reference migration, then re-run customer promotion.',
+            ],
+            'identity_alias_pending_primary' => [
+                'title' => 'Identity alias waiting for primary',
+                'description' => 'This legacy user is an alias of another user; the primary user must be migrated first.',
+                'guidance' => 'Ensure the primary legacy user in the duplicate NRC group is promoted, or resolve the group on the Identity tab.',
+            ],
+        ];
+
+        if ($exception !== null && isset($catalog[$exception])) {
+            return $catalog[$exception];
+        }
+
+        if ($exception !== null && str_starts_with($exception, 'uncertain_')) {
+            return [
+                'title' => 'Uncertain match — '.str_replace('_', ' ', substr($exception, 9)),
+                'description' => 'An automatic match was found but did not meet confidence rules for promotion.',
+                'guidance' => 'Review candidate matches and confirm the correct target customer before mapping.',
+            ];
+        }
+
+        return [
+            'title' => $exception ? 'Manual review — '.$exception : 'Manual review',
+            'description' => 'This customer was flagged during migration and was not promoted automatically.',
+            'guidance' => 'Review legacy and target identity fields below, then apply the appropriate identity resolution or entity map.',
+        ];
+    }
+
+    public static function customerExceptionLabel(?string $exception): string
+    {
+        return self::customerExceptionMeta($exception)['title'];
+    }
 }

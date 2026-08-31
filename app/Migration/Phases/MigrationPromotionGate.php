@@ -3,6 +3,7 @@
 namespace App\Migration\Phases;
 
 use App\Migration\Phases\Support\CustomerIdentityResolver;
+use App\Migration\Phases\Support\IdentityResolutionCatalog;
 use RuntimeException;
 
 class MigrationPromotionGate
@@ -33,8 +34,12 @@ class MigrationPromotionGate
     public function assertCustomersPromote(): void
     {
         if (! $this->identityResolver->duplicateGroupsResolved()) {
+            $pending = IdentityResolutionCatalog::unresolvedDuplicateNrcs();
+            $list = $pending === [] ? 'unknown' : implode(', ', $pending);
+
             throw new RuntimeException(
-                'Customer promotion blocked: duplicate NRC groups lack approved identity resolution. Run migration:identity-resolve --apply.'
+                'Customer promotion blocked: unresolved duplicate NRC group(s): '.$list.'. '.
+                'Resolve each on the migration dashboard Identity tab (/legacy/migration-dashboard/identity), then run migration:identity-resolve --apply if merging to an existing customer.'
             );
         }
 

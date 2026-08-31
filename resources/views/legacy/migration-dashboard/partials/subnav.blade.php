@@ -11,6 +11,7 @@
         ['label' => 'Repayments', 'route' => 'legacy.migration-dashboard.repayments.index'],
         ['label' => 'Exceptions', 'route' => 'legacy.migration-dashboard.exceptions.index'],
         ['label' => 'Reconciliation', 'route' => 'legacy.migration-dashboard.reconciliation.index'],
+        ['label' => 'Commands', 'route' => 'legacy.migration-dashboard.commands.index'],
     ];
 @endphp
 

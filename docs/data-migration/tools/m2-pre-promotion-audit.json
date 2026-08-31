@@ -1,11 +1,11 @@
 {
-    "generated_at": "2026-08-28T15:22:33+02:00",
+    "generated_at": "2026-08-31T09:51:21+02:00",
     "user_population": {
-        "total_users": 1957,
-        "total_customers_rows": 1936,
-        "difference_explanation": "1957 users \u2212 1936 customers = 21 users without customers row (admin/staff/system; no loans/repayments).",
-        "users_with_customers_row": 1936,
-        "users_without_customers_row": 21,
+        "total_users": 2051,
+        "total_customers_rows": 2028,
+        "difference_explanation": "2051 users \u2212 2028 customers = 23 users without customers row (admin/staff/system; no loans/repayments).",
+        "users_with_customers_row": 2028,
+        "users_without_customers_row": 23,
         "admin_or_staff_excluded": 21,
         "admin_details": [
             {
@@ -29,13 +29,6 @@
                 ]
             },
             {
-                "user_id": 382,
-                "name": "Mubita Muhau",
-                "roles": [
-                    "Information Systems Specialist"
-                ]
-            },
-            {
                 "user_id": 450,
                 "name": "Samuel Kalunga",
                 "roles": [
@@ -46,7 +39,7 @@
                 "user_id": 451,
                 "name": "Esnart Nkhoma",
                 "roles": [
-                    "Admin & Operations"
+                    "No Function"
                 ]
             },
             {
@@ -60,7 +53,7 @@
                 "user_id": 694,
                 "name": "Nalishebo Muuka",
                 "roles": [
-                    "Admin & Operations"
+                    "No Function"
                 ]
             },
             {
@@ -74,14 +67,14 @@
                 "user_id": 780,
                 "name": "Mutale Pamu",
                 "roles": [
-                    "Credit Admin"
+                    "No Function"
                 ]
             },
             {
                 "user_id": 800,
                 "name": "Saidi Manda",
                 "roles": [
-                    "Admin & Operations"
+                    "No Function"
                 ]
             },
             {
@@ -102,7 +95,7 @@
                 "user_id": 1578,
                 "name": "Joel Simfukwe",
                 "roles": [
-                    "Credit Admin"
+                    "No Function"
                 ]
             },
             {
@@ -130,7 +123,7 @@
                 "user_id": 1694,
                 "name": "Martin Mwale",
                 "roles": [
-                    "Super Admin"
+                    "Chief Technology & Innovations Officer"
                 ]
             },
             {
@@ -153,31 +146,38 @@
                 "roles": [
                     "Admin & Operations"
                 ]
+            },
+            {
+                "user_id": 2134,
+                "name": "Felicia Kauseni",
+                "roles": [
+                    "Admin & Operations"
+                ]
             }
         ],
-        "users_ever_had_loan": 1872,
-        "users_with_active_loan": 716,
-        "users_ever_repayment": 1788,
-        "true_migration_population": 1936,
+        "users_ever_had_loan": 1963,
+        "users_with_active_loan": 704,
+        "users_ever_repayment": 1892,
+        "true_migration_population": 2028,
         "classifications": {
-            "CUSTOMER_WITH_CUSTOMERS_ROW": 1936,
+            "CUSTOMER_WITH_CUSTOMERS_ROW": 2028,
             "CUSTOMER_WITHOUT_CUSTOMERS_ROW": 0,
             "ADMIN_OR_STAFF": 20,
             "SYSTEM_ACCOUNT": 1,
-            "INVALID_OR_ORPHAN": 0,
+            "INVALID_OR_ORPHAN": 2,
             "OTHER": 0
         }
     },
     "customer_population": {
-        "true_customer_count": 1936,
+        "true_customer_count": 2028,
         "completeness": {
-            "HAS_FULL_USER_AND_CUSTOMER": 1936,
+            "HAS_FULL_USER_AND_CUSTOMER": 2026,
             "USER_ONLY_BUT_VALID_CUSTOMER": 0,
             "CUSTOMER_ONLY_OR_BROKEN_RELATION": 0,
-            "DUPLICATE_IDENTITY": 0,
-            "MANUAL_REVIEW": 0
+            "DUPLICATE_IDENTITY": 2,
+            "MANUAL_REVIEW": 2
         },
-        "sum_check": 1936
+        "sum_check": 2030
     },
     "client_reconciliation": {
         "legacy_client_total": 38,
@@ -190,8 +190,8 @@
             "MARKETEER_PRODUCT_PLACEHOLDER": 1
         },
         "totals": {
-            "MATCH_EXISTING": 1,
-            "CREATE": 25,
+            "MATCH_EXISTING": 26,
+            "CREATE": 0,
             "SKIP_GOVERNMENT_PLACEHOLDER": 1,
             "SKIP_MARKETEER_PLACEHOLDER": 1,
             "SKIP_CHARACTER_PLACEHOLDER": 5,
@@ -264,11 +264,11 @@
                 "product_type": "salary_based",
                 "registration_number": "TPIN1003322227",
                 "rate_type": "Normal",
-                "customer_count": 4,
-                "active_customer_count": 1,
-                "loan_count": 14,
-                "active_loan_count": 1,
-                "salary_based_loan_count": 8,
+                "customer_count": 5,
+                "active_customer_count": 2,
+                "loan_count": 15,
+                "active_loan_count": 2,
+                "salary_based_loan_count": 9,
                 "government_loan_count": 0,
                 "character_loan_count": 6,
                 "marketeer_loan_count": 0,
@@ -285,11 +285,11 @@
                 "rate_type": "Normal",
                 "customer_count": 52,
                 "active_customer_count": 31,
-                "loan_count": 616,
-                "active_loan_count": 39,
+                "loan_count": 675,
+                "active_loan_count": 42,
                 "salary_based_loan_count": 0,
                 "government_loan_count": 0,
-                "character_loan_count": 616,
+                "character_loan_count": 675,
                 "marketeer_loan_count": 0,
                 "classification": "CHARACTER_PRODUCT_PLACEHOLDER",
                 "mapping_action": "SKIP_CHARACTER_PLACEHOLDER",
@@ -302,13 +302,13 @@
                 "product_type": "character_based",
                 "registration_number": null,
                 "rate_type": "Normal",
-                "customer_count": 254,
-                "active_customer_count": 88,
-                "loan_count": 4677,
-                "active_loan_count": 103,
+                "customer_count": 271,
+                "active_customer_count": 93,
+                "loan_count": 4973,
+                "active_loan_count": 123,
                 "salary_based_loan_count": 0,
                 "government_loan_count": 1,
-                "character_loan_count": 4676,
+                "character_loan_count": 4972,
                 "marketeer_loan_count": 0,
                 "classification": "CHARACTER_PRODUCT_PLACEHOLDER",
                 "mapping_action": "SKIP_CHARACTER_PLACEHOLDER",
@@ -321,13 +321,13 @@
                 "product_type": "salary_based",
                 "registration_number": "PSSD/101/6/12",
                 "rate_type": "Normal",
-                "customer_count": 1060,
-                "active_customer_count": 429,
-                "loan_count": 8618,
-                "active_loan_count": 433,
-                "salary_based_loan_count": 6279,
-                "government_loan_count": 8152,
-                "character_loan_count": 466,
+                "customer_count": 1061,
+                "active_customer_count": 360,
+                "loan_count": 8713,
+                "active_loan_count": 363,
+                "salary_based_loan_count": 6367,
+                "government_loan_count": 8240,
+                "character_loan_count": 473,
                 "marketeer_loan_count": 0,
                 "classification": "GOVERNMENT_PRODUCT_PLACEHOLDER",
                 "mapping_action": "SKIP_GOVERNMENT_PLACEHOLDER",
@@ -368,9 +368,9 @@
                 "character_loan_count": 1,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 3,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 11,
@@ -378,17 +378,17 @@
                 "product_type": "salary_based",
                 "registration_number": "095036",
                 "rate_type": "Preferential",
-                "customer_count": 28,
-                "active_customer_count": 11,
-                "loan_count": 308,
-                "active_loan_count": 15,
-                "salary_based_loan_count": 303,
+                "customer_count": 34,
+                "active_customer_count": 16,
+                "loan_count": 328,
+                "active_loan_count": 21,
+                "salary_based_loan_count": 321,
                 "government_loan_count": 0,
-                "character_loan_count": 5,
+                "character_loan_count": 7,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
                 "mapping_action": "MATCH_EXISTING",
-                "target_company_id": 8,
+                "target_company_id": 2,
                 "reason": "MATCH_EXISTING"
             },
             {
@@ -406,9 +406,9 @@
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 4,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 13,
@@ -416,18 +416,18 @@
                 "product_type": "salary_based",
                 "registration_number": "100110",
                 "rate_type": "Preferential",
-                "customer_count": 75,
-                "active_customer_count": 29,
-                "loan_count": 617,
-                "active_loan_count": 30,
-                "salary_based_loan_count": 616,
+                "customer_count": 96,
+                "active_customer_count": 43,
+                "loan_count": 691,
+                "active_loan_count": 45,
+                "salary_based_loan_count": 689,
                 "government_loan_count": 0,
-                "character_loan_count": 1,
+                "character_loan_count": 2,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 5,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 14,
@@ -436,17 +436,17 @@
                 "registration_number": "030",
                 "rate_type": "Normal",
                 "customer_count": 10,
-                "active_customer_count": 5,
+                "active_customer_count": 4,
                 "loan_count": 56,
-                "active_loan_count": 5,
+                "active_loan_count": 4,
                 "salary_based_loan_count": 56,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 6,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 15,
@@ -454,18 +454,18 @@
                 "product_type": "salary_based",
                 "registration_number": "040",
                 "rate_type": "Special Rates 16% to 7.5%",
-                "customer_count": 18,
-                "active_customer_count": 8,
-                "loan_count": 74,
-                "active_loan_count": 8,
+                "customer_count": 17,
+                "active_customer_count": 5,
+                "loan_count": 75,
+                "active_loan_count": 6,
                 "salary_based_loan_count": 74,
                 "government_loan_count": 0,
-                "character_loan_count": 0,
+                "character_loan_count": 1,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 7,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 16,
@@ -474,17 +474,17 @@
                 "registration_number": "81791",
                 "rate_type": "Special Rates 14% - 8%",
                 "customer_count": 10,
-                "active_customer_count": 5,
-                "loan_count": 83,
-                "active_loan_count": 5,
-                "salary_based_loan_count": 83,
+                "active_customer_count": 6,
+                "loan_count": 91,
+                "active_loan_count": 6,
+                "salary_based_loan_count": 91,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 8,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 17,
@@ -492,18 +492,18 @@
                 "product_type": "salary_based",
                 "registration_number": "62298",
                 "rate_type": "Special Rates 16% to 7.5%",
-                "customer_count": 75,
-                "active_customer_count": 8,
-                "loan_count": 319,
-                "active_loan_count": 8,
-                "salary_based_loan_count": 318,
+                "customer_count": 76,
+                "active_customer_count": 14,
+                "loan_count": 361,
+                "active_loan_count": 14,
+                "salary_based_loan_count": 333,
                 "government_loan_count": 0,
-                "character_loan_count": 1,
+                "character_loan_count": 28,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 9,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 18,
@@ -520,9 +520,9 @@
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 10,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 19,
@@ -539,9 +539,9 @@
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 11,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 20,
@@ -558,9 +558,9 @@
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 12,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 21,
@@ -577,9 +577,9 @@
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 13,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 22,
@@ -596,9 +596,9 @@
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 14,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 23,
@@ -607,17 +607,17 @@
                 "registration_number": "1111100000",
                 "rate_type": "Special Rates 16% to 7.5%",
                 "customer_count": 7,
-                "active_customer_count": 5,
+                "active_customer_count": 3,
                 "loan_count": 16,
-                "active_loan_count": 5,
+                "active_loan_count": 3,
                 "salary_based_loan_count": 16,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 15,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 24,
@@ -634,9 +634,9 @@
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 16,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 25,
@@ -664,17 +664,17 @@
                 "registration_number": "320060130389",
                 "rate_type": "Special Rates 14% - 8%",
                 "customer_count": 24,
-                "active_customer_count": 2,
-                "loan_count": 456,
-                "active_loan_count": 2,
-                "salary_based_loan_count": 456,
+                "active_customer_count": 3,
+                "loan_count": 463,
+                "active_loan_count": 3,
+                "salary_based_loan_count": 463,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 17,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 27,
@@ -682,18 +682,18 @@
                 "product_type": "salary_based",
                 "registration_number": "320140230364",
                 "rate_type": "Special Rates 16% to 7.5%",
-                "customer_count": 18,
-                "active_customer_count": 10,
+                "customer_count": 17,
+                "active_customer_count": 9,
                 "loan_count": 79,
-                "active_loan_count": 12,
+                "active_loan_count": 9,
                 "salary_based_loan_count": 79,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 18,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 28,
@@ -702,17 +702,17 @@
                 "registration_number": "454647",
                 "rate_type": "Special Rates 14% - 8%",
                 "customer_count": 15,
-                "active_customer_count": 9,
+                "active_customer_count": 7,
                 "loan_count": 49,
-                "active_loan_count": 9,
+                "active_loan_count": 7,
                 "salary_based_loan_count": 49,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 19,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 29,
@@ -721,17 +721,17 @@
                 "registration_number": "120200008818",
                 "rate_type": "Preferential",
                 "customer_count": 42,
-                "active_customer_count": 8,
+                "active_customer_count": 3,
                 "loan_count": 393,
-                "active_loan_count": 8,
+                "active_loan_count": 3,
                 "salary_based_loan_count": 393,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 20,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 30,
@@ -748,9 +748,9 @@
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 21,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 31,
@@ -786,9 +786,9 @@
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 22,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 33,
@@ -797,17 +797,17 @@
                 "registration_number": "120220027331",
                 "rate_type": "Special Rates 16% to 7.5%",
                 "customer_count": 10,
-                "active_customer_count": 3,
+                "active_customer_count": 2,
                 "loan_count": 30,
-                "active_loan_count": 3,
+                "active_loan_count": 2,
                 "salary_based_loan_count": 30,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 23,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 34,
@@ -815,18 +815,18 @@
                 "product_type": "salary_based",
                 "registration_number": "120110093230",
                 "rate_type": "Normal",
-                "customer_count": 22,
-                "active_customer_count": 3,
-                "loan_count": 72,
-                "active_loan_count": 3,
-                "salary_based_loan_count": 72,
+                "customer_count": 23,
+                "active_customer_count": 14,
+                "loan_count": 106,
+                "active_loan_count": 14,
+                "salary_based_loan_count": 106,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 24,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 35,
@@ -835,17 +835,17 @@
                 "registration_number": "320090158598",
                 "rate_type": "Normal",
                 "customer_count": 17,
-                "active_customer_count": 2,
+                "active_customer_count": 0,
                 "loan_count": 56,
-                "active_loan_count": 3,
+                "active_loan_count": 0,
                 "salary_based_loan_count": 55,
                 "government_loan_count": 0,
                 "character_loan_count": 1,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 25,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 36,
@@ -853,14 +853,14 @@
                 "product_type": "marketize_based",
                 "registration_number": "MKT-2025-001",
                 "rate_type": "Normal",
-                "customer_count": 35,
-                "active_customer_count": 24,
-                "loan_count": 71,
-                "active_loan_count": 24,
+                "customer_count": 81,
+                "active_customer_count": 57,
+                "loan_count": 158,
+                "active_loan_count": 57,
                 "salary_based_loan_count": 0,
                 "government_loan_count": 0,
-                "character_loan_count": 71,
-                "marketeer_loan_count": 71,
+                "character_loan_count": 158,
+                "marketeer_loan_count": 158,
                 "classification": "MARKETEER_PRODUCT_PLACEHOLDER",
                 "mapping_action": "SKIP_MARKETEER_PLACEHOLDER",
                 "target_company_id": null,
@@ -892,17 +892,17 @@
                 "registration_number": "319580002529",
                 "rate_type": "Special Rates 16% to 7.5%",
                 "customer_count": 7,
-                "active_customer_count": 6,
-                "loan_count": 11,
-                "active_loan_count": 6,
-                "salary_based_loan_count": 11,
+                "active_customer_count": 4,
+                "loan_count": 12,
+                "active_loan_count": 4,
+                "salary_based_loan_count": 12,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 26,
+                "reason": "MATCH_EXISTING"
             },
             {
                 "legacy_client_id": 39,
@@ -911,17 +911,17 @@
                 "registration_number": "120220043284",
                 "rate_type": "Normal",
                 "customer_count": 2,
-                "active_customer_count": 2,
-                "loan_count": 3,
-                "active_loan_count": 3,
-                "salary_based_loan_count": 3,
+                "active_customer_count": 1,
+                "loan_count": 5,
+                "active_loan_count": 1,
+                "salary_based_loan_count": 5,
                 "government_loan_count": 0,
                 "character_loan_count": 0,
                 "marketeer_loan_count": 0,
                 "classification": "MOU_REAL_EMPLOYER",
-                "mapping_action": "CREATE",
-                "target_company_id": null,
-                "reason": "CREATE"
+                "mapping_action": "MATCH_EXISTING",
+                "target_company_id": 27,
+                "reason": "MATCH_EXISTING"
             }
         ],
         "government_clients": [
@@ -929,22 +929,22 @@
                 "legacy_client_id": 8,
                 "company_name": "GRZ",
                 "classification": "GOVERNMENT_PRODUCT_PLACEHOLDER",
-                "customer_count": 1060
+                "customer_count": 1061
             }
         ]
     },
     "company_coverage": {
         "counts": {
-            "MOU_COMPANY_LINKED": 28,
-            "GOVERNMENT_INTENTIONAL_NO_COMPANY": 1060,
-            "MARKETEER_INTENTIONAL_NO_COMPANY": 35,
-            "CHARACTER_INTENTIONAL_NO_COMPANY": 315,
+            "MOU_COMPANY_LINKED": 549,
+            "GOVERNMENT_INTENTIONAL_NO_COMPANY": 1061,
+            "MARKETEER_INTENTIONAL_NO_COMPANY": 81,
+            "CHARACTER_INTENTIONAL_NO_COMPANY": 333,
             "OTHER_LEGITIMATE_NO_COMPANY": 0,
-            "COMPANY_MAPPING_PENDING": 494,
+            "COMPANY_MAPPING_PENDING": 0,
             "MANUAL_REVIEW": 4
         },
-        "sum": 1936,
-        "expected_total": 1936,
+        "sum": 2028,
+        "expected_total": 2028,
         "reconciles": true,
         "note": "Only MOU_REAL_EMPLOYER clients create companies. Government, Marketeer, and Character placeholders are intentional no-company buckets."
     },
@@ -953,7 +953,7 @@
             "legacy_client_id": 8,
             "company_name": "GRZ",
             "classification": "GOVERNMENT_PRODUCT_PLACEHOLDER",
-            "customer_count": 1060
+            "customer_count": 1061
         }
     ],
     "banks": {
@@ -963,15 +963,15 @@
                 "legacy_bank_id": 1,
                 "legacy_name": "Zambia Industrial Commercial Bank",
                 "legacy_code": "ZICB",
-                "target": null,
-                "action": "MANUAL_REVIEW",
-                "reason": "No target treasury Bank or FI match (e.g. ZICB not yet in target)."
+                "target": "Bank:2 (ZICB)",
+                "action": "MATCH_EXISTING",
+                "reason": "Legacy treasury bank maps to revamp Bank model; target preserved."
             },
             {
                 "legacy_bank_id": 2,
                 "legacy_name": "First National Bank",
                 "legacy_code": "FNB",
-                "target": "Bank:1 (Main FNB Bank Account)",
+                "target": "Bank:1 (FNB)",
                 "action": "MATCH_EXISTING",
                 "reason": "Legacy treasury bank maps to revamp Bank model; target preserved."
             }
@@ -1019,98 +1019,84 @@
         ]
     },
     "master_data_protection": {
-        "entity_maps_count": 36,
+        "entity_maps_count": 62,
         "policy": "MATCH \u2192 MAP \u2192 SKIP CREATE; maps->store() is no-op if map exists; target models never updated from legacy on rerun.",
         "samples": [
             {
+                "entity_type": "customer",
+                "legacy_id": "14",
+                "target_id": 7,
+                "method": "identity_resolution_primary",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "customer",
+                "legacy_id": "19",
+                "target_id": 7,
+                "method": "identity_resolution_alias",
+                "overwrite_on_rerun": false
+            },
+            {
                 "entity_type": "product",
                 "legacy_id": "MOU-001",
-                "target_id": 4,
+                "target_id": 3,
                 "method": "existing_target",
                 "overwrite_on_rerun": false
             },
             {
                 "entity_type": "product",
                 "legacy_id": "GOV-001",
-                "target_id": 6,
+                "target_id": 5,
                 "method": "existing_target",
                 "overwrite_on_rerun": false
             },
             {
                 "entity_type": "product",
                 "legacy_id": "CHAR-001",
-                "target_id": 5,
-                "method": "existing_target",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "product",
-                "legacy_id": "MARK-001",
-                "target_id": 8,
-                "method": "existing_target",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "company",
-                "legacy_id": "2",
                 "target_id": 4,
-                "method": "superseded_product_placeholder",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "company",
-                "legacy_id": "6",
-                "target_id": 5,
-                "method": "superseded_product_placeholder",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "company",
-                "legacy_id": "7",
-                "target_id": 6,
-                "method": "superseded_product_placeholder",
+                "method": "existing_target",
                 "overwrite_on_rerun": false
             },
             {
                 "entity_type": "company",
                 "legacy_id": "11",
-                "target_id": 8,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "company",
-                "legacy_id": "36",
-                "target_id": 9,
-                "method": "superseded_product_placeholder",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "financial_institution",
-                "legacy_id": "2",
                 "target_id": 2,
-                "method": "matched_existing",
+                "method": "normalized_name",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "bank",
+                "legacy_id": "1",
+                "target_id": 2,
+                "method": "treasury_bank_matched",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "bank",
+                "legacy_id": "2",
+                "target_id": 1,
+                "method": "treasury_bank_matched",
                 "overwrite_on_rerun": false
             },
             {
                 "entity_type": "wallet_provider",
                 "legacy_id": "2",
                 "target_id": 1,
-                "method": "matched_existing",
+                "method": "code",
                 "overwrite_on_rerun": false
             },
             {
                 "entity_type": "wallet_provider",
                 "legacy_id": "3",
                 "target_id": 2,
-                "method": "matched_existing",
+                "method": "code",
                 "overwrite_on_rerun": false
             },
             {
                 "entity_type": "wallet_provider",
                 "legacy_id": "4",
                 "target_id": 3,
-                "method": "matched_existing",
+                "method": "code",
                 "overwrite_on_rerun": false
             },
             {
@@ -1135,122 +1121,262 @@
                 "overwrite_on_rerun": false
             },
             {
-                "entity_type": "customer",
-                "legacy_id": "10",
-                "target_id": 4,
-                "method": "explicit_migration_mapping",
+                "entity_type": "relationship_manager",
+                "legacy_id": "8",
+                "target_id": 3,
+                "method": "name_exact",
                 "overwrite_on_rerun": false
             },
             {
-                "entity_type": "customer",
-                "legacy_id": "12",
-                "target_id": 6,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "14",
-                "target_id": 7,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "19",
-                "target_id": 7,
-                "method": "national_id",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "48",
-                "target_id": 9,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "52",
-                "target_id": 8,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "374",
-                "target_id": 10,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "392",
-                "target_id": 11,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "491",
-                "target_id": 12,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "596",
-                "target_id": 13,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "916",
-                "target_id": 15,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "941",
-                "target_id": 14,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "1997",
-                "target_id": 16,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "customer",
-                "legacy_id": "1999",
-                "target_id": 17,
-                "method": "explicit_migration_mapping",
-                "overwrite_on_rerun": false
-            },
-            {
-                "entity_type": "bank",
-                "legacy_id": "2",
+                "entity_type": "customer_group",
+                "legacy_id": "GOV-DEFAULT",
                 "target_id": 1,
-                "method": "treasury_bank_matched",
+                "method": "existing_target",
                 "overwrite_on_rerun": false
             },
             {
-                "entity_type": "customer",
+                "entity_type": "product",
+                "legacy_id": "MARK-001",
+                "target_id": 7,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "10",
+                "target_id": 3,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "12",
+                "target_id": 4,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "13",
+                "target_id": 5,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
                 "legacy_id": "14",
-                "target_id": 7,
-                "method": "identity_resolution_primary",
+                "target_id": 6,
+                "method": "created",
                 "overwrite_on_rerun": false
             },
             {
-                "entity_type": "customer",
-                "legacy_id": "19",
+                "entity_type": "company",
+                "legacy_id": "15",
                 "target_id": 7,
-                "method": "identity_resolution_alias",
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "16",
+                "target_id": 8,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "17",
+                "target_id": 9,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "18",
+                "target_id": 10,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "19",
+                "target_id": 11,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "20",
+                "target_id": 12,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "21",
+                "target_id": 13,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "22",
+                "target_id": 14,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "23",
+                "target_id": 15,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "24",
+                "target_id": 16,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "26",
+                "target_id": 17,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "27",
+                "target_id": 18,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "28",
+                "target_id": 19,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "29",
+                "target_id": 20,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "30",
+                "target_id": 21,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "32",
+                "target_id": 22,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "33",
+                "target_id": 23,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "34",
+                "target_id": 24,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "35",
+                "target_id": 25,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "38",
+                "target_id": 26,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "company",
+                "legacy_id": "39",
+                "target_id": 27,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "branch",
+                "legacy_id": "inferred:LSK",
+                "target_id": 3,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "branch",
+                "legacy_id": "inferred:KTW",
+                "target_id": 4,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "relationship_manager",
+                "legacy_id": "2",
+                "target_id": 5,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "relationship_manager",
+                "legacy_id": "3",
+                "target_id": 6,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "relationship_manager",
+                "legacy_id": "4",
+                "target_id": 7,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "relationship_manager",
+                "legacy_id": "5",
+                "target_id": 8,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "relationship_manager",
+                "legacy_id": "6",
+                "target_id": 9,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "relationship_manager",
+                "legacy_id": "7",
+                "target_id": 10,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "relationship_manager",
+                "legacy_id": "9",
+                "target_id": 11,
+                "method": "created",
                 "overwrite_on_rerun": false
             },
             {
@@ -1273,160 +1399,76 @@
                 "target_id": 2,
                 "method": "created",
                 "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "market",
+                "legacy_id": "3",
+                "target_id": 3,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "market",
+                "legacy_id": "4",
+                "target_id": 4,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "customer_group",
+                "legacy_id": "LEG-CHAR-2",
+                "target_id": 5,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "customer_group",
+                "legacy_id": "LEG-CHAR-4",
+                "target_id": 6,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "customer_group",
+                "legacy_id": "LEG-CHAR-5",
+                "target_id": 7,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "customer_group",
+                "legacy_id": "LEG-CHAR-6",
+                "target_id": 8,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "customer_group",
+                "legacy_id": "LEG-CHAR-7",
+                "target_id": 9,
+                "method": "created",
+                "overwrite_on_rerun": false
+            },
+            {
+                "entity_type": "customer",
+                "legacy_id": "336",
+                "target_id": 1,
+                "method": "national_id",
+                "overwrite_on_rerun": false
             }
         ]
     },
     "existing_customer_matches": {
-        "count": 16,
+        "count": 3,
         "rows": [
-            {
-                "legacy_user_id": 10,
-                "legacy_customer_id": 1,
-                "target_customer_id": 4,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 12,
-                "legacy_customer_id": 3,
-                "target_customer_id": 6,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 14,
-                "legacy_customer_id": 5,
-                "target_customer_id": 7,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 19,
-                "legacy_customer_id": 8,
-                "target_customer_id": 7,
-                "method": "national_id",
-                "nrc_match": true,
-                "employee_number_match": false,
-                "phone_match": false,
-                "confidence": "MANUAL_REVIEW"
-            },
-            {
-                "legacy_user_id": 48,
-                "legacy_customer_id": 37,
-                "target_customer_id": 9,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 52,
-                "legacy_customer_id": 41,
-                "target_customer_id": 8,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 374,
-                "legacy_customer_id": 360,
-                "target_customer_id": 10,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 392,
-                "legacy_customer_id": 377,
-                "target_customer_id": 11,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 491,
-                "legacy_customer_id": 473,
-                "target_customer_id": 12,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 596,
-                "legacy_customer_id": 577,
-                "target_customer_id": 13,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 916,
-                "legacy_customer_id": 891,
-                "target_customer_id": 15,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 941,
-                "legacy_customer_id": 912,
-                "target_customer_id": 14,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 1997,
-                "legacy_customer_id": 1957,
-                "target_customer_id": 16,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
-            {
-                "legacy_user_id": 1999,
-                "legacy_customer_id": 1959,
-                "target_customer_id": 17,
-                "method": "explicit_migration_mapping",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
-                "confidence": "HIGH"
-            },
             {
                 "legacy_user_id": 14,
                 "legacy_customer_id": 5,
                 "target_customer_id": 7,
                 "method": "identity_resolution_primary",
-                "nrc_match": true,
-                "employee_number_match": true,
-                "phone_match": true,
+                "nrc_match": false,
+                "employee_number_match": false,
+                "phone_match": false,
                 "confidence": "HIGH"
             },
             {
@@ -1434,16 +1476,26 @@
                 "legacy_customer_id": 8,
                 "target_customer_id": 7,
                 "method": "identity_resolution_alias",
-                "nrc_match": true,
+                "nrc_match": false,
                 "employee_number_match": false,
                 "phone_match": false,
                 "confidence": "HIGH"
+            },
+            {
+                "legacy_user_id": 336,
+                "legacy_customer_id": 322,
+                "target_customer_id": 1,
+                "method": "national_id",
+                "nrc_match": true,
+                "employee_number_match": false,
+                "phone_match": false,
+                "confidence": "MANUAL_REVIEW"
             }
         ],
         "manual_review": 1
     },
     "duplicate_analysis": {
-        "duplicate_nrc_groups": 2,
+        "duplicate_nrc_groups": 3,
         "cases": [
             {
                 "signal": "national_id",
@@ -1452,9 +1504,7 @@
                     14,
                     19
                 ],
-                "target_customers": [
-                    7
-                ],
+                "target_customers": [],
                 "action": "MANUAL_REVIEW"
             },
             {
@@ -1466,13 +1516,23 @@
                 ],
                 "target_customers": [],
                 "action": "MANUAL_REVIEW"
+            },
+            {
+                "signal": "national_id",
+                "value": "553364/10/1",
+                "legacy_user_ids": [
+                    192,
+                    838
+                ],
+                "target_customers": [],
+                "action": "MANUAL_REVIEW"
             }
         ]
     },
     "active_loan_simulation": {
-        "legacy_active_loans": 752,
-        "simulated_would_promote": 750,
-        "simulated_manual_review": 2,
+        "legacy_active_loans": 756,
+        "simulated_would_promote": 756,
+        "simulated_manual_review": 0,
         "simulated_blocked_missing_customer": 0,
         "note": "Assumes all 1936 customers promoted; 750 prior blocked become eligible."
     },
@@ -1491,7 +1551,7 @@
         "conditions": {
             "zicb_treasury_bank_needs_manual_map_or_skip_decision": true,
             "duplicate_nrc_legacy_14_and_19_share_target": true,
-            "company_mapping_pending_resolves_on_reference_promote": true
+            "company_mapping_pending_resolves_on_reference_promote": false
         }
     }
 }

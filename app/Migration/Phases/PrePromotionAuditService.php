@@ -504,7 +504,7 @@ class PrePromotionAuditService
             $empMatch = ($user['emp_number'] ?? null) && ($user['emp_number'] === ($target->employee_number ?? null));
             $phoneMatch = ($user['phone_number'] ?? null) && str_contains((string) ($target->phone ?? ''), substr(preg_replace('/\D/', '', $user['phone_number']) ?? '', -9));
             $confidence = $nrcMatch ? 'HIGH' : ($map->mapping_method === 'email' ? 'LOW' : 'MEDIUM');
-            if ($map->mapping_method === 'national_id' && ! $empMatch) {
+            if ($map->mapping_method === 'national_id' && ! $nrcMatch && ! $empMatch) {
                 $confidence = 'MANUAL_REVIEW';
             }
             if (in_array($map->mapping_method, ['identity_resolution_alias', 'identity_resolution_primary'], true)) {

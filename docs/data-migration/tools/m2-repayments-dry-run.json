@@ -1,15 +1,15 @@
 {
-    "run_uuid": "8a3562e8-caf7-4f61-8357-f4688b8466c8",
-    "migration_run_id": 58,
-    "replay_run_id": 57,
-    "promote": false,
-    "A_DIRECT": 6541,
-    "B_RECONSTRUCTED": 2600,
-    "C_AMBIGUOUS": 2,
-    "D_MANUAL": 4673,
+    "run_uuid": "b1d2fa9b-9364-4e3a-b9d7-d2cf28dcd4d6",
+    "migration_run_id": 13,
+    "replay_run_id": 12,
+    "promote": true,
+    "A_DIRECT": 7833,
+    "B_RECONSTRUCTED": 2152,
+    "C_AMBIGUOUS": 0,
+    "D_MANUAL": 4182,
     "would_promote": 0,
-    "promoted": 9141,
-    "excluded_ambiguous": 2,
-    "excluded_manual": 4673,
-    "blocked_missing_loan": 0
+    "promoted": 9960,
+    "excluded_ambiguous": 0,
+    "excluded_manual": 4182,
+    "blocked_missing_loan": 25
 }

@@ -16,6 +16,7 @@ class MigrationReconciliationReportService
     public function __construct(
         private readonly MigrationReconciliationReader $reconciliationReader,
         private readonly LegacyLoanBalanceCalculator $balanceCalculator,
+        private readonly MigrationCustomerDetailService $customerDetails,
     ) {}
 
     /**
@@ -90,6 +91,10 @@ class MigrationReconciliationReportService
             });
         }
 
+        if (! empty($filters['run_id'])) {
+            $query->where('ml.migration_run_id', (int) $filters['run_id']);
+        }
+
         return $query->paginate($perPage);
     }
 
@@ -114,7 +119,20 @@ class MigrationReconciliationReportService
             });
         }
 
-        return $query->paginate($perPage);
+        if (! empty($filters['run_id'])) {
+            $query->where('migration_run_id', (int) $filters['run_id']);
+        }
+
+        $paginator = $query->paginate($perPage);
+        $legacyNames = $this->customerDetails->legacyNamesForRows($paginator->getCollection());
+        $paginator->getCollection()->transform(function ($row) use ($legacyNames) {
+            $row->legacy_name = $legacyNames[(int) $row->legacy_user_id] ?? null;
+            $row->exception_label = MigrationDashboardSupport::customerExceptionLabel($row->exception ?? null);
+
+            return $row;
+        });
+
+        return $paginator;
     }
 
     public function customerDetail(int $legacyUserId): ?array
@@ -139,6 +157,7 @@ class MigrationReconciliationReportService
         }
 
         $identity = \App\Migration\Phases\Support\CustomerIdentityResolutionRegistry::forUser($legacyUserId);
+        $enriched = $this->customerDetails->build($legacyUserId, $staging);
 
         return [
             'staging' => $staging,
@@ -147,6 +166,8 @@ class MigrationReconciliationReportService
             'loans' => $loans,
             'repayments' => $repayments,
             'identity' => $identity,
+            'legacy' => $enriched['legacy'],
+            'review' => $enriched['review'],
         ];
     }
 
@@ -184,6 +205,10 @@ class MigrationReconciliationReportService
                     ->orWhere('legacy_user_id', $search)
                     ->orWhere('mapped_repayment_id', $search);
             });
+        }
+
+        if (! empty($filters['run_id'])) {
+            $query->where('migration_run_id', (int) $filters['run_id']);
         }
 
         return $query->paginate($perPage);

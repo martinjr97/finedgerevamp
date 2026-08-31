@@ -2,9 +2,9 @@
 
 namespace App\Migration\Phases\Support;
 
-use App\Migration\LegacyConnection;
 use App\Migration\Phases\MigrationEntityMapRepository;
 use App\Models\Customer;
+use App\Models\MigrationIdentityResolution;
 
 class CustomerIdentityResolver
 {
@@ -21,73 +21,94 @@ class CustomerIdentityResolver
     {
         $applied = [];
 
-        foreach (CustomerIdentityResolutionRegistry::approved() as $nrc => $resolution) {
-            $primaryId = (int) $resolution['primary_legacy_user_id'];
-            $targetId = (int) ($resolution['target_customer_id'] ?? 0);
+        foreach (IdentityResolutionCatalog::approved() as $nrc => $resolution) {
+            if (! IdentityResolutionCatalog::isMergeResolution($resolution)) {
+                continue;
+            }
 
+            $applied = array_merge($applied, $this->applyResolutionEntry($resolution, $nrc, $migrationRunId));
+        }
+
+        $this->markObsoleteCompanyMaps();
+
+        return [
+            'applied' => $applied,
+            'duplicate_groups_resolved' => IdentityResolutionCatalog::duplicateGroupsResolved(),
+            'pending_duplicate_groups' => IdentityResolutionCatalog::duplicateNrcKeys()->count()
+                - count(IdentityResolutionCatalog::approved()),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $resolution
+     * @return list<array<string, mixed>>
+     */
+    public function applyResolutionEntry(array $resolution, string $nrc, ?int $migrationRunId = null): array
+    {
+        $applied = [];
+        $primaryId = (int) $resolution['primary_legacy_user_id'];
+        $targetId = (int) ($resolution['target_customer_id'] ?? 0);
+
+        if ($targetId > 0) {
+            $this->maps->store(
+                MigrationEntityMapRepository::TYPE_CUSTOMER,
+                (string) $primaryId,
+                Customer::class,
+                $targetId,
+                'identity_resolution_primary',
+                'HIGH',
+                null,
+                $migrationRunId,
+                [
+                    'identity_resolution' => $resolution['classification'],
+                    'nrc' => $nrc,
+                    'role' => 'primary',
+                ]
+            );
+        }
+
+        foreach ($resolution['alias_legacy_user_ids'] ?? [] as $aliasId) {
             if ($targetId > 0) {
-                $this->maps->store(
+                $this->maps->annotateMap(
                     MigrationEntityMapRepository::TYPE_CUSTOMER,
-                    (string) $primaryId,
-                    Customer::class,
-                    $targetId,
-                    'identity_resolution_primary',
-                    'HIGH',
-                    null,
-                    $migrationRunId,
+                    (string) $aliasId,
                     [
                         'identity_resolution' => $resolution['classification'],
                         'nrc' => $nrc,
-                        'role' => 'primary',
-                    ]
+                        'role' => 'alias',
+                        'primary_legacy_user_id' => $primaryId,
+                        'approved_reason' => $resolution['reason'] ?? null,
+                    ],
+                    'identity_resolution_alias',
+                    $targetId
                 );
-            }
 
-            foreach ($resolution['alias_legacy_user_ids'] ?? [] as $aliasId) {
-                if ($targetId > 0) {
-                    $this->maps->annotateMap(
+                if (! $this->maps->find(MigrationEntityMapRepository::TYPE_CUSTOMER, (string) $aliasId)) {
+                    $this->maps->store(
                         MigrationEntityMapRepository::TYPE_CUSTOMER,
                         (string) $aliasId,
+                        Customer::class,
+                        $targetId,
+                        'identity_resolution_alias',
+                        'HIGH',
+                        null,
+                        $migrationRunId,
                         [
                             'identity_resolution' => $resolution['classification'],
                             'nrc' => $nrc,
                             'role' => 'alias',
                             'primary_legacy_user_id' => $primaryId,
-                            'approved_reason' => $resolution['reason'],
-                        ],
-                        'identity_resolution_alias',
-                        $targetId
+                        ]
                     );
-
-                    if (! $this->maps->find(MigrationEntityMapRepository::TYPE_CUSTOMER, (string) $aliasId)) {
-                        $this->maps->store(
-                            MigrationEntityMapRepository::TYPE_CUSTOMER,
-                            (string) $aliasId,
-                            Customer::class,
-                            $targetId,
-                            'identity_resolution_alias',
-                            'HIGH',
-                            null,
-                            $migrationRunId,
-                            [
-                                'identity_resolution' => $resolution['classification'],
-                                'nrc' => $nrc,
-                                'role' => 'alias',
-                                'primary_legacy_user_id' => $primaryId,
-                            ]
-                        );
-                    }
                 }
-
-                $applied[] = ['nrc' => $nrc, 'alias_legacy_user_id' => $aliasId, 'target_customer_id' => $targetId ?: null];
             }
 
-            $applied[] = ['nrc' => $nrc, 'primary_legacy_user_id' => $primaryId, 'target_customer_id' => $targetId ?: null];
+            $applied[] = ['nrc' => $nrc, 'alias_legacy_user_id' => $aliasId, 'target_customer_id' => $targetId ?: null];
         }
 
-        $this->markObsoleteCompanyMaps();
+        $applied[] = ['nrc' => $nrc, 'primary_legacy_user_id' => $primaryId, 'target_customer_id' => $targetId ?: null];
 
-        return ['applied' => $applied, 'duplicate_groups_resolved' => count(CustomerIdentityResolutionRegistry::approved())];
+        return $applied;
     }
 
     public function markObsoleteCompanyMaps(): void
@@ -114,23 +135,7 @@ class CustomerIdentityResolver
 
     public function duplicateGroupsResolved(): bool
     {
-        LegacyConnection::configureFromLegacyEnvFile();
-        $legacy = LegacyConnection::connection();
-
-        $groups = $legacy->table('customers')
-            ->whereNotNull('nrc')
-            ->where('nrc', '!=', '')
-            ->get()
-            ->groupBy('nrc')
-            ->filter(fn ($g) => $g->count() > 1);
-
-        foreach ($groups->keys() as $nrc) {
-            if (! CustomerIdentityResolutionRegistry::forNrc((string) $nrc)) {
-                return false;
-            }
-        }
-
-        return true;
+        return IdentityResolutionCatalog::duplicateGroupsResolved();
     }
 
     /**
@@ -148,7 +153,11 @@ class CustomerIdentityResolver
         }
 
         $resolution = CustomerIdentityResolutionRegistry::forUser($legacyUserId);
-        if (! $resolution) {
+        if (! $resolution || ($resolution['classification'] ?? '') === MigrationIdentityResolution::CLASS_EXCLUDE) {
+            return null;
+        }
+
+        if (! IdentityResolutionCatalog::isMergeResolution($resolution)) {
             return null;
         }
 

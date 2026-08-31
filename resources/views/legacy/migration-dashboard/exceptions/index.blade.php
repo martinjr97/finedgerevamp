@@ -9,13 +9,13 @@
 
     <form method="GET" class="mb-4 flex flex-wrap gap-2">
         <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Rule code or legacy ID" class="rounded-xl border px-3 py-2 text-sm">
+        <input type="number" name="run_id" value="{{ $filters['run_id'] ?? '' }}" placeholder="Run ID" min="1" class="rounded-xl border px-3 py-2 text-sm w-28">
         <select name="entity" class="rounded-xl border px-3 py-2 text-sm">
             <option value="">All entities</option>
             @foreach(['loan', 'customer', 'repayment', 'company'] as $entity)
                 <option value="{{ $entity }}" @selected(($filters['entity'] ?? '') === $entity)>{{ $entity }}</option>
             @endforeach
         </select>
-        <input type="number" name="run_id" value="{{ $filters['run_id'] ?? '' }}" placeholder="Run ID" class="rounded-xl border px-3 py-2 text-sm w-28">
         <button class="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white">Filter</button>
     </form>
 
@@ -39,7 +39,13 @@
                         <td class="px-3 py-2">{{ $row->legacy_user_id ?? '—' }}</td>
                         <td class="px-3 py-2">{{ $row->migration_status }}</td>
                         <td class="px-3 py-2 text-xs">{{ $row->exception ?? 'Requires manual review' }}</td>
-                        <td class="px-3 py-2">{{ $row->migration_run_id ?? '—' }}</td>
+                        <td class="px-3 py-2">
+                            @if($row->migration_run_id)
+                                <a href="{{ route('legacy.migration-dashboard.runs.show', $row->migration_run_id) }}" class="text-primary hover:underline">{{ $row->migration_run_id }}</a>
+                            @else
+                                —
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr><td colspan="6" class="px-3 py-6 text-center text-slate-500">No exceptions match filters.</td></tr>

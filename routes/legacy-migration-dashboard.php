@@ -15,11 +15,16 @@ Route::middleware(['auth:admin', 'password.changed', 'legacy.migration.dashboard
         Route::get('/companies', [LegacyMigrationDashboardController::class, 'companies'])->name('companies.index');
         Route::get('/marketeers', [LegacyMigrationDashboardController::class, 'marketeers'])->name('marketeers.index');
         Route::get('/identity', [LegacyMigrationDashboardController::class, 'identity'])->name('identity.index');
+        Route::get('/identity/resolve/{nrcKey}', [LegacyMigrationDashboardController::class, 'resolveIdentity'])->name('identity.resolve');
+        Route::post('/identity/resolve', [LegacyMigrationDashboardController::class, 'storeIdentityResolution'])
+            ->middleware('migration.manage')
+            ->name('identity.store');
         Route::get('/loans', [LegacyMigrationDashboardController::class, 'loans'])->name('loans.index');
         Route::get('/loans/{legacyLoanId}', [LegacyMigrationDashboardController::class, 'showLoan'])->name('loans.show');
         Route::get('/repayments', [LegacyMigrationDashboardController::class, 'repayments'])->name('repayments.index');
         Route::get('/repayments/{legacyRepaymentId}', [LegacyMigrationDashboardController::class, 'showRepayment'])->name('repayments.show');
         Route::get('/exceptions', [LegacyMigrationDashboardController::class, 'exceptions'])->name('exceptions.index');
         Route::get('/reconciliation', [LegacyMigrationDashboardController::class, 'reconciliation'])->name('reconciliation.index');
+        Route::get('/commands', [LegacyMigrationDashboardController::class, 'commands'])->name('commands.index');
         Route::get('/mappings', [LegacyMigrationDashboardController::class, 'mappings'])->name('mappings.index');
     });

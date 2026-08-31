@@ -351,6 +351,10 @@ class FinancialDataMigrator
             }
 
             $description = trim((string) ($row->description ?: 'Legacy expense #'.$legacyId));
+            [$importDescription, $importNotes] = $this->prepareImportedText(
+                $description,
+                'Imported from legacy expense #'.$legacyId,
+            );
 
             $transaction = FinancialTransaction::create([
                 'transaction_number' => $this->legacyTransactionNumber('EXP', $legacyId),
@@ -359,13 +363,13 @@ class FinancialDataMigrator
                 'category' => $category->code,
                 'expense_category_id' => $category->id,
                 'expense_subcategory_id' => $subcategoryId,
-                'description' => Str::limit($description, 500, ''),
+                'description' => $importDescription,
                 'receiver_name' => filled($row->receiver_name ?? null) ? (string) $row->receiver_name : null,
                 'amount' => $row->amount,
                 'source_type' => $sourceType,
                 'source_id' => $sourceId,
                 'reference_number' => $row->reference_number ?? null,
-                'notes' => 'Imported from legacy expense #'.$legacyId,
+                'notes' => $importNotes,
                 'metadata' => [
                     'legacy_import' => true,
                     'legacy_table' => 'expenses',
@@ -439,18 +443,24 @@ class FinancialDataMigrator
                 continue;
             }
 
+            $description = trim((string) ($row->description ?: 'Legacy income #'.$legacyId));
+            [$importDescription, $importNotes] = $this->prepareImportedText(
+                $description,
+                'Imported from legacy income #'.$legacyId,
+            );
+
             $transaction = FinancialTransaction::create([
                 'transaction_number' => $this->legacyTransactionNumber('INC', $legacyId),
                 'transaction_date' => $row->income_date,
                 'type' => 'income',
                 'category' => $category->code,
                 'income_category_id' => $category->id,
-                'description' => Str::limit(trim((string) ($row->description ?: 'Legacy income #'.$legacyId)), 500, ''),
+                'description' => $importDescription,
                 'amount' => $row->amount,
                 'destination_type' => $destinationType,
                 'destination_id' => $destinationId,
                 'reference_number' => $row->reference_number ?? null,
-                'notes' => 'Imported from legacy income #'.$legacyId,
+                'notes' => $importNotes,
                 'metadata' => [
                     'legacy_import' => true,
                     'legacy_table' => 'incomes',
@@ -536,6 +546,23 @@ class FinancialDataMigrator
         }
 
         return $wallet;
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function prepareImportedText(string $description, string $notesPrefix): array
+    {
+        $maxLength = 500;
+
+        if (Str::length($description) <= $maxLength) {
+            return [$description, $notesPrefix];
+        }
+
+        return [
+            Str::substr($description, 0, $maxLength),
+            $notesPrefix."\n\n".$description,
+        ];
     }
 
     private function legacyTransactionNumber(string $prefix, string $legacyId): string

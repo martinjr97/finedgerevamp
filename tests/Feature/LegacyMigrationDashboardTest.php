@@ -138,10 +138,118 @@ class LegacyMigrationDashboardTest extends TestCase
             ->assertOk()
             ->assertSee('m2-customers');
 
+        DB::table('migration_created_records')->insert([
+            'migration_run_id' => $runId,
+            'record_type' => 'customer',
+            'record_id' => 42,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('migration_entity_maps')->insert([
+            'entity_type' => 'customer',
+            'legacy_identifier' => '336',
+            'legacy_secondary' => '8',
+            'target_type' => \App\Models\Customer::class,
+            'target_id' => 42,
+            'mapping_method' => 'national_id',
+            'mapping_confidence' => 'HIGH',
+            'migration_run_id' => $runId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $this->actingAs($admin, 'admin')
             ->get(route('legacy.migration-dashboard.runs.show', $runId))
             ->assertOk()
-            ->assertSee('Run metadata');
+            ->assertSee('Run metadata')
+            ->assertSee('customer')
+            ->assertSee('42')
+            ->assertSee('336');
+    }
+
+    public function test_run_detail_shows_attention_links_for_manual_review_customers(): void
+    {
+        $admin = $this->adminWithRole($this->company(), PermissionMatrix::SUPER_ADMIN_ROLE);
+        $runId = DB::table('migration_runs')->insertGetId([
+            'name' => 'customer-promote',
+            'phase' => 'm2-customers',
+            'scope' => 'full',
+            'status' => 'completed',
+            'summary' => json_encode([
+                'promote' => true,
+                'manual_review' => 2,
+                'company_manual_review' => 4,
+            ]),
+            'run_uuid' => (string) Str::uuid(),
+            'started_at' => now(),
+            'completed_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('migration_customers')->insert([
+            [
+                'migration_run_id' => $runId,
+                'legacy_user_id' => 501,
+                'migration_status' => 'manual_review',
+                'exception' => 'national_id',
+                'confidence' => 'LOW',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'migration_run_id' => $runId,
+                'legacy_user_id' => 502,
+                'migration_status' => 'manual_review',
+                'exception' => 'national_id',
+                'confidence' => 'LOW',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $otherRunId = DB::table('migration_runs')->insertGetId([
+            'name' => 'other-run',
+            'phase' => 'm2-customers',
+            'scope' => 'full',
+            'status' => 'completed',
+            'summary' => json_encode(['promote' => true]),
+            'run_uuid' => (string) Str::uuid(),
+            'started_at' => now(),
+            'completed_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('migration_customers')->insert([
+            'migration_run_id' => $otherRunId,
+            'legacy_user_id' => 503,
+            'migration_status' => 'manual_review',
+            'exception' => 'national_id',
+            'confidence' => 'LOW',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('legacy.migration-dashboard.runs.show', $runId))
+            ->assertOk()
+            ->assertSee('Needs attention')
+            ->assertSee('Customers needing review')
+            ->assertSee('Company classifications to review')
+            ->assertSee('Review →');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('legacy.migration-dashboard.customers.index', [
+                'status' => 'manual_review',
+                'run_id' => $runId,
+            ]))
+            ->assertOk()
+            ->assertSee('501')
+            ->assertSee('502')
+            ->assertSee('Filtered to migration run')
+            ->assertDontSee('503');
     }
 
     public function test_customer_listing_and_detail_with_identity_aliases(): void
@@ -153,8 +261,9 @@ class LegacyMigrationDashboardTest extends TestCase
             'migration_run_id' => $runId,
             'legacy_user_id' => 14,
             'legacy_customer_id' => 100,
-            'migration_status' => 'matched_existing',
+            'migration_status' => 'manual_review',
             'confidence' => 'HIGH',
+            'exception' => 'email',
             'raw_context' => json_encode(['national_id' => '123456/78/1']),
             'created_at' => now(),
             'updated_at' => now(),
@@ -163,16 +272,20 @@ class LegacyMigrationDashboardTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('legacy.migration-dashboard.customers.index'))
             ->assertOk()
-            ->assertSee('14');
+            ->assertSee('14')
+            ->assertSee('Possible duplicate — email address');
 
         $this->actingAs($admin, 'admin')
-            ->get(route('legacy.migration-dashboard.customers.show', 14))
+            ->get(route('legacy.migration-dashboard.customers.show', ['legacyUserId' => 14]))
             ->assertOk()
-            ->assertSee('Legacy User 14');
+            ->assertSee('Legacy User 14')
+            ->assertSee('Manual review required')
+            ->assertSee('Possible duplicate — email address');
 
         $this->actingAs($admin, 'admin')
             ->get(route('legacy.migration-dashboard.identity.index'))
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('Pending duplicate NRC groups');
     }
 
     public function test_loan_and_repayment_pages_with_filters(): void
@@ -232,6 +345,13 @@ class LegacyMigrationDashboardTest extends TestCase
             ->get(route('legacy.migration-dashboard.reconciliation.index'))
             ->assertOk()
             ->assertSee('Legacy Outstanding');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('legacy.migration-dashboard.commands.index'))
+            ->assertOk()
+            ->assertSee('Migration Commands')
+            ->assertSee('php artisan migration:reference-data --dry-run', false)
+            ->assertSee('REFERENCE DATA → CUSTOMERS → ACTIVE LOANS → REPAYMENTS → RECONCILIATION', false);
     }
 
     public function test_mappings_and_company_pages_load(): void

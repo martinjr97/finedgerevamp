@@ -18,19 +18,13 @@ class MigrationStatusCommand extends Command
         $this->info('Migration status');
 
         $this->line('REFERENCE DATA');
-        foreach ($report['reference_data'] as $k => $v) {
-            $this->line("  {$k}: {$v}");
-        }
+        $this->printStatusSection($report['reference_data']);
 
         $this->line('CUSTOMERS');
-        foreach ($report['customers'] as $k => $v) {
-            $this->line("  {$k}: {$v}");
-        }
+        $this->printStatusSection($report['customers']);
 
         $this->line('ACTIVE LOANS');
-        foreach ($report['active_loans'] as $k => $v) {
-            $this->line("  {$k}: {$v}");
-        }
+        $this->printStatusSection($report['active_loans']);
 
         $this->line('REPAYMENTS');
         $this->line('  mapped: '.$report['repayments']['mapped']);
@@ -48,5 +42,41 @@ class MigrationStatusCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  array<string, mixed>  $section
+     */
+    private function printStatusSection(array $section): void
+    {
+        foreach ($section as $key => $value) {
+            if (is_array($value)) {
+                $this->line("  {$key}:");
+                foreach ($value as $nestedKey => $nestedValue) {
+                    $this->line('    '.$nestedKey.': '.$this->formatStatusValue($nestedValue));
+                }
+
+                continue;
+            }
+
+            $this->line("  {$key}: ".$this->formatStatusValue($value));
+        }
+    }
+
+    private function formatStatusValue(mixed $value): string
+    {
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if ($value === null) {
+            return 'null';
+        }
+
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
+
+        return json_encode($value, JSON_UNESCAPED_SLASHES) ?: '';
     }
 }

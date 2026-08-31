@@ -28,6 +28,30 @@
         </div>
     </div>
 
+    @php $attention = $detail->attention ?? ['all_clear' => true, 'items' => []]; @endphp
+    <div class="mt-6 rounded-2xl border bg-white p-6 shadow-sm">
+        <h2 class="font-semibold text-primary mb-3">Needs attention</h2>
+        @if($attention['all_clear'])
+            <p class="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-3">No manual-review items flagged for this run. Continue with the next migration phase from the <a href="{{ route('legacy.migration-dashboard.commands.index') }}" class="font-semibold underline">Commands</a> tab.</p>
+        @else
+            <p class="text-sm text-slate-600 mb-4">These items were skipped or need a decision before you can fully trust this run’s data.</p>
+            <ul class="space-y-3">
+                @foreach($attention['items'] as $item)
+                    <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <div>
+                            <p class="font-semibold text-slate-900">{{ $item['label'] }} <span class="ml-1 rounded-full bg-amber-200 px-2 py-0.5 text-xs font-bold text-amber-900">{{ number_format($item['count']) }}</span></p>
+                            <p class="text-xs text-slate-600 mt-1">{{ $item['description'] }}</p>
+                        </div>
+                        <a href="{{ route($item['route'], $item['params']) }}"
+                           class="shrink-0 rounded-lg border border-primary bg-white px-4 py-2 text-xs font-semibold text-primary hover:bg-slate-50">
+                            Review →
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </div>
+
     @if(!empty($summary))
         <div class="mt-6 rounded-2xl border bg-white p-6 shadow-sm">
             <h2 class="font-semibold text-primary mb-2">Summary (safe fields)</h2>
@@ -39,12 +63,12 @@
         <div class="rounded-2xl border bg-white p-6 shadow-sm overflow-x-auto">
             <h2 class="font-semibold text-primary mb-3">Created records ({{ $detail->created_records->count() }})</h2>
             <table class="min-w-full text-xs">
-                <thead><tr class="border-b bg-slate-100"><th class="px-2 py-1 text-left">Type</th><th class="px-2 py-1 text-left">Target ID</th><th class="px-2 py-1 text-left">Legacy</th></tr></thead>
+                <thead><tr class="border-b bg-slate-100"><th class="px-2 py-1 text-left">Type</th><th class="px-2 py-1 text-left">Record ID</th></tr></thead>
                 <tbody>
                     @forelse($detail->created_records as $record)
-                        <tr class="border-b"><td class="px-2 py-1">{{ $record->record_type }}</td><td class="px-2 py-1">{{ $record->target_id }}</td><td class="px-2 py-1">{{ $record->legacy_identifier ?? '—' }}</td></tr>
+                        <tr class="border-b"><td class="px-2 py-1">{{ $record->record_type }}</td><td class="px-2 py-1">{{ $record->record_id }}</td></tr>
                     @empty
-                        <tr><td colspan="3" class="py-4 text-center text-slate-500">None</td></tr>
+                        <tr><td colspan="2" class="py-4 text-center text-slate-500">None</td></tr>
                     @endforelse
                 </tbody>
             </table>

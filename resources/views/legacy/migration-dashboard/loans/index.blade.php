@@ -3,8 +3,16 @@
 @section('dashboard-content')
     @include('partials.admin.page-header', ['title' => 'Active Loan Migration', 'description' => 'Replay and promotion status for legacy active loans.'])
 
+    @if(!empty($filters['run_id']))
+        <div class="mb-4 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900 flex flex-wrap items-center justify-between gap-2">
+            <span>Filtered to migration run <strong>#{{ $filters['run_id'] }}</strong>@if(!empty($filters['migration_status'])) · status <strong>{{ $filters['migration_status'] }}</strong>@endif</span>
+            <a href="{{ route('legacy.migration-dashboard.runs.show', $filters['run_id']) }}" class="font-semibold text-primary hover:underline">← Back to run</a>
+        </div>
+    @endif
+
     <form method="GET" class="mb-4 flex flex-wrap gap-2">
         <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Legacy loan / user / target ID" class="rounded-xl border px-3 py-2 text-sm">
+        <input type="number" name="run_id" value="{{ $filters['run_id'] ?? '' }}" placeholder="Run ID" min="1" class="rounded-xl border px-3 py-2 text-sm w-28">
         <select name="migration_status" class="rounded-xl border px-3 py-2 text-sm">
             <option value="">Migration status</option>
             @foreach(['promotable', 'manual_review', 'blocked', 'created', 'matched_existing'] as $status)

@@ -28,13 +28,21 @@ class MigrationIdentityResolveCommand extends MigrationPhaseCommand
 
         $result = $this->option('apply')
             ? $resolver->applyApprovedResolutions($runId)
-            : ['would_apply' => true, 'duplicate_groups_resolved' => $resolver->duplicateGroupsResolved()];
+            : [
+                'would_apply' => true,
+                'duplicate_groups_resolved' => $resolver->duplicateGroupsResolved(),
+                'pending_duplicate_groups' => \App\Migration\Phases\Support\IdentityResolutionCatalog::duplicateNrcKeys()->count()
+                    - count(\App\Migration\Phases\Support\IdentityResolutionCatalog::approved()),
+            ];
 
         $path = base_path('docs/data-migration/tools/customer-identity-resolutions-applied.json');
         File::ensureDirectoryExists(dirname($path));
         File::put($path, json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         $this->info('Identity resolution '.($this->option('apply') ? 'applied' : 'preview'));
+        if (! ($result['duplicate_groups_resolved'] ?? false)) {
+            $this->warn('Unresolved duplicate NRC groups remain — resolve them on the migration dashboard Identity tab.');
+        }
         $this->line(json_encode($result, JSON_PRETTY_PRINT));
         $this->line("Output: {$path}");
 

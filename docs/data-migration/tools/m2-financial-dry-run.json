@@ -1,21 +1,21 @@
 {
-    "run_uuid": "41eb43ac-7585-4993-951d-1d19eb876839",
-    "migration_run_id": 72,
+    "run_uuid": "834b9900-a1d2-4f53-be77-c5c34c1669d7",
+    "migration_run_id": 18,
     "promote": true,
-    "from_date": "2026-08-29",
+    "from_date": "2026-01-01",
     "expense_categories": {
-        "MATCHED": 24,
+        "MATCHED": 0,
         "CREATED": 0,
         "WOULD_CREATE": 0
     },
     "expense_subcategories": {
-        "MATCHED": 22,
-        "CREATED": 12,
+        "MATCHED": 0,
+        "CREATED": 0,
         "WOULD_CREATE": 0
     },
     "income_categories": {
         "MATCHED": 0,
-        "CREATED": 3,
+        "CREATED": 0,
         "WOULD_CREATE": 0
     },
     "expenses": {
@@ -27,9 +27,9 @@
     },
     "incomes": {
         "MATCHED": 0,
-        "CREATED": 0,
+        "CREATED": 47,
         "WOULD_CREATE": 0,
-        "SKIPPED": 0,
-        "NO_DESTINATION": 0
+        "SKIPPED": 4679,
+        "NO_DESTINATION": 1
     }
 }

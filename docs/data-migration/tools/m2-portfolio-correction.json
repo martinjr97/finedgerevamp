@@ -1,14 +1,14 @@
 {
-    "run_uuid": "2e45fd14-556a-4794-91e9-e5d4020c17de",
-    "migration_run_id": 67,
+    "run_uuid": "92c2deca-8264-452e-91d9-0b476f5b0f85",
+    "migration_run_id": 21,
     "promote": true,
-    "loans_scanned": 750,
+    "loans_scanned": 1392,
     "disbursement_corrected": 0,
     "first_payment_dates_set": 0,
     "schedules_created": 0,
     "schedules_synced": 0,
-    "repayment_splits_updated": 0,
-    "repayment_splits_skipped": 0,
-    "loan_ledgers_synced": 666,
-    "repayment_snapshots_fixed": 6030
+    "repayment_splits_updated": 2101,
+    "repayment_splits_skipped": 4466,
+    "loan_ledgers_synced": 648,
+    "repayment_snapshots_fixed": 0
 }

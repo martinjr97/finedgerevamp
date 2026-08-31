@@ -19,7 +19,18 @@
             "nrc": "631351/11/1",
             "primary_legacy_user_id": 127,
             "target_customer_id": null
+        },
+        {
+            "nrc": "553364/10/1",
+            "alias_legacy_user_id": 838,
+            "target_customer_id": null
+        },
+        {
+            "nrc": "553364/10/1",
+            "primary_legacy_user_id": 192,
+            "target_customer_id": null
         }
     ],
-    "duplicate_groups_resolved": 2
+    "duplicate_groups_resolved": true,
+    "pending_duplicate_groups": 0
 }

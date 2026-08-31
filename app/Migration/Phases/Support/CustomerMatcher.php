@@ -14,6 +14,15 @@ class CustomerMatcher
     {
         $userId = (int) ($legacyUser['id'] ?? 0);
 
+        if (IdentityResolutionCatalog::shouldMigrateAsSeparateIdentity($userId)) {
+            return [
+                'customer' => null,
+                'method' => 'keep_separate_resolution',
+                'confidence' => 'HIGH',
+                'status' => 'NEW',
+            ];
+        }
+
         $byMetadata = Customer::query()
             ->where('metadata->legacy_user_id', $userId)
             ->first();
@@ -22,7 +31,7 @@ class CustomerMatcher
         }
 
         $nrc = trim((string) ($legacyCustomer['nrc'] ?? $legacyUser['nrc'] ?? ''));
-        if ($nrc !== '') {
+        if ($nrc !== '' && ! IdentityResolutionCatalog::forNrc($nrc)) {
             $byNrc = Customer::query()->where('national_id', $nrc)->get();
             if ($byNrc->count() === 1) {
                 return ['customer' => $byNrc->first(), 'method' => 'national_id', 'confidence' => 'HIGH', 'status' => 'MATCHED_EXISTING'];

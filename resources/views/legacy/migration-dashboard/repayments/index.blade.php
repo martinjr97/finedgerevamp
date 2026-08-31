@@ -27,8 +27,16 @@
         </div>
     @endif
 
+    @if(!empty($filters['run_id']))
+        <div class="mb-4 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900 flex flex-wrap items-center justify-between gap-2">
+            <span>Filtered to migration run <strong>#{{ $filters['run_id'] }}</strong>@if(!empty($filters['classification'])) · class <strong>{{ $filters['classification'] }}</strong>@endif</span>
+            <a href="{{ route('legacy.migration-dashboard.runs.show', $filters['run_id']) }}" class="font-semibold text-primary hover:underline">← Back to run</a>
+        </div>
+    @endif
+
     <form method="GET" class="mb-4 flex flex-wrap gap-2">
         <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Legacy repayment / user / target ID" class="rounded-xl border px-3 py-2 text-sm">
+        <input type="number" name="run_id" value="{{ $filters['run_id'] ?? '' }}" placeholder="Run ID" min="1" class="rounded-xl border px-3 py-2 text-sm w-28">
         <select name="classification" class="rounded-xl border px-3 py-2 text-sm">
             <option value="">All classes</option>
             @foreach($classifications as $class)

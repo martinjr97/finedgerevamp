@@ -8,6 +8,7 @@ use App\Migration\PhoneNormalizer;
 use App\Migration\Phases\Support\CompanyMatcher;
 use App\Migration\Phases\Support\CustomerBranchResolver;
 use App\Migration\Phases\Support\CustomerIdentityResolutionRegistry;
+use App\Migration\Phases\Support\IdentityResolutionCatalog;
 use App\Migration\Phases\Support\CustomerIdentityResolver;
 use App\Migration\Phases\Support\CustomerMigrationProfileResolver;
 use App\Migration\Phases\Support\CustomerMatcher;
@@ -99,6 +100,7 @@ class CustomerMigrator
             'marketeer_incorrect_company_link' => 0,
             'identity_alias_resolved' => 0,
             'identity_alias_groups' => count(CustomerIdentityResolutionRegistry::approved()),
+            'identity_excluded' => 0,
             'unique_intended_target_customers' => 0,
             'with_bank_account' => 0,
             'with_wallet' => 0,
@@ -134,6 +136,13 @@ class CustomerMigrator
                 $stats['broken_user_relation']++;
                 $stats['manual_review']++;
                 $this->stageCustomer($runId, $userId, $legacyCustomer, null, 'manual_review', null, 'missing_user_row');
+
+                continue;
+            }
+
+            if (IdentityResolutionCatalog::isExcludedFromMigration($userId)) {
+                $stats['identity_excluded']++;
+                $this->stageCustomer($runId, $userId, $legacyCustomer, null, 'skipped', null, 'identity_excluded');
 
                 continue;
             }

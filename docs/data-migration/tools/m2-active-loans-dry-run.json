@@ -1,13 +1,13 @@
 {
-    "run_uuid": "461a404a-1114-4106-a1c1-86ba65868654",
-    "migration_run_id": 52,
-    "promote": false,
-    "legacy_active_loans": 752,
+    "run_uuid": "a3024124-141e-43b1-9d59-a2caf3dac9de",
+    "migration_run_id": 9,
+    "promote": true,
+    "legacy_active_loans": 756,
     "would_create": 0,
-    "created": 0,
-    "matched_existing": 750,
-    "blocked_missing_customer": 0,
-    "manual_review": 2,
-    "promotable": 0,
+    "created": 755,
+    "matched_existing": 0,
+    "blocked_missing_customer": 1,
+    "manual_review": 0,
+    "promotable": 755,
     "blocked": 0
 }
