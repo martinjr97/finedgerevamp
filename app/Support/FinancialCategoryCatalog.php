@@ -107,4 +107,22 @@ class FinancialCategoryCatalog
             ->whereKey($subcategoryId)
             ->first();
     }
+
+    /**
+     * Expense category codes treated as loan disbursements / internal movements (hidden from operational expense lists by default).
+     *
+     * @return array<int, string>
+     */
+    public static function operationalExpenseExclusionCategoryCodes(): array
+    {
+        return ExpenseCategory::query()
+            ->where(function ($query) {
+                $query->whereRaw('LOWER(name) IN (?, ?)', ['loan take out', 'inhouse transfer'])
+                    ->orWhereIn('code', ['loan_take_out', 'inhouse_transfer']);
+            })
+            ->pluck('code')
+            ->filter()
+            ->values()
+            ->all();
+    }
 }

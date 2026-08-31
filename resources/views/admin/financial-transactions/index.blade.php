@@ -33,11 +33,10 @@
 
         <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
             <form method="GET" action="{{ route('admin.financial-transactions.index') }}" class="mb-6 space-y-4">
-                <!-- First Row: Type and Category -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                     <div>
-                        <label class="text-sm text-slate-300 mb-2 block">Type</label>
-                        <select name="type" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2 focus:border-cyan-400 focus:ring-cyan-400/40">
+                        <label class="text-sm text-slate-300 mb-1.5 block">Type</label>
+                        <select name="type" class="w-full rounded-xl bg-white/10 border border-white/10 text-white px-3 py-2 text-sm focus:border-cyan-400 focus:ring-cyan-400/40">
                             <option value="">All</option>
                             <option value="income" @selected(request('type') === 'income')>Income</option>
                             <option value="expense" @selected(request('type') === 'expense')>Expense</option>
@@ -45,8 +44,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="text-sm text-slate-300 mb-2 block">Category</label>
-                        <select name="category" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2 focus:border-cyan-400 focus:ring-cyan-400/40">
+                        <label class="text-sm text-slate-300 mb-1.5 block">Category</label>
+                        <select name="category" class="w-full rounded-xl bg-white/10 border border-white/10 text-white px-3 py-2 text-sm focus:border-cyan-400 focus:ring-cyan-400/40">
                             <option value="">All</option>
                             <optgroup label="Income">
                                 @foreach ($incomeCategories as $category)
@@ -60,23 +59,34 @@
                             </optgroup>
                         </select>
                     </div>
+                    <div>
+                        <label class="text-sm text-slate-300 mb-1.5 block">From Date</label>
+                        <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-xl bg-white/10 border border-white/10 text-white px-3 py-2 text-sm focus:border-cyan-400 focus:ring-cyan-400/40">
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-300 mb-1.5 block">To Date</label>
+                        <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-xl bg-white/10 border border-white/10 text-white px-3 py-2 text-sm focus:border-cyan-400 focus:ring-cyan-400/40">
+                    </div>
                 </div>
-                
-                <!-- Second Row: Dates and Actions -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="text-sm text-slate-300 mb-2 block">From Date</label>
-                        <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2 focus:border-cyan-400 focus:ring-cyan-400/40">
-                    </div>
-                    <div>
-                        <label class="text-sm text-slate-300 mb-2 block">To Date</label>
-                        <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2 focus:border-cyan-400 focus:ring-cyan-400/40">
-                    </div>
-                    <div class="flex items-end gap-2">
-                        <button type="submit" class="flex-1 rounded-xl bg-cyan-500/20 border border-cyan-500/50 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:bg-cyan-500/30 transition">
+
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <label class="inline-flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
+                        <input type="hidden" name="exclude_loan_takeouts" value="0">
+                        <input
+                            type="checkbox"
+                            name="exclude_loan_takeouts"
+                            value="1"
+                            class="rounded border-white/20 bg-white/10 text-cyan-400 focus:ring-cyan-500/30"
+                            @checked($excludeLoanTakeouts)
+                        >
+                        Hide loan take-outs &amp; in-house transfers
+                    </label>
+
+                    <div class="flex items-center gap-2">
+                        <button type="submit" class="rounded-xl bg-cyan-500/20 border border-cyan-500/50 px-4 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/30 transition">
                             Filter
                         </button>
-                        <a href="{{ route('admin.financial-transactions.index') }}" class="rounded-xl border border-white/10 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10 transition">
+                        <a href="{{ route('admin.financial-transactions.index') }}" class="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/10 transition">
                             Clear
                         </a>
                     </div>

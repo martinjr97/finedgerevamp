@@ -48,12 +48,31 @@ class FinancialTransactionController extends Controller
             $query->whereDate('transaction_date', '<=', $request->date_to);
         }
 
+        $excludeLoanTakeouts = $request->has('exclude_loan_takeouts')
+            ? $request->boolean('exclude_loan_takeouts')
+            : true;
+
+        if ($excludeLoanTakeouts) {
+            $excludedCategoryCodes = FinancialCategoryCatalog::operationalExpenseExclusionCategoryCodes();
+            if ($excludedCategoryCodes !== []) {
+                $query->where(function ($inner) use ($excludedCategoryCodes) {
+                    $inner->where('type', '!=', 'expense')
+                        ->orWhereNotIn('category', $excludedCategoryCodes);
+                });
+            }
+        }
+
         $transactions = $query->paginate(50);
 
         $expenseCategories = FinancialCategoryCatalog::activeExpenseCategories();
         $incomeCategories = FinancialCategoryCatalog::activeIncomeCategories();
 
-        return view('admin.financial-transactions.index', compact('transactions', 'expenseCategories', 'incomeCategories'));
+        return view('admin.financial-transactions.index', compact(
+            'transactions',
+            'expenseCategories',
+            'incomeCategories',
+            'excludeLoanTakeouts',
+        ));
     }
 
     /**
