@@ -807,8 +807,9 @@ body[data-theme="dark"] main:not(.content-area) [class*="text-white"] {
     }
 }
 
-/* Critical approve/reject buttons on customer show */
-.btn-approve-critical {
+/* Critical approve/reject buttons (admin actions) */
+.btn-approve-critical,
+button[type="submit"].btn-approve-critical {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -817,18 +818,23 @@ body[data-theme="dark"] main:not(.content-area) [class*="text-white"] {
     font-weight: 700;
     font-size: 0.95rem;
     color: #f8fafc !important;
-    background: linear-gradient(135deg, #16a34a, #0f766e);
-    border: 1px solid #0f766e;
-    box-shadow: 0 12px 30px -16px rgba(15, 118, 110, 0.55);
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+    border: 1px solid #15803d !important;
+    box-shadow: 0 12px 30px -16px rgba(22, 163, 74, 0.55);
     transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
 }
 .btn-approve-critical:hover,
-.btn-approve-critical:focus-visible {
+.btn-approve-critical:focus-visible,
+button[type="submit"].btn-approve-critical:hover,
+button[type="submit"].btn-approve-critical:focus-visible {
     filter: brightness(1.05);
     transform: translateY(-1px);
-    box-shadow: 0 16px 36px -18px rgba(15, 118, 110, 0.65);
+    box-shadow: 0 16px 36px -18px rgba(22, 163, 74, 0.65);
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    border-color: #16a34a !important;
 }
-.btn-approve-critical:active {
+.btn-approve-critical:active,
+button[type="submit"].btn-approve-critical:active {
     transform: translateY(0);
 }
 .btn-approve-critical *,
@@ -836,7 +842,8 @@ body[data-theme="dark"] main:not(.content-area) [class*="text-white"] {
     color: inherit !important;
 }
 
-.btn-reject-critical {
+.btn-reject-critical,
+button[type="submit"].btn-reject-critical {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -845,19 +852,31 @@ body[data-theme="dark"] main:not(.content-area) [class*="text-white"] {
     font-weight: 700;
     font-size: 0.95rem;
     color: #fef2f2 !important;
-    background: linear-gradient(135deg, var(--color-brand), var(--color-brand-hover));
-    border: 1px solid var(--color-brand-hover);
-    box-shadow: 0 12px 30px -16px rgba(102, 51, 153, 0.45);
+    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+    border: 1px solid #b91c1c !important;
+    box-shadow: 0 12px 30px -16px rgba(220, 38, 38, 0.45);
     transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
 }
 .btn-reject-critical:hover,
-.btn-reject-critical:focus-visible {
+.btn-reject-critical:focus-visible,
+button[type="submit"].btn-reject-critical:hover,
+button[type="submit"].btn-reject-critical:focus-visible {
     filter: brightness(1.05);
     transform: translateY(-1px);
-    box-shadow: 0 16px 36px -18px rgba(102, 51, 153, 0.55);
+    box-shadow: 0 16px 36px -18px rgba(220, 38, 38, 0.55);
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    border-color: #dc2626 !important;
 }
-.btn-reject-critical:active {
+.btn-reject-critical:active,
+button[type="submit"].btn-reject-critical:active {
     transform: translateY(0);
+}
+
+.content-area .btn-approve-critical,
+.content-area .btn-approve-critical *,
+.content-area .btn-reject-critical,
+.content-area .btn-reject-critical * {
+    color: #f8fafc !important;
 }
 
 .attention-banner {

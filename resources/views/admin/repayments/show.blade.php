@@ -75,7 +75,7 @@
                     <button
                         type="button"
                         @click="approveModalOpen = true"
-                        class="inline-flex items-center gap-2 rounded-2xl border border-emerald-400 bg-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-500/30 hover:bg-emerald-600 transition"
+                        class="btn-approve-critical px-4 py-3 text-sm"
                     >
                         Approve Manual Repayment
                     </button>
@@ -84,7 +84,7 @@
                     <button
                         type="button"
                         @click="rejectModalOpen = true"
-                        class="inline-flex items-center gap-2 rounded-2xl border border-red-500 bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-red-500/30 hover:bg-red-700 transition"
+                        class="btn-reject-critical px-4 py-3 text-sm"
                     >
                         Reject Repayment
                     </button>
@@ -609,7 +609,7 @@
                             @enderror
                         </div>
                         <div class="md:col-span-2 flex flex-wrap items-center gap-3">
-                            <button type="submit" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 px-4 py-2.5 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/30 transition">
+                            <button type="submit" class="btn-approve-critical px-4 py-2.5 text-sm">
                                 Approve And Process
                             </button>
                             <button type="button" @click="approveModalOpen = false" class="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/10 transition">
@@ -644,7 +644,7 @@
                             @enderror
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
-                            <button type="submit" class="inline-flex items-center gap-2 rounded-2xl bg-rose-500/20 border border-rose-500/50 px-4 py-2.5 text-sm font-semibold text-rose-200 hover:bg-rose-500/30 transition">
+                            <button type="submit" class="btn-reject-critical px-4 py-2.5 text-sm">
                                 Confirm Rejection
                             </button>
                             <button type="button" @click="rejectModalOpen = false" class="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/10 transition">
