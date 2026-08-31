@@ -213,6 +213,16 @@ class MigrationCommandsGuide
                         'destructive' => true,
                     ],
                     [
+                        'label' => 'Promote creditors',
+                        'command' => 'php artisan migration:financial-data --only=creditors --promote',
+                        'destructive' => true,
+                    ],
+                    [
+                        'label' => 'Promote physical assets',
+                        'command' => 'php artisan migration:financial-data --only=assets --promote',
+                        'destructive' => true,
+                    ],
+                    [
                         'label' => 'Dry-run expenses',
                         'command' => 'php artisan migration:financial-data --only=expenses --from-date=YYYY-MM-DD --dry-run',
                         'notes' => 'Set MIGRATION_FINANCIAL_FROM_DATE in .env or pass --from-date.',
@@ -231,9 +241,15 @@ class MigrationCommandsGuide
                         'command' => 'php artisan migration:financial-data --only=incomes --from-date=YYYY-MM-DD --promote',
                         'destructive' => true,
                     ],
+                    [
+                        'label' => 'Promote creditor conversion history (audit)',
+                        'command' => 'php artisan migration:financial-data --only=creditor_conversions --promote',
+                        'destructive' => true,
+                    ],
                 ],
                 'gates' => [
                     'Categories promoted before expenses/incomes.',
+                    'Creditors promoted before expenses that reference creditor_id.',
                     'Replace YYYY-MM-DD with your cutover date.',
                 ],
             ],

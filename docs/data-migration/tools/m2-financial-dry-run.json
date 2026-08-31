@@ -1,8 +1,8 @@
 {
-    "run_uuid": "834b9900-a1d2-4f53-be77-c5c34c1669d7",
-    "migration_run_id": 18,
+    "run_uuid": "ea90b65f-8706-425a-a28d-56ce16850232",
+    "migration_run_id": 27,
     "promote": true,
-    "from_date": "2026-01-01",
+    "from_date": "2026-08-31",
     "expense_categories": {
         "MATCHED": 0,
         "CREATED": 0,
@@ -27,9 +27,27 @@
     },
     "incomes": {
         "MATCHED": 0,
-        "CREATED": 47,
+        "CREATED": 0,
         "WOULD_CREATE": 0,
-        "SKIPPED": 4679,
-        "NO_DESTINATION": 1
+        "SKIPPED": 0,
+        "NO_DESTINATION": 0
+    },
+    "creditors": {
+        "MATCHED": 0,
+        "CREATED": 0,
+        "WOULD_CREATE": 0,
+        "SKIPPED": 0
+    },
+    "assets": {
+        "MATCHED": 0,
+        "CREATED": 0,
+        "WOULD_CREATE": 0,
+        "SKIPPED": 0
+    },
+    "creditor_conversions": {
+        "MATCHED": 0,
+        "CREATED": 0,
+        "WOULD_CREATE": 0,
+        "SKIPPED": 0
     }
 }

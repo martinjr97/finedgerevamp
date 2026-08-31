@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Creditor extends Model
@@ -11,6 +12,7 @@ class Creditor extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'legacy_id',
         'name',
         'description',
         'amount',
@@ -26,5 +28,18 @@ class Creditor extends Model
             'due_date' => 'date',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function expenseTransactions(): HasMany
+    {
+        return $this->hasMany(FinancialTransaction::class)
+            ->where('type', 'expense')
+            ->orderByDesc('transaction_date')
+            ->orderByDesc('id');
+    }
+
+    public function conversions(): HasMany
+    {
+        return $this->hasMany(CreditorConversion::class)->latest();
     }
 }

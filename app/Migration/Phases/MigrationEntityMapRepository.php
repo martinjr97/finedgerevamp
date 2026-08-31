@@ -38,6 +38,10 @@ class MigrationEntityMapRepository
 
     public const TYPE_FINANCIAL_TRANSACTION = 'financial_transaction';
 
+    public const TYPE_CREDITOR = 'creditor';
+
+    public const TYPE_ASSET = 'asset';
+
     public const TYPE_TREASURY_WALLET = 'treasury_wallet';
 
     public function find(string $entityType, string $legacyIdentifier, ?string $legacySecondary = null): ?object

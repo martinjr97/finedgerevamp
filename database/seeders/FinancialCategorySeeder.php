@@ -19,6 +19,7 @@ class FinancialCategorySeeder extends Seeder
             ['name' => 'Utilities', 'code' => 'utilities', 'description' => 'Electricity, water, internet, and utilities'],
             ['name' => 'Rent', 'code' => 'rent', 'description' => 'Office or property rent'],
             ['name' => 'Other Expense', 'code' => 'other_expense', 'description' => 'Miscellaneous expenses'],
+            ['name' => 'Creditor Loan Repayment', 'code' => 'creditor_loan_repayment', 'description' => 'Payments made to creditors to reduce outstanding debt'],
         ];
 
         foreach ($expenseCategories as $index => $definition) {
@@ -53,6 +54,7 @@ class FinancialCategorySeeder extends Seeder
             ['name' => 'Donation', 'code' => 'donation', 'is_system' => false],
             ['name' => 'Grant', 'code' => 'grant', 'is_system' => false],
             ['name' => 'Other Income', 'code' => 'other_income', 'is_system' => false],
+            ['name' => 'Creditor Conversion / Transfer', 'code' => 'creditor_conversion', 'is_system' => true],
         ];
 
         foreach ($incomeCategories as $index => $definition) {

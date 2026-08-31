@@ -22,6 +22,7 @@ class FinancialTransaction extends Model
         'description',
         'receiver_name',
         'employee_id',
+        'creditor_id',
         'amount',
         'source_type',
         'source_id',
@@ -139,6 +140,11 @@ class FinancialTransaction extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function creditor(): BelongsTo
+    {
+        return $this->belongsTo(Creditor::class);
     }
 
     /**

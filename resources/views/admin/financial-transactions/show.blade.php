@@ -43,8 +43,17 @@
                     <p class="text-white">{{ $financialTransaction->employee->full_name }}</p>
                 </div>
                 @endif
+                @if($financialTransaction->type === 'expense' && $financialTransaction->creditor)
                 <div>
-                    <label class="text-sm text-slate-400">Amount</label>
+                    <label class="text-sm text-slate-400">Creditor</label>
+                    <p class="text-white">
+                        <a href="{{ route('admin.creditors.show', $financialTransaction->creditor) }}" class="text-cyan-300 hover:text-cyan-200">
+                            {{ $financialTransaction->creditor->name }}
+                        </a>
+                    </p>
+                </div>
+                @endif
+                <div>
                     <p class="text-white font-semibold text-2xl {{ $financialTransaction->type === 'income' ? 'text-emerald-400' : ($financialTransaction->type === 'expense' ? 'text-rose-400' : 'text-blue-400') }}">
                         {{ $financialTransaction->type === 'expense' ? '-' : ($financialTransaction->type === 'transfer' ? '±' : '+') }}{{ number_format($financialTransaction->amount, 2) }}
                     </p>

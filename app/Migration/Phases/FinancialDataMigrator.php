@@ -3,7 +3,10 @@
 namespace App\Migration\Phases;
 
 use App\Migration\LegacyConnection;
+use App\Models\Asset;
 use App\Models\Bank;
+use App\Models\Creditor;
+use App\Models\CreditorConversion;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseSubcategory;
 use App\Models\FinancialTransaction;
@@ -11,6 +14,7 @@ use App\Models\IncomeCategory;
 use App\Models\Wallet;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class FinancialDataMigrator
@@ -47,6 +51,9 @@ class FinancialDataMigrator
             'income_categories' => ['MATCHED' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0],
             'expenses' => ['MATCHED' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0, 'SKIPPED' => 0, 'NO_SOURCE' => 0],
             'incomes' => ['MATCHED' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0, 'SKIPPED' => 0, 'NO_DESTINATION' => 0],
+            'creditors' => ['MATCHED' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0, 'SKIPPED' => 0],
+            'assets' => ['MATCHED' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0, 'SKIPPED' => 0],
+            'creditor_conversions' => ['MATCHED' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0, 'SKIPPED' => 0],
         ];
 
         if (! $only || in_array($only, ['categories', 'expense_categories'], true)) {
@@ -57,12 +64,24 @@ class FinancialDataMigrator
             $this->migrateIncomeCategories($legacy, $runId, $promote, $stats);
         }
 
+        if (! $only || $only === 'creditors') {
+            $this->migrateCreditors($legacy, $runId, $promote, $stats);
+        }
+
+        if (! $only || $only === 'assets') {
+            $this->migrateAssets($legacy, $runId, $promote, $stats);
+        }
+
         if (! $only || $only === 'expenses') {
             $this->migrateExpenses($legacy, $runId, $promote, $fromBoundary, $stats);
         }
 
         if (! $only || $only === 'incomes') {
             $this->migrateIncomes($legacy, $runId, $promote, $fromBoundary, $stats);
+        }
+
+        if (! $only || $only === 'creditor_conversions') {
+            $this->migrateCreditorConversions($legacy, $runId, $promote, $stats);
         }
 
         $this->runManager->complete($runId, $stats);
@@ -344,6 +363,14 @@ class FinancialDataMigrator
                 continue;
             }
 
+            $creditorId = null;
+            if (! empty($row->creditor_id)) {
+                $creditorId = $this->maps->targetId(
+                    MigrationEntityMapRepository::TYPE_CREDITOR,
+                    (string) $row->creditor_id,
+                );
+            }
+
             if (! $promote) {
                 $stats['expenses']['WOULD_CREATE']++;
 
@@ -365,6 +392,7 @@ class FinancialDataMigrator
                 'expense_subcategory_id' => $subcategoryId,
                 'description' => $importDescription,
                 'receiver_name' => filled($row->receiver_name ?? null) ? (string) $row->receiver_name : null,
+                'creditor_id' => $creditorId,
                 'amount' => $row->amount,
                 'source_type' => $sourceType,
                 'source_id' => $sourceId,
@@ -375,6 +403,7 @@ class FinancialDataMigrator
                     'legacy_table' => 'expenses',
                     'legacy_id' => (int) $legacyId,
                     'legacy_payment_method' => $row->payment_method ?? null,
+                    'legacy_creditor_id' => ! empty($row->creditor_id) ? (int) $row->creditor_id : null,
                 ],
                 'created_by' => null,
                 'approval_status' => 'approved',
@@ -568,5 +597,221 @@ class FinancialDataMigrator
     private function legacyTransactionNumber(string $prefix, string $legacyId): string
     {
         return $prefix.'-LEG-'.str_pad($legacyId, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * @param  array<string, mixed>  $stats
+     */
+    private function migrateCreditors($legacy, int $runId, bool $promote, array &$stats): void
+    {
+        if (! Schema::connection('legacy')->hasTable('creditors')) {
+            return;
+        }
+
+        foreach ($legacy->table('creditors')->orderBy('id')->get() as $row) {
+            $legacyId = (int) $row->id;
+            $legacyIdentifier = (string) $legacyId;
+
+            if ($this->maps->find(MigrationEntityMapRepository::TYPE_CREDITOR, $legacyIdentifier)) {
+                $stats['creditors']['MATCHED']++;
+
+                continue;
+            }
+
+            $existing = Creditor::query()
+                ->where('legacy_id', $legacyId)
+                ->orWhere('name', (string) $row->name)
+                ->first();
+
+            if ($existing) {
+                if ($promote && ! $existing->legacy_id) {
+                    $existing->update(['legacy_id' => $legacyId]);
+                }
+
+                $this->maps->store(
+                    MigrationEntityMapRepository::TYPE_CREDITOR,
+                    $legacyIdentifier,
+                    Creditor::class,
+                    $existing->id,
+                    'matched_existing',
+                    'HIGH',
+                    null,
+                    $runId,
+                );
+                $stats['creditors']['MATCHED']++;
+
+                continue;
+            }
+
+            if (! $promote) {
+                $stats['creditors']['WOULD_CREATE']++;
+
+                continue;
+            }
+
+            $creditor = Creditor::create([
+                'legacy_id' => $legacyId,
+                'name' => (string) $row->name,
+                'description' => null,
+                'amount' => $row->amount,
+                'due_date' => $row->due_date ?? null,
+                'is_active' => (bool) ($row->is_active ?? true),
+                'notes' => $row->notes ?? null,
+            ]);
+
+            $this->maps->store(
+                MigrationEntityMapRepository::TYPE_CREDITOR,
+                $legacyIdentifier,
+                Creditor::class,
+                $creditor->id,
+                'created',
+                'HIGH',
+                null,
+                $runId,
+            );
+            $this->maps->trackCreated($runId, 'creditor', $creditor->id);
+            $stats['creditors']['CREATED']++;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $stats
+     */
+    private function migrateAssets($legacy, int $runId, bool $promote, array &$stats): void
+    {
+        if (! Schema::connection('legacy')->hasTable('assets')) {
+            return;
+        }
+
+        foreach ($legacy->table('assets')->orderBy('id')->get() as $row) {
+            $legacyId = (int) $row->id;
+            $legacyIdentifier = (string) $legacyId;
+
+            if ($this->maps->find(MigrationEntityMapRepository::TYPE_ASSET, $legacyIdentifier)) {
+                $stats['assets']['MATCHED']++;
+
+                continue;
+            }
+
+            $existing = Asset::query()
+                ->where('legacy_id', $legacyId)
+                ->orWhere(function ($query) use ($row) {
+                    $query->where('name', (string) $row->name)
+                        ->where('asset_type', (string) $row->asset_type);
+                })
+                ->first();
+
+            if ($existing) {
+                if ($promote && ! $existing->legacy_id) {
+                    $existing->update(['legacy_id' => $legacyId]);
+                }
+
+                $this->maps->store(
+                    MigrationEntityMapRepository::TYPE_ASSET,
+                    $legacyIdentifier,
+                    Asset::class,
+                    $existing->id,
+                    'matched_existing',
+                    'HIGH',
+                    null,
+                    $runId,
+                );
+                $stats['assets']['MATCHED']++;
+
+                continue;
+            }
+
+            if (! $promote) {
+                $stats['assets']['WOULD_CREATE']++;
+
+                continue;
+            }
+
+            $asset = Asset::create([
+                'legacy_id' => $legacyId,
+                'asset_type' => (string) $row->asset_type,
+                'name' => (string) $row->name,
+                'description' => $row->description ?? null,
+                'acquisition_date' => $row->acquisition_date ?? null,
+                'value' => $row->value ?? 0,
+                'image_path' => $row->image_path ?? null,
+                'is_active' => (bool) ($row->is_active ?? true),
+            ]);
+
+            $this->maps->store(
+                MigrationEntityMapRepository::TYPE_ASSET,
+                $legacyIdentifier,
+                Asset::class,
+                $asset->id,
+                'created',
+                'HIGH',
+                null,
+                $runId,
+            );
+            $this->maps->trackCreated($runId, 'asset', $asset->id);
+            $stats['assets']['CREATED']++;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $stats
+     */
+    private function migrateCreditorConversions($legacy, int $runId, bool $promote, array &$stats): void
+    {
+        if (! Schema::connection('legacy')->hasTable('creditor_conversions')) {
+            return;
+        }
+
+        foreach ($legacy->table('creditor_conversions')->orderBy('id')->get() as $row) {
+            $legacyId = (int) $row->id;
+            $legacyIdentifier = (string) $legacyId;
+
+            if (CreditorConversion::query()->where('legacy_id', $legacyId)->exists()) {
+                $stats['creditor_conversions']['MATCHED']++;
+
+                continue;
+            }
+
+            $creditorId = $this->maps->targetId(
+                MigrationEntityMapRepository::TYPE_CREDITOR,
+                (string) ($row->creditor_id ?? ''),
+            );
+
+            if (! $creditorId) {
+                $stats['creditor_conversions']['SKIPPED']++;
+
+                continue;
+            }
+
+            $financialTransactionId = null;
+            if (! empty($row->income_id)) {
+                $financialTransactionId = $this->maps->targetId(
+                    MigrationEntityMapRepository::TYPE_FINANCIAL_TRANSACTION,
+                    (string) $row->income_id,
+                    'income',
+                );
+            }
+
+            if (! $promote) {
+                $stats['creditor_conversions']['WOULD_CREATE']++;
+
+                continue;
+            }
+
+            CreditorConversion::create([
+                'legacy_id' => $legacyId,
+                'creditor_id' => $creditorId,
+                'amount' => $row->amount,
+                'destination_type' => strtoupper((string) $row->destination_type),
+                'destination_id' => (int) $row->destination_id,
+                'financial_transaction_id' => $financialTransactionId,
+                'notes' => $row->notes ?? null,
+                'created_by' => null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ]);
+
+            $stats['creditor_conversions']['CREATED']++;
+        }
     }
 }

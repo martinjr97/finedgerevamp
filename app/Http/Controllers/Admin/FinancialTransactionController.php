@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bank;
+use App\Models\Creditor;
 use App\Models\Employee;
 use App\Models\FinancialTransaction;
 use App\Models\Wallet;
+use App\Services\CreditorBalanceService;
 use App\Support\FinancialCategoryCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +17,10 @@ use Illuminate\View\View;
 
 class FinancialTransactionController extends Controller
 {
+    public function __construct(
+        private readonly CreditorBalanceService $creditorBalanceService,
+    ) {}
+
     /**
      * Display a listing of financial transactions.
      */
@@ -66,15 +72,45 @@ class FinancialTransactionController extends Controller
     /**
      * Show the form for creating a new expense transaction.
      */
-    public function createExpense(): View
+    public function createExpense(Request $request): View
     {
         abort_unless(auth('admin')->user()?->can('financial-transactions.create'), 403);
         $banks = Bank::where('is_active', true)->orderBy('name')->get();
         $wallets = Wallet::where('is_active', true)->orderBy('name')->get();
         $expenseCategories = FinancialCategoryCatalog::activeExpenseCategories();
         $employees = Employee::query()->active()->orderBy('first_name')->orderBy('last_name')->get();
-        
-        return view('admin.financial-transactions.create-expense', compact('banks', 'wallets', 'expenseCategories', 'employees'));
+        $creditors = Creditor::query()->where('is_active', true)->orderBy('name')->get();
+        $creditorRepaymentCategoryCode = CreditorBalanceService::CREDITOR_LOAN_REPAYMENT_CODE;
+
+        $preselectedCreditor = null;
+        $preselectedCreditorId = (int) $request->query('creditor_id', 0);
+        if ($preselectedCreditorId > 0) {
+            $preselectedCreditor = Creditor::query()->find($preselectedCreditorId);
+            if ($preselectedCreditor && ! $creditors->contains('id', $preselectedCreditor->id)) {
+                $creditors = $creditors->push($preselectedCreditor)->sortBy('name')->values();
+            }
+        }
+
+        $preselectedCategory = $request->query('category');
+        if ($preselectedCreditor && ! $preselectedCategory) {
+            $preselectedCategory = $creditorRepaymentCategoryCode;
+        }
+
+        $returnToCreditorUrl = $preselectedCreditor
+            ? route('admin.creditors.show', $preselectedCreditor)
+            : null;
+
+        return view('admin.financial-transactions.create-expense', compact(
+            'banks',
+            'wallets',
+            'expenseCategories',
+            'employees',
+            'creditors',
+            'creditorRepaymentCategoryCode',
+            'preselectedCreditor',
+            'preselectedCategory',
+            'returnToCreditorUrl',
+        ));
     }
 
     /**
@@ -152,11 +188,13 @@ class FinancialTransactionController extends Controller
             'description' => ['required', 'string', 'max:500'],
             'receiver_name' => ['nullable', 'string', 'max:255'],
             'employee_id' => ['nullable', 'integer', 'exists:employees,id'],
+            'creditor_id' => ['nullable', 'integer', 'exists:creditors,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'source_type' => ['required', 'in:bank,wallet'],
             'source_id' => ['required', 'integer'],
             'reference_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string'],
+            'return_creditor_id' => ['nullable', 'integer', 'exists:creditors,id'],
         ]);
 
         try {
@@ -178,6 +216,23 @@ class FinancialTransactionController extends Controller
                 ? FinancialCategoryCatalog::resolveExpenseSubcategory($expenseCategory->id, $validated['expense_subcategory_id'] ?? null)
                 : null;
 
+            $isCreditorRepayment = $this->creditorBalanceService->isCreditorLoanRepayment($expenseCategory);
+            if ($isCreditorRepayment && empty($validated['creditor_id'])) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Creditor is required for Creditor Loan Repayment expenses.');
+            }
+
+            $creditor = null;
+            if ($isCreditorRepayment && ! empty($validated['creditor_id'])) {
+                $creditor = Creditor::query()->findOrFail((int) $validated['creditor_id']);
+                if ($this->creditorBalanceService->paymentExceedsBalance($creditor, (float) $validated['amount'])) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Payment amount exceeds creditor outstanding balance (ZMW '.number_format((float) $creditor->amount, 2).').');
+                }
+            }
+
             $employee = ! empty($validated['employee_id'])
                 ? Employee::query()->find($validated['employee_id'])
                 : null;
@@ -196,6 +251,7 @@ class FinancialTransactionController extends Controller
                 'description' => $validated['description'],
                 'receiver_name' => $receiverName !== '' ? $receiverName : null,
                 'employee_id' => $employee?->id,
+                'creditor_id' => $creditor?->id,
                 'amount' => $validated['amount'],
                 'source_type' => $validated['source_type'],
                 'source_id' => $validated['source_id'],
@@ -207,7 +263,16 @@ class FinancialTransactionController extends Controller
             // Update balances
             $transaction->updateBalances();
 
+            if ($isCreditorRepayment && $creditor) {
+                $this->creditorBalanceService->reduceBalance($creditor->fresh(), (float) $validated['amount']);
+            }
+
             DB::commit();
+
+            if (! empty($validated['return_creditor_id'])) {
+                return redirect()->route('admin.creditors.show', (int) $validated['return_creditor_id'])
+                    ->with('status', 'Creditor payment recorded successfully.');
+            }
 
             return redirect()->route('admin.financial-transactions.index')
                 ->with('status', 'Expense transaction recorded successfully.');
@@ -226,7 +291,7 @@ class FinancialTransactionController extends Controller
     public function show(FinancialTransaction $financialTransaction): View
     {
         abort_unless(auth('admin')->user()?->can('financial-transactions.view'), 403);
-        $financialTransaction->load(['sourceBank', 'sourceWallet', 'destinationBank', 'destinationWallet', 'creator', 'employee', 'expenseCategory', 'expenseSubcategory']);
+        $financialTransaction->load(['sourceBank', 'sourceWallet', 'destinationBank', 'destinationWallet', 'creator', 'employee', 'expenseCategory', 'expenseSubcategory', 'creditor']);
         return view('admin.financial-transactions.show', compact('financialTransaction'));
     }
 
@@ -238,6 +303,8 @@ class FinancialTransactionController extends Controller
         abort_unless(auth('admin')->user()?->can('financial-transactions.delete'), 403);
         try {
             DB::beginTransaction();
+
+            $isCreditorRepayment = $this->creditorBalanceService->isCreditorLoanRepayment($financialTransaction->expenseCategory);
 
             // Reverse the balance updates
             if ($financialTransaction->type === 'income' && $financialTransaction->destination_type && $financialTransaction->destination_id) {
@@ -272,6 +339,13 @@ class FinancialTransactionController extends Controller
                 
                 if ($destination) {
                     $destination->updateBalance($financialTransaction->amount, 'debit');
+                }
+            }
+
+            if ($isCreditorRepayment && $financialTransaction->creditor_id) {
+                $creditor = Creditor::query()->find($financialTransaction->creditor_id);
+                if ($creditor) {
+                    $this->creditorBalanceService->restoreBalance($creditor, (float) $financialTransaction->amount);
                 }
             }
 

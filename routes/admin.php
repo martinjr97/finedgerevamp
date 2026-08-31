@@ -178,6 +178,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('sms-templates/{smsTemplate}/edit', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'edit'])->name('sms-templates.edit');
         Route::put('sms-templates/{smsTemplate}', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'update'])->name('sms-templates.update');
         Route::resource('creditors', CreditorController::class);
+        Route::post('creditors/{creditor}/convert', [CreditorController::class, 'convert'])->name('creditors.convert');
         Route::resource('assets', AssetController::class);
         Route::post('assets/{asset}/transfer', [AssetController::class, 'transfer'])->name('assets.transfer');
         Route::resource('employees', EmployeeController::class)->except(['show']);

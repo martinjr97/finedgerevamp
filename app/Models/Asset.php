@@ -12,6 +12,7 @@ class Asset extends Model
     use HasFactory;
 
     protected $fillable = [
+        'legacy_id',
         'asset_type',
         'name',
         'description',

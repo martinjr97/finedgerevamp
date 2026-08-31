@@ -10,7 +10,7 @@ class MigrationFinancialDataCommand extends MigrationPhaseCommand
     protected $signature = 'migration:financial-data
         {--dry-run : Non-destructive preview (default when --promote omitted)}
         {--promote : Write categories and financial transactions to the target database}
-        {--only= : categories|expense_categories|income_categories|expenses|incomes}
+        {--only= : categories|expense_categories|income_categories|creditors|assets|expenses|incomes|creditor_conversions}
         {--from-date= : Import expenses/incomes on or after this date (YYYY-MM-DD). Defaults to MIGRATION_FINANCIAL_FROM_DATE or today.}
         {--run= : Migration run UUID}';
 
@@ -33,7 +33,7 @@ class MigrationFinancialDataCommand extends MigrationPhaseCommand
 
         $this->outputSummary($summary);
         $this->line("Output: {$path}");
-        $this->line('Recommended order: migration:financial-data --only=categories --promote, then --only=expenses --from-date=YYYY-MM-DD --promote');
+        $this->line('Recommended order: migration:financial-data --only=categories --promote, then --only=creditors --promote, then --only=assets --promote, then --only=expenses --from-date=YYYY-MM-DD --promote');
 
         return self::SUCCESS;
     }
