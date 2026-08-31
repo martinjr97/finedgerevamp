@@ -98,6 +98,52 @@ class MigrationEntityMapRepository
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    public function storeOrUpdate(
+        string $entityType,
+        string $legacyIdentifier,
+        string $targetType,
+        int $targetId,
+        string $mappingMethod,
+        string $confidence = 'HIGH',
+        ?string $legacySecondary = null,
+        ?int $migrationRunId = null,
+        array $metadata = [],
+    ): void {
+        $existing = $this->find($entityType, $legacyIdentifier, $legacySecondary);
+        if ($existing) {
+            $merged = array_merge(json_decode($existing->metadata ?? '{}', true) ?: [], $metadata);
+
+            DB::table('migration_entity_maps')
+                ->where('id', $existing->id)
+                ->update([
+                    'target_type' => $targetType,
+                    'target_id' => $targetId,
+                    'mapping_method' => $mappingMethod,
+                    'mapping_confidence' => $confidence,
+                    'migration_run_id' => $migrationRunId ?? $existing->migration_run_id,
+                    'metadata' => $merged === [] ? null : json_encode($merged),
+                    'updated_at' => now(),
+                ]);
+
+            return;
+        }
+
+        $this->store(
+            $entityType,
+            $legacyIdentifier,
+            $targetType,
+            $targetId,
+            $mappingMethod,
+            $confidence,
+            $legacySecondary,
+            $migrationRunId,
+            $metadata,
+        );
+    }
+
     public function trackCreated(int $migrationRunId, string $recordType, int $recordId): void
     {
         DB::table('migration_created_records')->insert([

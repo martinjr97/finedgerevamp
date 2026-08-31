@@ -17,12 +17,23 @@ class MigrationCustomerDetailService
     {
         $legacy = $this->legacySnapshot($legacyUserId);
         $exception = $staging->exception ?? null;
-        $candidates = $this->candidateMatches($exception, $legacy);
+        $candidates = $this->candidateMatches($exception, $legacy, $staging);
         $exceptionMeta = MigrationDashboardSupport::customerExceptionMeta($exception);
 
         $nrc = $legacy['national_id'] ?? null;
         $duplicateLegacyUsers = $this->duplicateLegacyUsersByNrc($nrc, $legacyUserId);
         $identityResolution = $nrc ? IdentityResolutionCatalog::forNrc($nrc) : null;
+        $identityResolveUrl = null;
+        if ($nrc && $duplicateLegacyUsers !== [] && $identityResolution === null) {
+            $identityResolveUrl = route(
+                'legacy.migration-dashboard.identity.resolve',
+                IdentityResolutionCatalog::encodeNrcKey($nrc),
+            );
+        }
+
+        $mapEligibleExceptions = [
+            'national_id', 'uncertain_national_id', 'email', 'uncertain_email',
+        ];
 
         return [
             'legacy' => $legacy,
@@ -37,6 +48,10 @@ class MigrationCustomerDetailService
                 'candidate_matches' => $candidates,
                 'duplicate_legacy_users' => $duplicateLegacyUsers,
                 'identity_resolution' => $identityResolution,
+                'identity_resolve_url' => $identityResolveUrl,
+                'can_map_to_existing' => ($staging->migration_status ?? '') === 'manual_review'
+                    && in_array($exception, $mapEligibleExceptions, true)
+                    && $candidates !== [],
                 'identity_registry' => CustomerIdentityResolutionRegistry::forUser($legacyUserId),
             ],
         ];
@@ -79,14 +94,21 @@ class MigrationCustomerDetailService
             'legacy_user_id' => $legacyUserId,
             'legacy_customer_id' => null,
             'legacy_client_id' => null,
+            'first_name' => null,
+            'last_name' => null,
             'full_name' => null,
             'email' => null,
             'phone' => null,
             'national_id' => null,
             'employee_number' => null,
+            'position' => null,
             'employer_name' => null,
             'product_type' => null,
             'department' => null,
+            'address_line1' => null,
+            'city' => null,
+            'gross_salary' => null,
+            'net_salary' => null,
             'active_loan_count' => 0,
             'total_loan_count' => 0,
         ];
@@ -115,14 +137,21 @@ class MigrationCustomerDetailService
                 'legacy_user_id' => $legacyUserId,
                 'legacy_customer_id' => $customer['id'] ?? null,
                 'legacy_client_id' => $clientId ?: null,
+                'first_name' => trim((string) ($user['fname'] ?? '')) ?: null,
+                'last_name' => trim((string) ($user['lname'] ?? '')) ?: null,
                 'full_name' => $this->formatLegacyName($user),
                 'email' => $user['email'] ?? null,
                 'phone' => $user['phone_number'] ?? null,
                 'national_id' => $customer['nrc'] ?? $user['nrc'] ?? null,
                 'employee_number' => $user['emp_number'] ?? null,
+                'position' => $customer['position'] ?? $user['position'] ?? null,
                 'employer_name' => $client['company_name'] ?? null,
                 'product_type' => $client['product_type'] ?? null,
                 'department' => $customer['department'] ?? $customer['ministry'] ?? null,
+                'address_line1' => $customer['physical_address'] ?? $customer['address'] ?? $user['address'] ?? null,
+                'city' => $customer['town'] ?? $customer['city'] ?? null,
+                'gross_salary' => is_numeric($customer['gross_salary'] ?? null) ? (float) $customer['gross_salary'] : null,
+                'net_salary' => is_numeric($customer['net_pay'] ?? null) ? (float) $customer['net_pay'] : null,
                 'active_loan_count' => $activeLoans,
                 'total_loan_count' => $totalLoans,
             ];
@@ -137,35 +166,43 @@ class MigrationCustomerDetailService
      * @param  array<string, mixed>  $legacy
      * @return list<array<string, mixed>>
      */
-    private function candidateMatches(?string $exception, array $legacy): array
+    private function candidateMatches(?string $exception, array $legacy, ?object $staging = null): array
     {
         if ($exception === null || $exception === '') {
             return [];
         }
 
+        $ctx = [];
+        if ($staging !== null) {
+            $ctx = json_decode($staging->raw_context ?? '{}', true) ?: [];
+        }
+
         $customers = collect();
 
         if (in_array($exception, ['national_id', 'uncertain_national_id'], true)) {
-            $nrc = trim((string) ($legacy['national_id'] ?? ''));
+            $nrc = trim((string) ($legacy['national_id'] ?? $ctx['national_id'] ?? ''));
             if ($nrc !== '') {
                 $customers = Customer::query()->where('national_id', $nrc)->with('company')->get();
             }
         } elseif (in_array($exception, ['email', 'uncertain_email'], true)) {
-            $email = trim((string) ($legacy['email'] ?? ''));
+            $email = trim((string) ($legacy['email'] ?? $ctx['email'] ?? ''));
             if ($email !== '' && ! str_contains($email, '@migration.local')) {
                 $customers = Customer::query()->where('email', $email)->with('company')->get();
             }
         }
 
-        return $customers->map(fn (Customer $customer) => [
-            'id' => $customer->id,
-            'full_name' => $customer->full_name,
-            'email' => $customer->email,
-            'national_id' => $customer->national_id,
-            'employee_number' => $customer->employee_number,
-            'company' => $customer->company?->name,
-            'admin_url' => route('admin.customers.show', $customer->id),
-        ])->values()->all();
+        return $customers->map(function (Customer $customer) use ($legacy) {
+            return [
+                'id' => $customer->id,
+                'full_name' => $customer->full_name,
+                'email' => $customer->email,
+                'national_id' => $customer->national_id,
+                'employee_number' => $customer->employee_number,
+                'company' => $customer->company?->name,
+                'admin_url' => route('admin.customers.show', $customer->id),
+                'map_fields' => MigrationCustomerMapFieldCatalog::comparisonRows($legacy, $customer),
+            ];
+        })->values()->all();
     }
 
     /**

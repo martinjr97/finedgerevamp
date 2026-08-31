@@ -16,6 +16,10 @@
         'buttons' => [['text' => 'Back', 'href' => $backUrl, 'action' => 'secondary']],
     ])
 
+    @if (session('status'))
+        <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">{{ session('status') }}</div>
+    @endif
+
     @if(!empty($review['is_manual_review']))
         <div class="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -36,6 +40,25 @@
             @endif
             @if(!empty($review['exception_code']))
                 <p class="mt-2 text-xs text-amber-800">Rule code: <code class="rounded bg-amber-100 px-1">{{ $review['exception_code'] }}</code></p>
+            @endif
+            @if(!empty($review['can_map_to_existing']) && !empty($review['candidate_matches']))
+                <p class="mt-3 text-sm text-amber-900">
+                    <span class="font-semibold">Quick action:</span>
+                    Click <strong>Map to this customer</strong> to review legacy vs revamp fields, apply any cleanup, then confirm the entity map for loan migration.
+                </p>
+            @elseif(!empty($review['identity_resolve_url']))
+                <div class="mt-3 flex flex-wrap items-center gap-3">
+                    <p class="text-sm text-amber-900">
+                        <span class="font-semibold">Duplicate legacy NRC:</span>
+                        resolve the identity group first (merge legacy users), then map or promote.
+                    </p>
+                    @if($canManage ?? false)
+                        <a href="{{ $review['identity_resolve_url'] }}"
+                           class="inline-flex items-center rounded-lg border border-cyan-400/50 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-900 hover:bg-cyan-500/20 transition">
+                            Resolve identity group
+                        </a>
+                    @endif
+                </div>
             @endif
         </div>
     @endif
@@ -97,7 +120,31 @@
     </div>
 
     @if(!empty($review['candidate_matches']))
-        <div class="mt-6 rounded-2xl border border-rose-200 bg-white p-6 shadow-sm">
+        @php
+            $mapCandidates = collect($review['candidate_matches'])->map(fn ($candidate) => [
+                'id' => $candidate['id'],
+                'full_name' => $candidate['full_name'],
+                'email' => $candidate['email'],
+                'national_id' => $candidate['national_id'],
+                'employee_number' => $candidate['employee_number'],
+                'company' => $candidate['company'],
+                'map_fields' => $candidate['map_fields'] ?? [],
+            ])->values()->all();
+            $showMapModal = ($canManage ?? false) && !empty($review['can_map_to_existing']) && !$target;
+        @endphp
+        <div
+            class="mt-6 rounded-2xl border border-rose-200 bg-white p-6 shadow-sm"
+            @if($showMapModal)
+                x-data="customerMapModal({
+                    candidates: @js($mapCandidates),
+                    legacyUserId: {{ (int) $legacyUserId }},
+                    legacyName: @js($displayName ?? 'Legacy user'),
+                    mapUrl: @js(route('legacy.migration-dashboard.customers.map', $legacyUserId)),
+                    runId: @js(request('run_id')),
+                    statusFilter: @js(request('status')),
+                })"
+            @endif
+        >
             <h2 class="font-semibold text-primary mb-2">Conflicting revamp customer(s)</h2>
             <p class="text-sm text-slate-600 mb-4">These existing customers triggered the {{ $review['exception_code'] ?? 'match' }} rule. Compare identity fields before deciding.</p>
             <div class="overflow-x-auto">
@@ -122,14 +169,29 @@
                                 <td class="px-3 py-2 text-xs break-all">{{ $candidate['email'] ?? '—' }}</td>
                                 <td class="px-3 py-2">{{ $candidate['employee_number'] ?? '—' }}</td>
                                 <td class="px-3 py-2">{{ $candidate['company'] ?? '—' }}</td>
-                                <td class="px-3 py-2">
-                                    <a href="{{ $candidate['admin_url'] }}" class="font-semibold text-primary hover:underline text-xs">Open in admin</a>
+                                <td class="px-3 py-2 space-y-1">
+                                    <a href="{{ $candidate['admin_url'] }}" class="block font-semibold text-primary hover:underline text-xs">Open in admin</a>
+                                    @if($showMapModal)
+                                        <button
+                                            type="button"
+                                            class="rounded-lg border border-emerald-400 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 transition"
+                                            @click="openCandidate({{ $candidate['id'] }})"
+                                        >
+                                            Map to this customer
+                                        </button>
+                                    @elseif($target && (int) $target->id === (int) $candidate['id'])
+                                        <span class="text-xs font-semibold text-emerald-700">Mapped</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
+
+            @if($showMapModal)
+                @include('legacy.migration-dashboard.customers.partials.map-modal')
+            @endif
         </div>
     @endif
 
@@ -145,8 +207,13 @@
                 @endforeach
             </ul>
             <p class="mt-3 text-xs text-slate-600">
-                <a href="{{ route('legacy.migration-dashboard.identity.index') }}" class="font-semibold text-primary hover:underline">Identity resolution</a>
-                may be required if these are duplicate NRC groups.
+                @if(!empty($review['identity_resolve_url']))
+                    <a href="{{ $review['identity_resolve_url'] }}" class="font-semibold text-primary hover:underline">Resolve identity group</a>
+                    to merge these legacy users before customer / loan migration.
+                @else
+                    <a href="{{ route('legacy.migration-dashboard.identity.index') }}" class="font-semibold text-primary hover:underline">Identity resolution</a>
+                    may be required if these are duplicate NRC groups.
+                @endif
             </p>
         </div>
     @endif

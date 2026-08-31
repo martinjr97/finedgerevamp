@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
@@ -544,5 +545,47 @@ class AdminCustomerFlowTest extends TestCase
         $this->assertEquals(10000.0, (float) $customer->net_salary);
         $this->assertEquals(4000.0, (float) $customer->maximum_loan_take);
         $this->assertEquals(40.0, (float) data_get($customer->metadata, 'sme_qualification_percentage'));
+    }
+
+    public function test_mou_customer_edit_form_prefills_phone(): void
+    {
+        $admin = $this->makeAdminWithPermissions(['customers.update']);
+        $branch = Branch::create(['name' => 'Lusaka', 'code' => 'LSK', 'is_active' => true]);
+
+        $product = LoanProduct::create([
+            'company_id' => $admin->company_id,
+            'name' => 'MOU Loan',
+            'code' => 'MOU-EDIT-'.Str::lower(Str::random(4)),
+            'category' => 'mou',
+            'is_active' => true,
+        ]);
+
+        $phone = '260977123456';
+        $customer = Customer::create([
+            'company_id' => $admin->company_id,
+            'loan_product_id' => $product->id,
+            'branch_id' => $branch->id,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email' => 'john.mou.'.Str::lower(Str::random(4)).'@example.com',
+            'phone' => $phone,
+            'password' => '1234',
+            'status' => 'active',
+            'approval_status' => 'approved',
+            'address_line1' => '123 Street',
+            'city' => 'Lusaka',
+            'country' => 'Zambia',
+            'employee_number' => 'EMP001',
+            'position' => 'Analyst',
+            'department' => 'Finance',
+            'date_of_employment' => '2020-01-01',
+            'gross_salary' => 10000,
+            'net_salary' => 8000,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.customers.edit', $customer))
+            ->assertOk()
+            ->assertSee('value="'.$phone.'"', false);
     }
 }

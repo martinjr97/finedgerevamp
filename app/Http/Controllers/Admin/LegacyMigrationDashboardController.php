@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Migration\Dashboard\MigrationCustomerMapService;
 use App\Migration\Dashboard\MigrationIdentityResolutionService;
 use App\Migration\Dashboard\MigrationCommandsGuide;
 use App\Migration\Dashboard\MigrationDashboardService;
@@ -64,7 +65,40 @@ class LegacyMigrationDashboardController extends Controller
             'legacyUserId' => $legacyUserId,
             'detail' => $detail,
             'backUrl' => route('legacy.migration-dashboard.customers.index', $backParams),
+            'canManage' => auth('admin')->user()?->can('migration.manage') ?? false,
         ]);
+    }
+
+    public function mapCustomer(
+        Request $request,
+        int $legacyUserId,
+        MigrationCustomerMapService $customerMaps,
+    ): RedirectResponse {
+        abort_unless(auth('admin')->user()?->can('migration.manage'), 403);
+
+        $validated = $request->validate([
+            'target_customer_id' => ['required', 'integer', 'exists:customers,id'],
+            'reason' => ['nullable', 'string', 'max:2000'],
+            'fields' => ['nullable', 'array'],
+            'fields.*' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $result = $customerMaps->mapToExistingCustomer(
+            $legacyUserId,
+            (int) $validated['target_customer_id'],
+            (int) auth('admin')->id(),
+            $validated['reason'] ?? null,
+            $validated['fields'] ?? [],
+        );
+
+        $backParams = array_filter([
+            'run_id' => $request->integer('run_id') ?: null,
+            'status' => $request->input('status'),
+        ]);
+
+        return redirect()
+            ->route('legacy.migration-dashboard.customers.show', array_merge(['legacyUserId' => $legacyUserId], $backParams))
+            ->with('status', $result['message']);
     }
 
     public function companies(Request $request, MigrationMappingReportService $mappings): View

@@ -96,3 +96,7 @@ Use combined classifier — flags and product_type disagree on some active loans
 
 - [M0-DATABASE-PROFILING.md](./M0-DATABASE-PROFILING.md)
 - [MIGRATION-READINESS-REPORT.md](./MIGRATION-READINESS-REPORT.md)
+
+
+
+On this page  https://finedge.havencrest.co.zm/admin/repayments/11 we have the manual approve repyament and reject repayment for manu payment , lets move the button to  appear next to the Create New Repayment button and let the Approve button be in clear green and the other to be in a visible red color 

@@ -12,6 +12,9 @@ Route::middleware(['auth:admin', 'password.changed', 'legacy.migration.dashboard
         Route::get('/runs/{run}', [LegacyMigrationDashboardController::class, 'showRun'])->name('runs.show');
         Route::get('/customers', [LegacyMigrationDashboardController::class, 'customers'])->name('customers.index');
         Route::get('/customers/{legacyUserId}', [LegacyMigrationDashboardController::class, 'showCustomer'])->name('customers.show');
+        Route::post('/customers/{legacyUserId}/map', [LegacyMigrationDashboardController::class, 'mapCustomer'])
+            ->middleware('migration.manage')
+            ->name('customers.map');
         Route::get('/companies', [LegacyMigrationDashboardController::class, 'companies'])->name('companies.index');
         Route::get('/marketeers', [LegacyMigrationDashboardController::class, 'marketeers'])->name('marketeers.index');
         Route::get('/identity', [LegacyMigrationDashboardController::class, 'identity'])->name('identity.index');

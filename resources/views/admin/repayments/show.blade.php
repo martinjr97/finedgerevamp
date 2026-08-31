@@ -71,6 +71,24 @@
                         Create New Repayment
                     </a>
                 @endif
+                @if($isPendingRepayment && $canApproveRepayment)
+                    <button
+                        type="button"
+                        @click="approveModalOpen = true"
+                        class="inline-flex items-center gap-2 rounded-2xl border border-emerald-400 bg-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-500/30 hover:bg-emerald-600 transition"
+                    >
+                        Approve Manual Repayment
+                    </button>
+                @endif
+                @if($isPendingRepayment && $canRejectRepayment)
+                    <button
+                        type="button"
+                        @click="rejectModalOpen = true"
+                        class="inline-flex items-center gap-2 rounded-2xl border border-red-500 bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-red-500/30 hover:bg-red-700 transition"
+                    >
+                        Reject Repayment
+                    </button>
+                @endif
                 @if($showManualReconciliation)
                     <button
                         type="button"
@@ -270,29 +288,6 @@
                         <div class="md:col-span-2"><span class="text-slate-400">Notes:</span><p class="font-medium text-white mt-1">{{ $repayment->metadata['notes'] }}</p></div>
                     @endif
                 </div>
-            </div>
-        @endif
-
-        @if($isPendingRepayment && ($canApproveRepayment || $canRejectRepayment))
-            <div class="flex flex-wrap items-center gap-3">
-                @if($canApproveRepayment)
-                    <button
-                        type="button"
-                        @click="approveModalOpen = true"
-                        class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 px-4 py-2.5 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/30 transition"
-                    >
-                        Approve Manual Repayment
-                    </button>
-                @endif
-                @if($canRejectRepayment)
-                    <button
-                        type="button"
-                        @click="rejectModalOpen = true"
-                        class="inline-flex items-center gap-2 rounded-2xl bg-rose-500/20 border border-rose-500/50 px-4 py-2.5 text-sm font-semibold text-rose-200 hover:bg-rose-500/30 transition"
-                    >
-                        Reject Repayment
-                    </button>
-                @endif
             </div>
         @endif
 

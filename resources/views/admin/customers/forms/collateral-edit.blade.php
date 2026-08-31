@@ -85,13 +85,15 @@
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>
-            <div>
-                <label class="text-sm font-medium {{ $labelClass }}">Phone</label>
-                <input type="text" name="phone" value="{{ old('phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260970000000">
-                @error('phone')
-                    <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
+            @include('partials.zambian-phone-field', [
+                'name' => 'phone',
+                'label' => 'Phone',
+                'value' => $customer->phone,
+                'inputClass' => "mt-2 w-full rounded-2xl {$inputClass} text-white px-4 py-3 {$inputFocusClass}",
+                'labelClass' => $labelClass,
+                'errorClass' => $errorClass,
+                'helpClass' => $helpClass,
+            ])
             @include('partials.admin.customer-referral-select', [
                 'referredByCustomers' => $referredByCustomers,
                 'selected' => old('referred_by', $customer->referred_by),
@@ -204,13 +206,16 @@
                     <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                 @enderror
             </div>
-            <div>
-                <label class="text-sm font-medium {{ $labelClass }}">Phone <span class="{{ $requiredClass }}">*</span></label>
-                <input type="text" name="next_of_kin_phone" value="{{ old('next_of_kin_phone') }}" maxlength="12" inputmode="numeric" pattern="260[0-9]{9}" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-3 focus:border-cyan-400 focus:ring-cyan-400/40 zambian-phone-input" placeholder="260970000000">
-                @error('next_of_kin_phone')
-                    <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
-                @enderror
-            </div>
+            @include('partials.zambian-phone-field', [
+                'name' => 'next_of_kin_phone',
+                'label' => 'Phone',
+                'value' => $customer->next_of_kin_phone,
+                'required' => true,
+                'inputClass' => "mt-2 w-full rounded-2xl {$inputClass} text-white px-4 py-3 {$inputFocusClass}",
+                'labelClass' => $labelClass,
+                'errorClass' => $errorClass,
+                'helpClass' => $helpClass,
+            ])
             <div>
                 <label class="text-sm font-medium {{ $labelClass }}">Relationship <span class="{{ $requiredClass }}">*</span></label>
                 <select name="next_of_kin_relationship" required class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
