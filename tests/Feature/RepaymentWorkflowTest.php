@@ -431,6 +431,131 @@ class RepaymentWorkflowTest extends TestCase
         $this->assertSame('completed', $repayment->status);
     }
 
+    public function test_multi_loan_approval_aggregates_due_date_allocations_for_same_loan(): void
+    {
+        $suffix = Str::lower(Str::random(6));
+        $company = $this->makeCompany($suffix);
+        $loanProduct = $this->makeLoanProduct($company, $suffix);
+
+        $channel = Channel::create([
+            'name' => 'Manual Channel '.$suffix,
+            'code' => 'MAN-'.$suffix,
+            'can_disburse' => true,
+            'can_repay' => true,
+            'is_repayment_integrated' => false,
+            'is_active' => true,
+        ]);
+
+        $customer = $this->makeCustomer($company, $loanProduct, $suffix);
+
+        $priorityLoan = Loan::create([
+            'customer_id' => $customer->id,
+            'loan_product_id' => $loanProduct->id,
+            'channel_id' => $channel->id,
+            'loan_number' => Loan::generateLoanNumber($loanProduct),
+            'principal_amount' => 4040,
+            'processing_fee' => 0,
+            'total_amount' => 4040,
+            'amount_paid' => 0,
+            'outstanding_balance' => 4040,
+            'tenure_months' => 2,
+            'loan_start_date' => now()->subMonths(2)->toDateString(),
+            'loan_end_date' => now()->addMonth()->toDateString(),
+            'first_payment_date' => now()->subMonth()->toDateString(),
+            'last_payment_date' => now()->addMonth()->toDateString(),
+            'accrual_type' => 'daily',
+            'status' => 'active',
+            'disbursement_status' => 'completed',
+            'disbursed_at' => now()->subMonths(2),
+        ]);
+
+        LoanPaymentSchedule::create([
+            'loan_id' => $priorityLoan->id,
+            'period_number' => 1,
+            'due_date' => now()->addDays(3)->toDateString(),
+            'expected_amount' => 2020,
+            'amount_paid' => 0,
+            'remaining_amount' => 2020,
+            'status' => 'upcoming',
+            'days_overdue' => 0,
+        ]);
+
+        LoanPaymentSchedule::create([
+            'loan_id' => $priorityLoan->id,
+            'period_number' => 2,
+            'due_date' => now()->addDays(10)->toDateString(),
+            'expected_amount' => 2020,
+            'amount_paid' => 0,
+            'remaining_amount' => 2020,
+            'status' => 'upcoming',
+            'days_overdue' => 0,
+        ]);
+
+        $laterLoan = $this->makeLoan($customer, $loanProduct, $channel, 4000, now()->addDays(20)->toDateString());
+
+        $repayment = Repayment::create([
+            'customer_id' => $customer->id,
+            'channel_id' => $channel->id,
+            'repayment_number' => Repayment::generateRepaymentNumber(),
+            'total_amount' => 4040,
+            'phone_number' => $customer->phone,
+            'status' => 'pending',
+            'metadata' => [
+                'repayment_type' => 'partial',
+                'submitted_from' => 'customer_portal',
+            ],
+        ]);
+
+        $bank = Bank::create([
+            'name' => 'Branch Cash Account '.$suffix,
+            'account_number' => 'ACC-'.$suffix,
+            'account_name' => 'Repayment Co',
+            'bank_name' => 'Test Bank',
+            'opening_balance' => 0,
+            'current_balance' => 0,
+            'is_active' => true,
+        ]);
+
+        $admin = $this->makeAdminWithPermissions(['repayments.approve', 'repayments.view']);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->post(route('admin.repayments.approve', $repayment), [
+                'channel_id' => $channel->id,
+                'manual_source' => 'bank',
+                'bank_id' => $bank->id,
+                'notes' => 'Verified multi-loan repayment.',
+            ]);
+
+        $response->assertRedirect(route('admin.repayments.show', $repayment));
+
+        $repayment->refresh();
+        $this->assertSame('completed', $repayment->status);
+
+        $this->assertSame(
+            1,
+            LoanRepayment::query()
+                ->where('repayment_id', $repayment->id)
+                ->where('loan_id', $priorityLoan->id)
+                ->where('transaction_type', LoanRepayment::TRANSACTION_TYPE_PAYMENT)
+                ->count()
+        );
+
+        $priorityAllocation = LoanRepayment::query()
+            ->where('repayment_id', $repayment->id)
+            ->where('loan_id', $priorityLoan->id)
+            ->firstOrFail();
+
+        $this->assertSame(4040.0, (float) $priorityAllocation->amount);
+
+        $priorityLoan->refresh();
+        $laterLoan->refresh();
+
+        $this->assertSame(4040.0, (float) $priorityLoan->amount_paid);
+        $this->assertSame(0.0, (float) $priorityLoan->outstanding_balance);
+        $this->assertSame(0.0, (float) $laterLoan->amount_paid);
+        $this->assertSame(4000.0, (float) $laterLoan->outstanding_balance);
+    }
+
     public function test_repayment_create_page_preselects_loan_when_loan_id_query_is_present(): void
     {
         $suffix = Str::lower(Str::random(6));

@@ -237,19 +237,39 @@ class RepaymentProcessingService
             $loanRepaymentNotes .= ' | Overpayment reason: '.$overpaymentMeta['reason'];
         }
 
-        LoanRepayment::create([
-            'repayment_id' => $repayment->id,
-            'loan_id' => $loan->id,
-            'transaction_type' => LoanRepayment::TRANSACTION_TYPE_PAYMENT,
-            'amount' => $amount,
-            'principal_amount' => round($principalAmount, 2),
-            'interest_amount' => round($interestAmount, 2),
-            'processing_fee_amount' => round($processingFeeAmount, 2),
-            'outstanding_balance_before' => $outstandingBalanceBefore,
-            'outstanding_balance_after' => $outstandingBalanceAfter,
-            'notes' => $loanRepaymentNotes,
-            'metadata' => is_array($overpaymentMeta) ? ['overpayment' => $overpaymentMeta] : null,
-        ]);
+        $existing = LoanRepayment::query()
+            ->where('repayment_id', $repayment->id)
+            ->where('loan_id', $loan->id)
+            ->where('transaction_type', LoanRepayment::TRANSACTION_TYPE_PAYMENT)
+            ->first();
+
+        if ($existing) {
+            $existing->update([
+                'amount' => round((float) $existing->amount + $amount, 2),
+                'principal_amount' => round((float) $existing->principal_amount + $principalAmount, 2),
+                'interest_amount' => round((float) $existing->interest_amount + $interestAmount, 2),
+                'processing_fee_amount' => round((float) $existing->processing_fee_amount + $processingFeeAmount, 2),
+                'outstanding_balance_after' => $outstandingBalanceAfter,
+                'notes' => trim($existing->notes.' | '.$loanRepaymentNotes),
+                'metadata' => is_array($overpaymentMeta)
+                    ? array_merge($existing->metadata ?? [], ['overpayment' => $overpaymentMeta])
+                    : $existing->metadata,
+            ]);
+        } else {
+            LoanRepayment::create([
+                'repayment_id' => $repayment->id,
+                'loan_id' => $loan->id,
+                'transaction_type' => LoanRepayment::TRANSACTION_TYPE_PAYMENT,
+                'amount' => $amount,
+                'principal_amount' => round($principalAmount, 2),
+                'interest_amount' => round($interestAmount, 2),
+                'processing_fee_amount' => round($processingFeeAmount, 2),
+                'outstanding_balance_before' => $outstandingBalanceBefore,
+                'outstanding_balance_after' => $outstandingBalanceAfter,
+                'notes' => $loanRepaymentNotes,
+                'metadata' => is_array($overpaymentMeta) ? ['overpayment' => $overpaymentMeta] : null,
+            ]);
+        }
 
         $this->ledgerService->syncLoanLedger($loan->fresh());
     }

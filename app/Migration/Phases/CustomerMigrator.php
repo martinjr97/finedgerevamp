@@ -13,6 +13,7 @@ use App\Migration\Phases\Support\CustomerIdentityResolver;
 use App\Migration\Phases\Support\CustomerMigrationProfileResolver;
 use App\Migration\Phases\Support\CustomerMatcher;
 use App\Migration\Phases\Support\LegacyClientClassifier;
+use App\Migration\Phases\Support\MigratedCustomerAttributes;
 use App\Migration\Phases\Support\MarketeerClassifier;
 use App\Models\Customer;
 use App\Models\LoanProduct;
@@ -107,6 +108,8 @@ class CustomerMigrator
             'branch_assigned' => 0,
             'branch_head_office_fallback' => 0,
             'corrected_existing' => 0,
+            'legacy_registration_dates_applied' => 0,
+            'legacy_passwords_applied' => 0,
             'correct_existing_mode' => $correctExisting,
         ];
 
@@ -191,7 +194,9 @@ class CustomerMigrator
                         $legacyClient,
                         $legacy,
                         $runId,
-                        $userId
+                        $userId,
+                        $stats,
+                        $correctExisting,
                     );
                     $stats['corrected_existing']++;
                 }
@@ -316,6 +321,9 @@ class CustomerMigrator
             $branchResolution = $this->branchResolver->resolve($legacyCustomer, $legacyClient);
             $this->trackBranchResolution($stats, $branchResolution);
 
+            $legacyRegisteredAt = MigratedCustomerAttributes::legacyRegisteredAtIso($legacyUser, $legacyCustomer);
+            $legacyPasswordHash = MigratedCustomerAttributes::resolveLegacyPasswordHash($legacyUser);
+
             $customer = Customer::create([
                 'company_id' => $companyId,
                 'customer_group_id' => $customerGroupId,
@@ -331,12 +339,14 @@ class CustomerMigrator
                 'net_salary' => is_numeric($legacyCustomer['net_pay'] ?? null) ? $legacyCustomer['net_pay'] : null,
                 'status' => 'active',
                 'kyc_status' => 'verified',
-                'password' => bcrypt('Migration!'.Str::random(12)),
+                'password' => $legacyPasswordHash ?? bcrypt('Migration!'.Str::random(12)),
                 'metadata' => [
                     'legacy_user_id' => $userId,
                     'legacy_customer_id' => $legacyCustomer['id'] ?? null,
                     'legacy_client_id' => $legacyCustomer['client_id'] ?? null,
                     'legacy_market_id' => $legacyCustomer['market_id'] ?? null,
+                    'legacy_registered_at' => $legacyRegisteredAt,
+                    'legacy_password_migrated' => $legacyPasswordHash !== null,
                     'source_system' => 'finedge_legacy',
                     'legacy_default_product_code' => $profile['product_code'],
                     'client_classification' => $profile['client_classification'],
@@ -345,6 +355,14 @@ class CustomerMigrator
                     'branch_resolution' => $branchResolution['resolution'],
                 ],
             ]);
+
+            if (MigratedCustomerAttributes::applyRegistrationTimestamps($customer, $legacyUser, $legacyCustomer, true)) {
+                $stats['legacy_registration_dates_applied']++;
+            }
+
+            if ($legacyPasswordHash !== null) {
+                $stats['legacy_passwords_applied']++;
+            }
 
             if ($profile['requires_market_detail'] && $targetMarketId) {
                 MarketeerCustomerDetail::create([
@@ -517,6 +535,8 @@ class CustomerMigrator
         $legacy,
         int $runId,
         int $userId,
+        array &$stats,
+        bool $forceRegistrationTimestamps = false,
     ): void {
         $loanProduct = LoanProduct::query()->where('code', $profile['product_code'])->first();
         $customer = Customer::query()->find($customerId);
@@ -555,6 +575,7 @@ class CustomerMigrator
         }
 
         $branchResolution = $this->branchResolver->resolve($legacyCustomer, $legacyClient);
+        $legacyRegisteredAt = MigratedCustomerAttributes::legacyRegisteredAtIso($legacyUser, $legacyCustomer);
 
         $customer->update([
             'loan_product_id' => $loanProduct->id,
@@ -565,6 +586,7 @@ class CustomerMigrator
                 'legacy_user_id' => $userId,
                 'legacy_customer_id' => $legacyCustomer['id'] ?? null,
                 'legacy_client_id' => $legacyCustomer['client_id'] ?? null,
+                'legacy_registered_at' => $legacyRegisteredAt ?? data_get($customer->metadata, 'legacy_registered_at'),
                 'legacy_default_product_code' => $profile['product_code'],
                 'client_classification' => $profile['client_classification'],
                 'is_marketeer' => $profile['requires_market_detail'],
@@ -573,6 +595,15 @@ class CustomerMigrator
                 'branch_resolution' => $branchResolution['resolution'],
             ]),
         ]);
+
+        $customer->refresh();
+        if (MigratedCustomerAttributes::applyRegistrationTimestamps($customer, $legacyUser, $legacyCustomer, $forceRegistrationTimestamps)) {
+            $stats['legacy_registration_dates_applied']++;
+        }
+
+        if (MigratedCustomerAttributes::applyLegacyPassword($customer, $legacyUser, $forceRegistrationTimestamps)) {
+            $stats['legacy_passwords_applied']++;
+        }
     }
 
     /**
