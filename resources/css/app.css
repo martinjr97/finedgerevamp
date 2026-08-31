@@ -1031,28 +1031,41 @@ body[data-theme="dark"] .content-area a.duplicate-warning-badge svg {
     line-height: 1.25rem;
     font-weight: 600;
 }
-.status-pill-completed,
 .status-pill-active {
+    background: #bbf7d0 !important;
+    border: 1px solid #22c55e !important;
+    color: #15803d !important;
+}
+.content-area .status-pill-active,
+.content-area .status-pill-active * {
+    color: #15803d !important;
+}
+body[data-theme="dark"] .status-pill-active {
+    background: rgba(34, 197, 94, 0.28) !important;
+    border-color: #4ade80 !important;
+    color: #86efac !important;
+}
+body[data-theme="dark"] .content-area .status-pill-active,
+body[data-theme="dark"] .content-area .status-pill-active * {
+    color: #86efac !important;
+}
+
+.status-pill-completed {
     background: #d1fae5 !important;
     border: 1px solid #10b981 !important;
     color: #047857 !important;
 }
 .content-area .status-pill-completed,
-.content-area .status-pill-completed *,
-.content-area .status-pill-active,
-.content-area .status-pill-active * {
+.content-area .status-pill-completed * {
     color: #047857 !important;
 }
-body[data-theme="dark"] .status-pill-completed,
-body[data-theme="dark"] .status-pill-active {
+body[data-theme="dark"] .status-pill-completed {
     background: rgba(16, 185, 129, 0.22) !important;
     border-color: #34d399 !important;
     color: #6ee7b7 !important;
 }
 body[data-theme="dark"] .content-area .status-pill-completed,
-body[data-theme="dark"] .content-area .status-pill-completed *,
-body[data-theme="dark"] .content-area .status-pill-active,
-body[data-theme="dark"] .content-area .status-pill-active * {
+body[data-theme="dark"] .content-area .status-pill-completed * {
     color: #6ee7b7 !important;
 }
 
@@ -1196,6 +1209,82 @@ body[data-theme="dark"] .status-pill-inactive {
 body[data-theme="dark"] .content-area .status-pill-inactive,
 body[data-theme="dark"] .content-area .status-pill-inactive * {
     color: #fda4af !important;
+}
+
+.status-pill-pending {
+    background: #fef3c7 !important;
+    border: 1px solid #f59e0b !important;
+    color: #b45309 !important;
+}
+.content-area .status-pill-pending,
+.content-area .status-pill-pending * {
+    color: #b45309 !important;
+}
+body[data-theme="dark"] .status-pill-pending {
+    background: rgba(245, 158, 11, 0.22) !important;
+    border-color: #fbbf24 !important;
+    color: #fcd34d !important;
+}
+body[data-theme="dark"] .content-area .status-pill-pending,
+body[data-theme="dark"] .content-area .status-pill-pending * {
+    color: #fcd34d !important;
+}
+
+.status-pill-settled {
+    background: #dbeafe !important;
+    border: 1px solid #3b82f6 !important;
+    color: #1d4ed8 !important;
+}
+.content-area .status-pill-settled,
+.content-area .status-pill-settled * {
+    color: #1d4ed8 !important;
+}
+body[data-theme="dark"] .status-pill-settled {
+    background: rgba(59, 130, 246, 0.24) !important;
+    border-color: #60a5fa !important;
+    color: #93c5fd !important;
+}
+body[data-theme="dark"] .content-area .status-pill-settled,
+body[data-theme="dark"] .content-area .status-pill-settled * {
+    color: #93c5fd !important;
+}
+
+.status-pill-defaulted {
+    background: #ffe4e6 !important;
+    border: 1px solid #e11d48 !important;
+    color: #be123c !important;
+}
+.content-area .status-pill-defaulted,
+.content-area .status-pill-defaulted * {
+    color: #be123c !important;
+}
+body[data-theme="dark"] .status-pill-defaulted {
+    background: rgba(225, 29, 72, 0.22) !important;
+    border-color: #fb7185 !important;
+    color: #fda4af !important;
+}
+body[data-theme="dark"] .content-area .status-pill-defaulted,
+body[data-theme="dark"] .content-area .status-pill-defaulted * {
+    color: #fda4af !important;
+}
+
+.status-pill-cancelled {
+    background: #f1f5f9 !important;
+    border: 1px solid #94a3b8 !important;
+    color: #475569 !important;
+}
+.content-area .status-pill-cancelled,
+.content-area .status-pill-cancelled * {
+    color: #475569 !important;
+}
+body[data-theme="dark"] .status-pill-cancelled {
+    background: rgba(148, 163, 184, 0.2) !important;
+    border-color: #94a3b8 !important;
+    color: #cbd5e1 !important;
+}
+body[data-theme="dark"] .content-area .status-pill-cancelled,
+body[data-theme="dark"] .content-area .status-pill-cancelled * {
+    color: #cbd5e1 !important;
 }
 
 /* Gateway routing premium toggles (green on / red off) */

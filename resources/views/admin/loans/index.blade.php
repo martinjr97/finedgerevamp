@@ -180,18 +180,18 @@
                                 </td>
                                 <td>
                                     @php
-                                        $statusTextColors = [
-                                            'pending_approval' => 'text-amber-400',
-                                            'approved' => 'text-blue-400',
-                                            'active' => 'text-emerald-400',
-                                            'completed' => 'text-green-400',
-                                            'settled' => 'text-teal-400',
-                                            'defaulted' => 'text-rose-400',
-                                            'cancelled' => 'text-slate-400',
+                                        $loanStatusPills = [
+                                            'pending_approval' => 'status-pill status-pill-pending',
+                                            'approved' => 'status-pill status-pill-approved',
+                                            'active' => 'status-pill status-pill-active',
+                                            'completed' => 'status-pill status-pill-completed',
+                                            'settled' => 'status-pill status-pill-settled',
+                                            'defaulted' => 'status-pill status-pill-defaulted',
+                                            'cancelled' => 'status-pill status-pill-cancelled',
                                         ];
-                                        $statusTextColor = $statusTextColors[$loan->status] ?? 'text-slate-400';
+                                        $loanStatusClass = $loanStatusPills[$loan->status] ?? 'status-pill status-pill-cancelled';
                                     @endphp
-                                    <span class="text-sm font-medium {{ $statusTextColor }}">
+                                    <span class="{{ $loanStatusClass }}">
                                         {{ ucfirst(str_replace('_', ' ', $loan->status)) }}
                                     </span>
                                 </td>

@@ -243,21 +243,17 @@
                         <span class="text-slate-400">Status:</span>
                         @php
                             $statusColors = [
-                                'pending_approval' => 'bg-amber-500/20 text-amber-300',
+                                'pending_approval' => 'status-pill status-pill-pending',
                                 'approved' => 'status-pill status-pill-approved',
                                 'active' => 'status-pill status-pill-active',
                                 'completed' => 'status-pill status-pill-completed',
-                                'settled' => 'status-pill status-pill-completed',
-                                'defaulted' => 'bg-rose-500/20 text-rose-300',
-                                'cancelled' => 'bg-slate-500/20 text-slate-300',
+                                'settled' => 'status-pill status-pill-settled',
+                                'defaulted' => 'status-pill status-pill-defaulted',
+                                'cancelled' => 'status-pill status-pill-cancelled',
                             ];
-                            $statusColor = $statusColors[$loan->status] ?? 'bg-slate-500/20 text-slate-300';
-                            $usesStatusPill = in_array($loan->status, ['approved', 'active', 'completed', 'settled'], true);
+                            $statusColor = $statusColors[$loan->status] ?? 'status-pill status-pill-cancelled';
                         @endphp
-                        <span @class([
-                            'inline-block rounded-full px-2 py-1 text-xs' => ! $usesStatusPill,
-                            $statusColor,
-                        ])>
+                        <span class="{{ $statusColor }}">
                             {{ ucfirst(str_replace('_', ' ', $loan->status)) }}
                         </span>
                     </div>
