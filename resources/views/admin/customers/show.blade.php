@@ -902,15 +902,15 @@
                 </div>
             </div>
 
-            {{-- Cashflow & PAR --}}
+            {{-- Cashflow & PAR (scoped to this customer only — not company-wide portfolio) --}}
             <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-5">
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <h2 class="text-xl font-semibold text-white">Cashflow & PAR</h2>
-                        <p class="text-sm text-slate-400">Disbursement vs repayment momentum and risk for this customer.</p>
+                        <p class="text-sm text-slate-400">Disbursement vs repayment momentum and risk for <span class="text-slate-200">{{ $customer->full_name }}</span> only — not the whole loan book.</p>
                     </div>
                     <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-slate-200">
-                        PAR = (Arrears ÷ Portfolio) × 100
+                        Customer PAR = (Overdue ÷ Outstanding) × 100
                     </span>
                 </div>
 
@@ -990,19 +990,21 @@
 
                 <div class="grid gap-3 sm:grid-cols-3">
                     <div class="rounded-2xl bg-white/5 border border-white/10 p-3 text-sm">
-                        <p class="text-slate-300">Portfolio</p>
+                        <p class="text-slate-300">Outstanding (active loans)</p>
                         <p class="text-xl font-semibold text-white mt-1">ZMW {{ number_format($customerCashflowStats['portfolio']['total'], 2) }}</p>
+                        <p class="text-[11px] text-slate-400 mt-1">This customer's approved &amp; active loans</p>
                     </div>
                     <div class="rounded-2xl bg-white/5 border border-white/10 p-3 text-sm">
-                        <p class="text-slate-300">Arrears</p>
+                        <p class="text-slate-300">Overdue</p>
                         <p class="text-xl font-semibold text-amber-200 mt-1">ZMW {{ number_format($customerCashflowStats['portfolio']['arrears'], 2) }}</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Past-due installments on this customer's loans</p>
                     </div>
                     <div class="rounded-2xl bg-white/5 border border-white/10 p-3 text-sm">
-                        <p class="text-slate-300">Portfolio at Risk</p>
+                        <p class="text-slate-300">Customer PAR ratio</p>
                         <p class="text-xl font-semibold {{ $customerCashflowStats['portfolio']['par'] >= 20 ? 'text-rose-300' : ($customerCashflowStats['portfolio']['par'] >= 10 ? 'text-amber-200' : 'text-emerald-200') }} mt-1">
                             {{ number_format($customerCashflowStats['portfolio']['par'], 2) }}%
                         </p>
-                        <p class="text-[11px] text-slate-400 mt-1">Total Arrears ÷ Total Portfolio × 100</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Overdue ÷ outstanding for this customer only</p>
                     </div>
                 </div>
             </div>

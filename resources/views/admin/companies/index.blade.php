@@ -40,6 +40,7 @@
                             <th scope="col">Status</th>
                             <th scope="col">Admins</th>
                             <th scope="col">Customers</th>
+                            <th scope="col">Portfolio Balance</th>
                             <th data-sortable="false" scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
@@ -77,6 +78,9 @@
                                 </td>
                                 <td>{{ $company->admins_count }}</td>
                                 <td>{{ $company->customers_count }}</td>
+                                <td class="font-medium text-amber-300 whitespace-nowrap">
+                                    ZMW {{ number_format($portfolioBalances[$company->id] ?? 0, 2) }}
+                                </td>
                                 <td>
                                     <div class="inline-flex items-center gap-3">
                                         @can('companies.view')

@@ -176,12 +176,16 @@
                         <p class="text-2xl font-semibold text-amber-300">
                             ZMW {{ number_format($loanSnapshot['total_outstanding_balance'], 2) }}
                         </p>
+                        <p class="text-[11px] text-slate-500 mt-1">Active loan book for this company</p>
                     </div>
                     @if($loanSnapshot['has_overdue'])
                         <div class="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4">
                             <p class="text-xs uppercase tracking-wide text-rose-200 mb-2">Overdue Exposure</p>
                             <p class="text-2xl font-semibold text-rose-300">
                                 ZMW {{ number_format($loanSnapshot['total_overdue_amount'], 2) }}
+                            </p>
+                            <p class="text-xs text-rose-100/80 mt-2">
+                                Past-due installments on active loans (never more than total outstanding)
                             </p>
                             <p class="mt-1 text-sm text-rose-200/90">
                                 {{ number_format($loanSnapshot['overdue_loans_count']) }} {{ $loanSnapshot['overdue_loans_count'] === 1 ? 'loan' : 'loans' }} with overdue installments

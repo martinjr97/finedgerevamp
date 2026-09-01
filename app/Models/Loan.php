@@ -1287,15 +1287,15 @@ class Loan extends Model
      */
     public function getOverdueAmount(): float
     {
-        $overdueSchedules = $this->paymentSchedules()
-            ->where('status', 'overdue')
-            ->orWhere(function ($q) {
-                $q->where('due_date', '<', Carbon::today())
-                    ->where('remaining_amount', '>', 0);
+        return (float) $this->paymentSchedules()
+            ->where(function ($q) {
+                $q->where('status', 'overdue')
+                    ->orWhere(function ($query) {
+                        $query->where('due_date', '<', Carbon::today())
+                            ->where('remaining_amount', '>', 0);
+                    });
             })
-            ->get();
-
-        return $overdueSchedules->sum('remaining_amount');
+            ->sum('remaining_amount');
     }
 
     /**

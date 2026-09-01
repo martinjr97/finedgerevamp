@@ -444,6 +444,164 @@ class LoanController extends Controller
         }, $filename);
     }
 
+    public function missedPayments(Request $request): View
+    {
+        $today = Carbon::today();
+        [$windowStart, $windowEnd] = $this->missedPaymentsWindow($today);
+        $query = $this->buildMissedPaymentsQuery($request, $today);
+
+        $loans = $query
+            ->with([
+                'customer.company.relationshipManager',
+                'customer.customerGroup.relationshipManager',
+                'customer.branch',
+                'loanProduct',
+                'customerGroup.relationshipManager',
+                'channel',
+                'paymentSchedules' => fn ($q) => $q
+                    ->where('remaining_amount', '>', 0)
+                    ->whereDate('due_date', '>=', $windowStart)
+                    ->whereDate('due_date', '<=', $windowEnd)
+                    ->orderBy('due_date'),
+            ])
+            ->paginate(20)
+            ->withQueryString();
+
+        $loans->getCollection()->transform(fn (Loan $loan) => $this->attachMissedPaymentSummary($loan, $today));
+
+        $branches = Branch::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $relationshipManagers = Admin::query()
+            ->where('is_relationship_manager', true)
+            ->where('is_active', true)
+            ->when($request->filled('branch_id'), fn (Builder $q) => $q->where('branch_id', $request->integer('branch_id')))
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get(['id', 'first_name', 'last_name']);
+
+        return view('admin.loans.missed-payments', compact(
+            'loans',
+            'today',
+            'windowStart',
+            'windowEnd',
+            'branches',
+            'relationshipManagers'
+        ));
+    }
+
+    public function exportMissedPayments(Request $request)
+    {
+        abort_unless(auth('admin')->user()?->can('loans.export'), 403);
+
+        $today = Carbon::today();
+        [$windowStart, $windowEnd] = $this->missedPaymentsWindow($today);
+        $query = $this->buildMissedPaymentsQuery($request, $today);
+
+        $loans = $query
+            ->with([
+                'customer.company.relationshipManager',
+                'customer.customerGroup.relationshipManager',
+                'customer.branch',
+                'loanProduct',
+                'customerGroup',
+                'channel',
+                'paymentSchedules' => fn ($q) => $q
+                    ->where('remaining_amount', '>', 0)
+                    ->whereDate('due_date', '>=', $windowStart)
+                    ->whereDate('due_date', '<=', $windowEnd)
+                    ->orderBy('due_date'),
+            ])
+            ->get()
+            ->map(fn (Loan $loan) => $this->attachMissedPaymentSummary($loan, $today));
+
+        $exportData = $loans->map(function (Loan $loan) {
+            $schedule = $loan->primary_missed_schedule;
+            $relationshipManager = $loan->customerGroup?->relationshipManager
+                ?? $loan->customer?->company?->relationshipManager
+                ?? $loan->customer?->customerGroup?->relationshipManager;
+
+            return [
+                'Loan Number' => $loan->loan_number,
+                'Customer Name' => $loan->customer->full_name ?? 'N/A',
+                'Customer Email' => $loan->customer->email ?? 'N/A',
+                'Customer Phone' => $loan->customer->phone ?? 'N/A',
+                'Branch' => $loan->customer?->branch?->name ?? 'N/A',
+                'Relationship Manager' => $relationshipManager
+                    ? trim($relationshipManager->first_name.' '.$relationshipManager->last_name)
+                    : 'N/A',
+                'Product' => $loan->loanProduct->name ?? 'N/A',
+                'Customer Group' => $loan->customerGroup->name ?? 'N/A',
+                'Oldest Missed Due Date' => $schedule?->due_date?->format('Y-m-d') ?? 'N/A',
+                'Days Overdue' => $loan->missed_days_overdue ?? 0,
+                'Missed Installments' => $loan->missed_installments_count ?? 0,
+                'Missed Amount (ZMW)' => number_format($loan->missed_amount_total ?? 0, 2),
+                'Expected Amount (Oldest) (ZMW)' => $schedule ? number_format($schedule->expected_amount, 2) : '0.00',
+                'Amount Paid (Oldest) (ZMW)' => $schedule ? number_format($schedule->amount_paid, 2) : '0.00',
+                'Remaining (Oldest) (ZMW)' => $schedule ? number_format($schedule->remaining_amount, 2) : '0.00',
+                'Payment Status (Oldest)' => $schedule ? ucfirst(str_replace('_', ' ', $schedule->status)) : 'N/A',
+                'Period Number (Oldest)' => $schedule?->period_number ?? 'N/A',
+                'Booked Outstanding Balance (ZMW)' => number_format($loan->outstanding_balance, 2),
+                'Loan Status' => ucfirst(str_replace('_', ' ', $loan->status)),
+            ];
+        });
+
+        $filename = 'missed-payments-'.$windowStart->format('Y-m-d').'-to-'.$windowEnd->format('Y-m-d').'.xlsx';
+
+        return Excel::download(new class($exportData) implements FromCollection, WithColumnWidths, WithHeadings, WithStyles
+        {
+            protected $data;
+
+            public function __construct($data)
+            {
+                $this->data = $data;
+            }
+
+            public function collection()
+            {
+                return collect($this->data)->map(function ($row) {
+                    return array_values($row);
+                });
+            }
+
+            public function headings(): array
+            {
+                $first = $this->data->first();
+
+                return $first ? array_keys($first) : [];
+            }
+
+            public function columnWidths(): array
+            {
+                return [
+                    'A' => 18, 'B' => 25, 'C' => 30, 'D' => 18, 'E' => 20,
+                    'F' => 24, 'G' => 20, 'H' => 20, 'I' => 20, 'J' => 14,
+                    'K' => 14, 'L' => 20, 'M' => 24, 'N' => 24, 'O' => 24,
+                    'P' => 22, 'Q' => 18, 'R' => 24, 'S' => 15,
+                ];
+            }
+
+            public function styles(Worksheet $sheet)
+            {
+                return [
+                    1 => [
+                        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'f97316'],
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER,
+                        ],
+                    ],
+                ];
+            }
+        }, $filename);
+    }
+
     public function show(Loan $loan): View
     {
         $loan->load([
@@ -1048,43 +1206,10 @@ class LoanController extends Controller
 
     private function buildTodaysPaymentsQuery(Request $request, Carbon $today): Builder
     {
-        $admin = auth('admin')->user();
-        $companyFilterId = $admin->getCompanyFilterId();
-
         $query = Loan::query()
             ->whereHas('paymentSchedules', fn (Builder $q) => $q->whereDate('due_date', $today));
 
-        if ($companyFilterId !== null) {
-            $query->whereHas('customer', fn (Builder $q) => $q->where('company_id', $companyFilterId));
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-            $query->where(function (Builder $q) use ($search) {
-                $q->where('loan_number', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function (Builder $customerQuery) use ($search) {
-                        $customerQuery->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('registered_name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        if ($request->filled('branch_id')) {
-            $branchId = $request->integer('branch_id');
-            $query->whereHas('customer', fn (Builder $q) => $q->where('branch_id', $branchId));
-        }
-
-        if ($request->filled('relationship_manager_id')) {
-            $relationshipManagerId = $request->integer('relationship_manager_id');
-            $query->where(function (Builder $q) use ($relationshipManagerId) {
-                $q->whereHas('customerGroup', fn (Builder $groupQuery) => $groupQuery->where('relationship_manager_id', $relationshipManagerId))
-                    ->orWhereHas('customer.company', fn (Builder $companyQuery) => $companyQuery->where('relationship_manager_id', $relationshipManagerId))
-                    ->orWhereHas('customer.customerGroup', fn (Builder $groupQuery) => $groupQuery->where('relationship_manager_id', $relationshipManagerId));
-            });
-        }
+        $this->applyLoanFollowUpFilters($request, $query);
 
         $sortBy = $request->string('sort_by')->toString() ?: 'loan_number';
         $sortDir = strtolower($request->string('sort_dir')->toString() ?: 'asc') === 'desc' ? 'desc' : 'asc';
@@ -1117,5 +1242,112 @@ class LoanController extends Controller
         };
 
         return $query;
+    }
+
+    /**
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function missedPaymentsWindow(Carbon $today, int $days = 14): array
+    {
+        $windowEnd = $today->copy()->subDay();
+        $windowStart = $today->copy()->subDays($days);
+
+        return [$windowStart, $windowEnd];
+    }
+
+    private function buildMissedPaymentsQuery(Request $request, Carbon $today): Builder
+    {
+        [$windowStart, $windowEnd] = $this->missedPaymentsWindow($today);
+
+        $query = Loan::query()
+            ->activePortfolio()
+            ->whereHas('paymentSchedules', function (Builder $q) use ($windowStart, $windowEnd) {
+                $q->where('remaining_amount', '>', 0)
+                    ->whereDate('due_date', '>=', $windowStart)
+                    ->whereDate('due_date', '<=', $windowEnd);
+            });
+
+        $this->applyLoanFollowUpFilters($request, $query);
+
+        $sortBy = $request->string('sort_by')->toString() ?: 'days_overdue';
+        $sortDir = strtolower($request->string('sort_dir')->toString() ?: 'desc') === 'desc' ? 'desc' : 'asc';
+
+        $scheduleSubquery = LoanPaymentSchedule::query()
+            ->selectRaw('loan_id, MIN(due_date) as oldest_due_date, SUM(remaining_amount) as missed_amount, COUNT(*) as missed_installments')
+            ->where('remaining_amount', '>', 0)
+            ->whereDate('due_date', '>=', $windowStart)
+            ->whereDate('due_date', '<=', $windowEnd)
+            ->groupBy('loan_id');
+
+        $query->leftJoinSub($scheduleSubquery, 'missed_schedule', 'missed_schedule.loan_id', '=', 'loans.id')
+            ->select('loans.*');
+
+        match ($sortBy) {
+            'customer_name' => $query
+                ->leftJoin('customers as sort_customers', 'sort_customers.id', '=', 'loans.customer_id')
+                ->orderBy('sort_customers.first_name', $sortDir)
+                ->orderBy('sort_customers.last_name', $sortDir)
+                ->orderBy('sort_customers.registered_name', $sortDir),
+            'due_date' => $query->orderBy('missed_schedule.oldest_due_date', $sortDir),
+            'days_overdue' => $query->orderBy('missed_schedule.oldest_due_date', $sortDir === 'desc' ? 'asc' : 'desc'),
+            'missed_amount' => $query->orderBy('missed_schedule.missed_amount', $sortDir),
+            'missed_installments' => $query->orderBy('missed_schedule.missed_installments', $sortDir),
+            'outstanding_balance' => $query->orderBy('loans.outstanding_balance', $sortDir),
+            default => $query->orderBy('loans.loan_number', $sortDir),
+        };
+
+        return $query;
+    }
+
+    private function attachMissedPaymentSummary(Loan $loan, Carbon $today): Loan
+    {
+        $schedules = $loan->paymentSchedules;
+        $primary = $schedules->first();
+        $loan->primary_missed_schedule = $primary;
+        $loan->missed_amount_total = (float) $schedules->sum('remaining_amount');
+        $loan->missed_installments_count = $schedules->count();
+        $loan->missed_days_overdue = $primary
+            ? max(0, $primary->due_date->startOfDay()->diffInDays($today))
+            : 0;
+
+        return $loan;
+    }
+
+    private function applyLoanFollowUpFilters(Request $request, Builder $query): void
+    {
+        $admin = auth('admin')->user();
+        $companyFilterId = $admin?->getCompanyFilterId();
+
+        if ($companyFilterId !== null) {
+            $query->whereHas('customer', fn (Builder $q) => $q->where('company_id', $companyFilterId));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('loan_number', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function (Builder $customerQuery) use ($search) {
+                        $customerQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('registered_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('branch_id')) {
+            $branchId = $request->integer('branch_id');
+            $query->whereHas('customer', fn (Builder $q) => $q->where('branch_id', $branchId));
+        }
+
+        if ($request->filled('relationship_manager_id')) {
+            $relationshipManagerId = $request->integer('relationship_manager_id');
+            $query->where(function (Builder $q) use ($relationshipManagerId) {
+                $q->whereHas('customerGroup', fn (Builder $groupQuery) => $groupQuery->where('relationship_manager_id', $relationshipManagerId))
+                    ->orWhereHas('customer.company', fn (Builder $companyQuery) => $companyQuery->where('relationship_manager_id', $relationshipManagerId))
+                    ->orWhereHas('customer.customerGroup', fn (Builder $groupQuery) => $groupQuery->where('relationship_manager_id', $relationshipManagerId));
+            });
+        }
     }
 }

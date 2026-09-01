@@ -98,6 +98,7 @@
                             <th>Branch</th>
                             <th>Risk Level</th>
                             <th>Customers</th>
+                            <th>Portfolio Balance</th>
                             <th>Status</th>
                             <th scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
@@ -143,6 +144,9 @@
                                 <td class="font-medium text-white">
                                     {{ $group->customers_count ?? $group->customers->count() }}
                                 </td>
+                                <td class="font-medium text-amber-300 whitespace-nowrap">
+                                    ZMW {{ number_format($portfolioBalances[$group->id] ?? 0, 2) }}
+                                </td>
                                 <td>
                                     <span class="text-sm font-medium {{ $group->is_active ? 'text-emerald-400' : 'text-slate-400' }}">
                                         {{ $group->is_active ? 'Active' : 'Inactive' }}
@@ -165,7 +169,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="py-8 text-center text-slate-400">
+                                <td colspan="10" class="py-8 text-center text-slate-400">
                                     No customer groups found.
                                 </td>
                             </tr>

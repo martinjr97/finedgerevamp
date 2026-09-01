@@ -84,7 +84,11 @@ class CustomerGroupController extends Controller
         $loanProducts = $loanProductsQuery->orderBy('name')->get();
         $companies = $companiesQuery->orderBy('name')->get();
 
-        return view('admin.customer-groups.index', compact('customerGroups', 'loanProducts', 'companies'));
+        $portfolioBalances = PortfolioLoanSnapshot::outstandingBalancesForCustomerGroups(
+            $customerGroups->pluck('id')->all()
+        );
+
+        return view('admin.customer-groups.index', compact('customerGroups', 'loanProducts', 'companies', 'portfolioBalances'));
     }
 
     public function create(Request $request): View

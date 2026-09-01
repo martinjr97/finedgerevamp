@@ -122,6 +122,8 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('loans/export', [\App\Http\Controllers\Admin\LoanController::class, 'export'])->name('loans.export');
         Route::get('loans/todays-payments', [\App\Http\Controllers\Admin\LoanController::class, 'todaysPayments'])->name('loans.todays-payments');
         Route::get('loans/todays-payments/export', [\App\Http\Controllers\Admin\LoanController::class, 'exportTodaysPayments'])->name('loans.todays-payments.export');
+        Route::get('loans/missed-payments', [\App\Http\Controllers\Admin\LoanController::class, 'missedPayments'])->name('loans.missed-payments');
+        Route::get('loans/missed-payments/export', [\App\Http\Controllers\Admin\LoanController::class, 'exportMissedPayments'])->name('loans.missed-payments.export');
         Route::get('loans/{loan}/schedule-pdf', [\App\Http\Controllers\Admin\LoanController::class, 'exportSchedulePdf'])->name('loans.schedule-pdf');
         Route::post('loans/{loan}/backfill-repayment', [\App\Http\Controllers\Admin\LoanController::class, 'backfillRepayment'])->name('loans.backfill-repayment');
         Route::post('loans/{loan}/refund', [\App\Http\Controllers\Admin\LoanController::class, 'storeRefund'])->name('loans.refund');

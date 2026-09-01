@@ -33,6 +33,18 @@
             </div>
         @endif
 
+        @php
+            $upcomingWindow = request()->filled('days_overdue_min') && (int) request('days_overdue_min') < 0;
+        @endphp
+
+        @unless($upcomingWindow)
+            <div class="rounded-2xl border border-slate-600/40 bg-slate-800/40 px-4 py-3 text-sm text-slate-300">
+                <strong class="text-white">How overdue is calculated:</strong>
+                sums <em>past-due installment balances only</em> (installments with a due date before today and amount still owed).
+                Payments due today are shown as due, not overdue. Full loan principal is never counted unless every installment is past due.
+            </div>
+        @endunless
+
         {{-- Summary Cards (filtered dataset totals, not just the current page) --}}
         <div class="grid gap-4 md:grid-cols-3">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
@@ -56,6 +68,13 @@
                         <p class="text-xs font-medium text-slate-400 mb-1">Total Overdue Amount</p>
                         <p class="text-xl font-bold text-rose-400">
                             ZMW {{ number_format($arrearsSummary['total_overdue_amount'], 2) }}
+                        </p>
+                        <p class="text-[11px] text-slate-500 mt-1">
+                            @if($upcomingWindow)
+                                Upcoming installment balances in the selected window
+                            @else
+                                Past-due installments only ({{ number_format($arrearsSummary['total_overdue_installments'] ?? 0) }} installment{{ ($arrearsSummary['total_overdue_installments'] ?? 0) === 1 ? '' : 's' }})
+                            @endif
                         </p>
                     </div>
                     <div class="flex-shrink-0 ml-3">

@@ -1226,6 +1226,12 @@ class ReportController extends Controller
         }
 
         $overdueAmount = (float) $matchingSchedules->sum('remaining_amount');
+        $bookedOutstanding = max(0.0, (float) $loan->outstanding_balance);
+        $overdueAmount = min($overdueAmount, $bookedOutstanding);
+
+        if ($overdueAmount <= 0) {
+            return null;
+        }
 
         if ($upcomingWindow) {
             $primarySchedule = $matchingSchedules->sortBy('due_date')->first();
@@ -1246,7 +1252,8 @@ class ReportController extends Controller
 
         return [
             'loan' => $loan,
-            'overdue_amount' => $overdueAmount,
+            'overdue_amount' => round($overdueAmount, 2),
+            'booked_outstanding' => round($bookedOutstanding, 2),
             'days_overdue' => $daysOverdue,
             'par_status' => $upcomingWindow ? null : $loan->getPARStatus(),
             'overdue_installments_count' => $matchingSchedules->count(),
@@ -1262,7 +1269,9 @@ class ReportController extends Controller
     {
         return [
             'total_loans' => $rows->count(),
-            'total_overdue_amount' => (float) $rows->sum('overdue_amount'),
+            'total_overdue_amount' => round((float) $rows->sum('overdue_amount'), 2),
+            'total_booked_outstanding' => round((float) $rows->sum('booked_outstanding'), 2),
+            'total_overdue_installments' => (int) $rows->sum('overdue_installments_count'),
             'avg_days_overdue' => $rows->count() > 0 ? round((float) $rows->avg('days_overdue'), 1) : 0.0,
             'par30_plus' => $rows->where('days_overdue', '>=', 30)->count(),
         ];

@@ -46,7 +46,11 @@ class CompanyController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.companies.index', compact('companies'));
+        $portfolioBalances = PortfolioLoanSnapshot::outstandingBalancesForCompanies(
+            $companies->pluck('id')->all()
+        );
+
+        return view('admin.companies.index', compact('companies', 'portfolioBalances'));
     }
 
     public function create(): View

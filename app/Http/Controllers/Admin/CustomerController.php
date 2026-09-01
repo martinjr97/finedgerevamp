@@ -855,7 +855,8 @@ class CustomerController extends Controller
         $repaymentBase = LoanRepayment::query()
             ->join('repayments', 'repayments.id', '=', 'loan_repayments.repayment_id')
             ->join('loans', 'loans.id', '=', 'loan_repayments.loan_id')
-            ->where('repayments.customer_id', $customer->id);
+            ->where('repayments.customer_id', $customer->id)
+            ->where('loans.customer_id', $customer->id);
 
         $repaymentMonthlyRows = (clone $repaymentBase)
             ->where('repayments.processed_at', '>=', $startOfThreeMonths)

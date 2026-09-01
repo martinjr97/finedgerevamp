@@ -5,8 +5,6 @@ namespace App\Support;
 use App\Models\Company;
 use App\Models\CustomerGroup;
 use App\Models\Loan;
-use App\Models\LoanPaymentSchedule;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 
 class PortfolioLoanSnapshot
@@ -47,6 +45,60 @@ class PortfolioLoanSnapshot
         return self::build($activeLoansQuery);
     }
 
+    public static function outstandingBalanceForCompany(Company $company): float
+    {
+        return self::outstandingBalancesForCompanies([$company->id])[$company->id] ?? 0.0;
+    }
+
+    public static function outstandingBalanceForCustomerGroup(CustomerGroup $customerGroup): float
+    {
+        return self::outstandingBalancesForCustomerGroups([$customerGroup->id])[$customerGroup->id] ?? 0.0;
+    }
+
+    /**
+     * @param  list<int>  $companyIds
+     * @return array<int, float>
+     */
+    public static function outstandingBalancesForCompanies(array $companyIds): array
+    {
+        if ($companyIds === []) {
+            return [];
+        }
+
+        return Loan::query()
+            ->join('customers', 'customers.id', '=', 'loans.customer_id')
+            ->where('loans.status', 'active')
+            ->where('loans.disbursement_status', 'completed')
+            ->whereIn('customers.company_id', $companyIds)
+            ->groupBy('customers.company_id')
+            ->selectRaw('customers.company_id as portfolio_key, SUM(GREATEST(loans.outstanding_balance, 0)) as total')
+            ->pluck('total', 'portfolio_key')
+            ->mapWithKeys(fn ($total, $companyId) => [(int) $companyId => round((float) $total, 2)])
+            ->all();
+    }
+
+    /**
+     * @param  list<int>  $customerGroupIds
+     * @return array<int, float>
+     */
+    public static function outstandingBalancesForCustomerGroups(array $customerGroupIds): array
+    {
+        if ($customerGroupIds === []) {
+            return [];
+        }
+
+        return Loan::query()
+            ->join('customers', 'customers.id', '=', 'loans.customer_id')
+            ->where('loans.status', 'active')
+            ->where('loans.disbursement_status', 'completed')
+            ->whereIn('customers.customer_group_id', $customerGroupIds)
+            ->groupBy('customers.customer_group_id')
+            ->selectRaw('customers.customer_group_id as portfolio_key, SUM(GREATEST(loans.outstanding_balance, 0)) as total')
+            ->pluck('total', 'portfolio_key')
+            ->mapWithKeys(fn ($total, $groupId) => [(int) $groupId => round((float) $total, 2)])
+            ->all();
+    }
+
     /**
      * @return array{
      *     active_loans_count: int,
@@ -58,26 +110,33 @@ class PortfolioLoanSnapshot
      */
     private static function build(Builder $activeLoansQuery): array
     {
-        $today = Carbon::today();
+        $loans = (clone $activeLoansQuery)
+            ->with('paymentSchedules')
+            ->get(['id', 'outstanding_balance']);
 
-        $overdueSchedulesQuery = LoanPaymentSchedule::query()
-            ->where('remaining_amount', '>', 0)
-            ->where(function ($query) use ($today) {
-                $query->where('status', 'overdue')
-                    ->orWhere('due_date', '<', $today);
-            })
-            ->whereHas('loan', function ($query) use ($activeLoansQuery) {
-                $query->whereIn('id', (clone $activeLoansQuery)->select('loans.id'));
-            });
+        $totalOutstanding = 0.0;
+        $totalOverdue = 0.0;
+        $overdueLoansCount = 0;
 
-        $totalOverdueAmount = (float) (clone $overdueSchedulesQuery)->sum('remaining_amount');
+        foreach ($loans as $loan) {
+            $outstanding = max(0.0, (float) $loan->outstanding_balance);
+            $totalOutstanding += $outstanding;
+
+            $overdue = min((float) $loan->getOverdueAmount(), $outstanding);
+            if ($overdue <= 0) {
+                continue;
+            }
+
+            $overdueLoansCount++;
+            $totalOverdue += $overdue;
+        }
 
         return [
-            'active_loans_count' => (int) (clone $activeLoansQuery)->count(),
-            'total_outstanding_balance' => (float) (clone $activeLoansQuery)->sum('outstanding_balance'),
-            'overdue_loans_count' => (clone $overdueSchedulesQuery)->pluck('loan_id')->unique()->count(),
-            'total_overdue_amount' => $totalOverdueAmount,
-            'has_overdue' => $totalOverdueAmount > 0,
+            'active_loans_count' => $loans->count(),
+            'total_outstanding_balance' => round($totalOutstanding, 2),
+            'overdue_loans_count' => $overdueLoansCount,
+            'total_overdue_amount' => round($totalOverdue, 2),
+            'has_overdue' => $totalOverdue > 0,
         ];
     }
 }
