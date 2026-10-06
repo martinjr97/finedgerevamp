@@ -44,6 +44,9 @@ class LegacyConnection
         }
     }
 
+    /**
+     * Legacy finedge database connection (read-only enforced via ReadOnlyMySqlConnection).
+     */
     public static function connection()
     {
         self::configureFromLegacyEnvFile();
@@ -51,12 +54,32 @@ class LegacyConnection
         return DB::connection('legacy');
     }
 
+    /**
+     * Reject SQL that mutates legacy data. SELECT, SHOW, DESCRIBE, EXPLAIN, and WITH … SELECT are allowed.
+     */
     public static function assertReadOnly(string $sql): void
     {
-        $normalized = ltrim(strtoupper($sql));
-        $forbidden = ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'ALTER', 'DROP', 'CREATE', 'REPLACE', 'GRANT', 'REVOKE'];
-        foreach ($forbidden as $prefix) {
-            if (str_starts_with($normalized, $prefix)) {
+        $normalized = preg_replace('/\s+/', ' ', ltrim($sql)) ?? '';
+        $upper = strtoupper($normalized);
+
+        $forbiddenPrefixes = [
+            'INSERT',
+            'UPDATE',
+            'DELETE',
+            'TRUNCATE',
+            'ALTER',
+            'DROP',
+            'CREATE',
+            'REPLACE',
+            'GRANT',
+            'REVOKE',
+            'RENAME',
+            'CALL',
+            'LOAD',
+        ];
+
+        foreach ($forbiddenPrefixes as $prefix) {
+            if (str_starts_with($upper, $prefix.' ') || $upper === $prefix) {
                 throw new RuntimeException('Legacy database access is read-only.');
             }
         }

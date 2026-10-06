@@ -84,7 +84,7 @@ return [
         ],
 
         'legacy' => [
-            'driver' => env('LEGACY_DB_DRIVER', 'mysql'),
+            'driver' => env('LEGACY_DB_DRIVER', 'legacy-mysql'),
             'host' => env('LEGACY_DB_HOST', '127.0.0.1'),
             'port' => env('LEGACY_DB_PORT', '3306'),
             'database' => env('LEGACY_DB_DATABASE', 'finedge'),

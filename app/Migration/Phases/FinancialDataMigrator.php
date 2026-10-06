@@ -404,6 +404,7 @@ class FinancialDataMigrator
                     'legacy_id' => (int) $legacyId,
                     'legacy_payment_method' => $row->payment_method ?? null,
                     'legacy_creditor_id' => ! empty($row->creditor_id) ? (int) $row->creditor_id : null,
+                    'skip_balance_update' => true,
                 ],
                 'created_by' => null,
                 'approval_status' => 'approved',
@@ -495,6 +496,7 @@ class FinancialDataMigrator
                     'legacy_table' => 'incomes',
                     'legacy_id' => (int) $legacyId,
                     'legacy_payment_channel' => $row->payment_channel ?? null,
+                    'skip_balance_update' => true,
                 ],
                 'created_by' => null,
                 'approval_status' => 'approved',
@@ -558,10 +560,9 @@ class FinancialDataMigrator
             return null;
         }
 
-        $wallet = Wallet::query()
-            ->where('name', (string) ($legacyWallet->name ?? ''))
-            ->orWhere('wallet_number', (string) ($legacyWallet->account_number ?? $legacyWallet->wallet_number ?? ''))
-            ->first();
+        $matcher = app(\App\Migration\Phases\Support\ReferenceMatcher::class);
+        $walletArr = (array) $legacyWallet;
+        $wallet = $matcher->matchTreasuryWalletRecord($walletArr);
 
         if ($wallet) {
             $this->maps->store(

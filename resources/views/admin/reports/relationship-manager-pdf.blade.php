@@ -80,8 +80,8 @@
                         <th class="text-right">Outstanding</th>
                         <th class="text-right">PAR Amount</th>
                         <th class="text-right">PAR Ratio</th>
-                        <th class="text-right">Individuals</th>
-                        <th class="text-right">Groups</th>
+                        <th class="text-right">Customers</th>
+                        <th class="text-right">Groups Assigned</th>
                         <th class="text-right">Disbursed</th>
                         <th class="text-right">Collections</th>
                     </tr>
@@ -94,7 +94,7 @@
                             <td class="text-right">ZMW {{ number_format($row['total_outstanding_balance'], 2) }}</td>
                             <td class="text-right">ZMW {{ number_format($row['par_amount'], 2) }}</td>
                             <td class="text-right">{{ number_format($row['par_ratio'], 2) }}% ({{ $row['par_status'] }})</td>
-                            <td class="text-right">{{ number_format($row['individual_customers_count']) }}</td>
+                            <td class="text-right">{{ number_format($row['customers_count']) }}</td>
                             <td class="text-right">{{ number_format($row['groups_count']) }}</td>
                             <td class="text-right">ZMW {{ number_format($row['loans_disbursed_amount'], 2) }}</td>
                             <td class="text-right">ZMW {{ number_format($row['collections_amount'], 2) }}</td>

@@ -9,7 +9,7 @@
 	    $isPendingApproval = $customer->approval_status === 'pending';
 	    $isPendingWithoutKyc = $isPendingApproval && ! $hasKycForApproval;
 	    $paymentDetail = $customer->paymentDetail;
-	    $relationshipManager = $customer->customerGroup?->relationshipManager ?? $customer->company?->relationshipManager;
+	    $relationshipManager = $customer->resolvedRelationshipManager();
 	@endphp
 	<div class="space-y-8 min-w-0">
         @if($isPendingApproval)

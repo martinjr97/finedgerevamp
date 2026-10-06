@@ -10,7 +10,7 @@ class MigrationReferenceDataCommand extends MigrationPhaseCommand
     protected $signature = 'migration:reference-data
         {--dry-run : Non-destructive preview (default when --promote omitted)}
         {--promote : Write target reference data and durable mappings}
-        {--only= : products|companies|banks|wallet_providers|providers|branches|relationship_managers|marketeer|customer_groups|groups}
+        {--only= : products|companies|banks|treasury_wallets|wallet_providers|providers|branches|relationship_managers|marketeer|customer_groups|groups}
         {--run= : Migration run UUID}';
 
     protected $description = 'Phase 1 — migrate reference/master data (companies, products, banks, wallet providers)';

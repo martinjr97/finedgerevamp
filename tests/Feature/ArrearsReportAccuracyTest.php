@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Branch;
 use App\Models\Channel;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\CustomerGroup;
 use App\Models\Loan;
 use App\Models\LoanPaymentSchedule;
 use App\Models\LoanProduct;
@@ -245,6 +247,115 @@ class ArrearsReportAccuracyTest extends TestCase
                     && $summary['total_overdue_amount'] === 6588.0
                     && $summary['total_overdue_amount'] <= $summary['total_booked_outstanding'];
             });
+
+        Carbon::setTestNow();
+    }
+
+    public function test_arrears_report_shows_relationship_manager_from_customer_group(): void
+    {
+        Carbon::setTestNow('2026-08-31 12:00:00');
+
+        $suffix = Str::lower(Str::random(6));
+        $company = Company::create([
+            'name' => 'Operator Co '.$suffix,
+            'slug' => 'operator-co-'.$suffix,
+            'code' => 'OP'.$suffix,
+            'type' => 'operator',
+            'status' => 'active',
+            'approval_status' => 'approved',
+            'relationship_manager_id' => null,
+        ]);
+        $product = LoanProduct::create([
+            'company_id' => $company->id,
+            'name' => 'Government',
+            'code' => 'GOV-'.$suffix,
+            'category' => 'government',
+            'is_active' => true,
+        ]);
+        $branch = Branch::create([
+            'name' => 'Branch '.$suffix,
+            'code' => 'BR-'.$suffix,
+            'is_active' => true,
+        ]);
+        $relationshipManager = Admin::create([
+            'company_id' => $company->id,
+            'branch_id' => $branch->id,
+            'first_name' => 'Group',
+            'last_name' => 'Manager',
+            'email' => 'group-rm-'.$suffix.'@example.com',
+            'password' => 'password',
+            'is_active' => true,
+            'is_relationship_manager' => true,
+            'approval_status' => 'approved',
+            'must_change_password' => false,
+        ]);
+        $group = CustomerGroup::create([
+            'loan_product_id' => $product->id,
+            'branch_id' => $branch->id,
+            'relationship_manager_id' => $relationshipManager->id,
+            'name' => 'Government Group '.$suffix,
+            'code' => 'GOV-GRP-'.$suffix,
+            'risk_level' => 'medium',
+            'is_active' => true,
+        ]);
+        $channel = Channel::create([
+            'name' => 'Channel '.$suffix,
+            'code' => 'CH-'.$suffix,
+            'can_disburse' => true,
+            'can_repay' => true,
+            'is_active' => true,
+        ]);
+        $customer = Customer::create([
+            'company_id' => $company->id,
+            'customer_group_id' => $group->id,
+            'branch_id' => $branch->id,
+            'loan_product_id' => $product->id,
+            'first_name' => 'Government',
+            'last_name' => 'Borrower',
+            'email' => 'gov-borrower-'.$suffix.'@example.com',
+            'phone' => '260955'.random_int(100000, 999999),
+            'password' => '1234',
+            'status' => 'active',
+        ]);
+        $admin = $this->makeAdmin($company);
+
+        $loan = Loan::create([
+            'customer_id' => $customer->id,
+            'customer_group_id' => $group->id,
+            'loan_product_id' => $product->id,
+            'channel_id' => $channel->id,
+            'loan_number' => 'AR-RM-'.$suffix,
+            'principal_amount' => 1000,
+            'processing_fee' => 0,
+            'total_amount' => 1000,
+            'amount_paid' => 0,
+            'outstanding_balance' => 1000,
+            'tenure_months' => 2,
+            'loan_start_date' => now()->subMonth()->toDateString(),
+            'loan_end_date' => now()->addMonth()->toDateString(),
+            'first_payment_date' => now()->subDays(10)->toDateString(),
+            'last_payment_date' => now()->addMonth()->toDateString(),
+            'accrual_type' => 'daily',
+            'status' => 'active',
+            'disbursement_status' => 'completed',
+            'disbursed_at' => now()->subMonth(),
+        ]);
+
+        LoanPaymentSchedule::create([
+            'loan_id' => $loan->id,
+            'period_number' => 1,
+            'due_date' => now()->subDays(5)->toDateString(),
+            'expected_amount' => 500,
+            'amount_paid' => 0,
+            'remaining_amount' => 500,
+            'status' => 'overdue',
+            'days_overdue' => 5,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.reports.arrears'))
+            ->assertOk()
+            ->assertSee('Group Manager');
 
         Carbon::setTestNow();
     }

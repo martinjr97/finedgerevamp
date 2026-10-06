@@ -9,8 +9,8 @@
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Ticket #{{ $ticket->id }}</h1>
                 <p class="text-sm text-gray-600 dark:text-gray-300">{{ $ticket->subject }}</p>
             </div>
-            <a href="{{ route('customer.support') }}" class="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
-                ← Back to Support
+            <a href="{{ route('customer.support-tickets.index') }}" class="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                ← Back to My Tickets
             </a>
         </div>
 

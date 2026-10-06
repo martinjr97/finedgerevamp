@@ -234,10 +234,10 @@
                                 </td>
                                 <td class="px-4 py-4 border-r border-white/5">
                                     @php
-                                        $relationshipManager = $loan->customer->company->relationshipManager ?? null;
+                                        $relationshipManager = $loan->resolvedRelationshipManager();
                                     @endphp
                                     <span class="text-white">
-                                        {{ $relationshipManager ? ($relationshipManager->first_name . ' ' . $relationshipManager->last_name) : '—' }}
+                                        {{ $relationshipManager?->full_name ?? '—' }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-4 font-medium text-white border-r border-white/5">

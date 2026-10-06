@@ -6,6 +6,7 @@ use App\Models\Admin;
 use App\Models\Channel;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\CustomerGroup;
 use App\Models\GeneralSetting;
 use App\Models\Loan;
 use App\Models\LoanPaymentSchedule;
@@ -554,6 +555,85 @@ class LoanExtensionReportingRegressionTest extends TestCase
                     && $row['par_status'] === 'Due Within 30 Days'
                     && in_array($upcomingLoan->loan_number, $loanNumbers, true)
                     && ! in_array($overdueLoan->loan_number, $loanNumbers, true);
+            });
+    }
+
+    public function test_relationship_manager_report_customers_count_includes_group_members(): void
+    {
+        $suffix = Str::lower(Str::random(6));
+        $company = $this->makeCompany($suffix);
+        $product = $this->makeLoanProduct($company, $suffix);
+        $relationshipManager = Admin::create([
+            'company_id' => $company->id,
+            'first_name' => 'Relationship',
+            'last_name' => 'Manager',
+            'email' => 'rm-group-'.$suffix.'@example.com',
+            'password' => 'password',
+            'is_active' => true,
+            'is_relationship_manager' => true,
+            'approval_status' => 'approved',
+            'must_change_password' => false,
+        ]);
+        $group = CustomerGroup::create([
+            'loan_product_id' => $product->id,
+            'relationship_manager_id' => $relationshipManager->id,
+            'name' => 'RM Group '.$suffix,
+            'code' => 'RMG-'.$suffix,
+            'risk_level' => 'medium',
+            'is_active' => true,
+        ]);
+
+        foreach (range(1, 3) as $index) {
+            Customer::create([
+                'company_id' => $company->id,
+                'customer_group_id' => $group->id,
+                'loan_product_id' => $product->id,
+                'first_name' => 'Group',
+                'last_name' => 'Member '.$index,
+                'email' => 'group-member-'.$suffix.'-'.$index.'@example.com',
+                'phone' => '260967'.random_int(100000, 999999),
+                'password' => '1234',
+                'status' => 'active',
+                'approval_status' => 'approved',
+                'must_change_pin' => false,
+            ]);
+        }
+
+        $admin = $this->makeAdminWithPermissions(['reports.view']);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.reports.relationship-manager', [
+                'relationship_manager_id' => $relationshipManager->id,
+                'customer_type' => 'all',
+            ]))
+            ->assertStatus(200)
+            ->assertViewHas('reportRows', function ($rows) {
+                $row = $rows->first();
+                if ($row === null) {
+                    return false;
+                }
+
+                return $row['customers_count'] === 3
+                    && $row['individual_customers_count'] === 0
+                    && $row['group_customers_count'] === 3
+                    && $row['groups_count'] === 1;
+            });
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.reports.relationship-manager', [
+                'relationship_manager_id' => $relationshipManager->id,
+                'customer_type' => 'individual',
+            ]))
+            ->assertStatus(200)
+            ->assertViewHas('reportRows', function ($rows) {
+                $row = $rows->first();
+                if ($row === null) {
+                    return false;
+                }
+
+                return $row['customers_count'] === 0
+                    && $row['individual_customers_count'] === 0
+                    && $row['groups_count'] === 0;
             });
     }
 }

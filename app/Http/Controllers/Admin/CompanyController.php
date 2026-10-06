@@ -582,6 +582,7 @@ class CompanyController extends Controller
             'totalRemaining' => $totalRemaining,
             'totalLoans' => $totalLoans,
             'totalCustomers' => $totalCustomers,
+            'backUrl' => route('admin.payment-due-report.select'),
         ]);
     }
 
@@ -662,6 +663,7 @@ class CompanyController extends Controller
             'totalRemaining' => $totalRemaining,
             'totalLoans' => $totalLoans,
             'totalCustomers' => $totalCustomers,
+            'backUrl' => route('admin.companies.payment-due-report', $company),
         ]);
     }
 

@@ -191,7 +191,7 @@
                             <th class="px-4 py-3">Booked Outstanding</th>
                             <th class="px-4 py-3">PAR</th>
                             <th class="px-4 py-3">Customers</th>
-                            <th class="px-4 py-3">Groups</th>
+                            <th class="px-4 py-3">Groups Assigned</th>
                             <th class="px-4 py-3">Disbursements</th>
                             <th class="px-4 py-3">Pending Balances</th>
                             <th class="px-4 py-3">Collections</th>
@@ -212,7 +212,7 @@
                                         {{ number_format($row['par_ratio'], 2) }}% ({{ $row['par_status'] }})
                                     </div>
                                 </td>
-                                <td class="px-4 py-3 text-center">{{ number_format($row['individual_customers_count']) }}</td>
+                                <td class="px-4 py-3 text-center">{{ number_format($row['customers_count']) }}</td>
                                 <td class="px-4 py-3 text-center">{{ number_format($row['groups_count']) }}</td>
                                 <td class="px-4 py-3 text-center">
                                     <div>{{ number_format($row['loans_disbursed_count']) }} loans</div>

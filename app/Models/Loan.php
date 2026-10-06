@@ -1332,6 +1332,34 @@ class Loan extends Model
     }
 
     /**
+     * Resolve the relationship manager for reporting and portfolio views.
+     * Prefers the loan/customer group assignment, then falls back to company RM.
+     */
+    public function resolvedRelationshipManager(): ?Admin
+    {
+        return $this->customerGroup?->relationshipManager
+            ?? $this->customer?->customerGroup?->relationshipManager
+            ?? $this->customer?->company?->relationshipManager;
+    }
+
+    /**
+     * Whether this loan counts toward portfolio default rate in risk reporting.
+     * Includes explicit default/write-off status and active loans at PAR90+.
+     */
+    public function countsAsDefaultedForRiskReporting(): bool
+    {
+        if (in_array($this->status, ['defaulted', 'written_off'], true)) {
+            return true;
+        }
+
+        if (! in_array($this->status, ['approved', 'active'], true)) {
+            return false;
+        }
+
+        return $this->getPARStatus() === 'PAR90';
+    }
+
+    /**
      * Get PAR 30, 60, 90 status
      */
     public function getPARStatus(): ?string

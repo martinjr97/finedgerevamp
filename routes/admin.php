@@ -396,11 +396,15 @@ Route::middleware('auth:admin')->group(function (): void {
             Route::get('collection-split', [\App\Http\Controllers\Admin\ReportController::class, 'collectionSplit'])->name('collection-split');
             Route::get('collection-split/export', [\App\Http\Controllers\Admin\ReportController::class, 'exportCollectionSplit'])->name('collection-split.export');
             Route::get('loan-book', [\App\Http\Controllers\Admin\ReportController::class, 'loanBook'])->name('loan-book');
+            Route::get('loan-book/loans', [\App\Http\Controllers\Admin\ReportController::class, 'loanBookLoans'])->name('loan-book.loans');
             Route::get('loan-book/export', [\App\Http\Controllers\Admin\ReportController::class, 'exportLoanBook'])->name('loan-book.export');
             Route::get('loan-book/export-summary', [\App\Http\Controllers\Admin\ReportController::class, 'exportLoanBookSummary'])->name('loan-book.export-summary');
             Route::get('loan-performance', [\App\Http\Controllers\Admin\ReportController::class, 'loanPerformance'])->name('loan-performance');
             Route::get('loan-performance/export', [\App\Http\Controllers\Admin\ReportController::class, 'exportLoanPerformance'])->name('loan-performance.export');
             Route::get('risk-heatmap', [\App\Http\Controllers\Admin\ReportController::class, 'riskHeatmap'])->name('risk-heatmap');
+            Route::get('risk-heatmap/export/{format}', [\App\Http\Controllers\Admin\ReportController::class, 'exportRiskHeatmap'])
+                ->whereIn('format', ['excel'])
+                ->name('risk-heatmap.export');
             Route::get('relationship-manager', [\App\Http\Controllers\Admin\ReportController::class, 'relationshipManagerReport'])->name('relationship-manager');
             Route::get('relationship-manager/export/{format}', [\App\Http\Controllers\Admin\ReportController::class, 'exportRelationshipManagerReport'])
                 ->whereIn('format', ['excel', 'csv', 'pdf'])

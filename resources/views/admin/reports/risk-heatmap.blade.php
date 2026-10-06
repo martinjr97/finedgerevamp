@@ -6,7 +6,15 @@
     <div class="space-y-8">
         @include('partials.admin.page-header', [
             'title' => 'Risk Heatmap Dashboard',
-            'description' => 'Visual dashboard showing high-risk areas across borrowers, branches, regions, and loan officers'
+            'description' => 'Visual dashboard showing high-risk areas across borrowers, branches, regions, and loan officers',
+            'buttons' => [
+                [
+                    'action' => 'export',
+                    'text' => 'Export All (Excel)',
+                    'href' => route('admin.reports.risk-heatmap.export', ['format' => 'excel', 'dataset' => 'all']),
+                    'icon' => '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
+                ],
+            ],
         ])
 
         {{-- Summary Cards --}}
@@ -56,14 +64,26 @@
             </div>
         </div>
 
+        <p class="text-xs text-slate-400">
+            Default rate counts loans marked defaulted or written off, plus active loans at PAR90+ (90+ days overdue). Delinquency rate uses overdue installment balances.
+        </p>
+
         {{-- High-Risk Borrowers --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <span class="inline-flex items-center rounded-full bg-red-500/20 px-2.5 py-1 text-xs font-semibold text-red-400 border border-red-500/50">
-                    High Risk
-                </span>
-                High-Risk Borrowers
-            </h2>
+        <x-admin.collapsible-section
+            panel-id="risk-heatmap-borrowers"
+            title="High-Risk Borrowers"
+            badge="High Risk"
+            badge-class="bg-red-500/20 border-red-500/50 text-red-400"
+            :summary="$highRiskBorrowers->count().' borrowers shown (top 50 on screen) — export for full list'"
+        >
+            <div class="flex flex-wrap items-center justify-end gap-3 pt-4 pb-2">
+                <a
+                    href="{{ route('admin.reports.risk-heatmap.export', ['format' => 'excel', 'dataset' => 'borrowers']) }}"
+                    class="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/25 transition"
+                >
+                    Export Excel
+                </a>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full w-full text-sm text-slate-300">
                     <thead>
@@ -121,16 +141,24 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+        </x-admin.collapsible-section>
 
         {{-- High-Risk Branches --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <span class="inline-flex items-center rounded-full bg-orange-500/20 px-2.5 py-1 text-xs font-semibold text-orange-400 border border-orange-500/50">
-                    Medium-High Risk
-                </span>
-                High-Risk Branches
-            </h2>
+        <x-admin.collapsible-section
+            panel-id="risk-heatmap-branches"
+            title="High-Risk Branches"
+            badge="Medium-High Risk"
+            badge-class="bg-orange-500/20 border-orange-500/50 text-orange-400"
+            :summary="$highRiskBranches->count().' branches with elevated risk — click to expand'"
+        >
+            <div class="flex flex-wrap items-center justify-end gap-3 pt-4 pb-2">
+                <a
+                    href="{{ route('admin.reports.risk-heatmap.export', ['format' => 'excel', 'dataset' => 'branches']) }}"
+                    class="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/25 transition"
+                >
+                    Export Excel
+                </a>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full w-full text-sm text-slate-300">
                     <thead>
@@ -189,16 +217,24 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+        </x-admin.collapsible-section>
 
         {{-- Delinquency by Region --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <span class="inline-flex items-center rounded-full bg-yellow-500/20 px-2.5 py-1 text-xs font-semibold text-yellow-400 border border-yellow-500/50">
-                    Regional Analysis
-                </span>
-                Delinquency by Region
-            </h2>
+        <x-admin.collapsible-section
+            panel-id="risk-heatmap-regions"
+            title="Delinquency by Region"
+            badge="Regional Analysis"
+            badge-class="bg-yellow-500/20 border-yellow-500/50 text-yellow-400"
+            :summary="$delinquencyByRegion->count().' provinces with active loans — click to expand'"
+        >
+            <div class="flex flex-wrap items-center justify-end gap-3 pt-4 pb-2">
+                <a
+                    href="{{ route('admin.reports.risk-heatmap.export', ['format' => 'excel', 'dataset' => 'regions']) }}"
+                    class="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/25 transition"
+                >
+                    Export Excel
+                </a>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full w-full text-sm text-slate-300">
                     <thead>
@@ -240,16 +276,24 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+        </x-admin.collapsible-section>
 
         {{-- Loan Officer Performance Risk --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-            <h2 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <span class="inline-flex items-center rounded-full bg-purple-500/20 px-2.5 py-1 text-xs font-semibold text-purple-400 border border-purple-500/50">
-                    Performance Risk
-                </span>
-                Loan Officer Performance Risk
-            </h2>
+        <x-admin.collapsible-section
+            panel-id="risk-heatmap-officers"
+            title="Loan Officer Performance Risk"
+            badge="Performance Risk"
+            badge-class="bg-purple-500/20 border-purple-500/50 text-purple-400"
+            :summary="$loanOfficerRisk->count().' relationship managers with active loans — click to expand'"
+        >
+            <div class="flex flex-wrap items-center justify-end gap-3 pt-4 pb-2">
+                <a
+                    href="{{ route('admin.reports.risk-heatmap.export', ['format' => 'excel', 'dataset' => 'officers']) }}"
+                    class="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/25 transition"
+                >
+                    Export Excel
+                </a>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full w-full text-sm text-slate-300">
                     <thead>
@@ -311,7 +355,7 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+        </x-admin.collapsible-section>
     </div>
 @endsection
 

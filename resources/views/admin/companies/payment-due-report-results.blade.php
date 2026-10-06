@@ -4,14 +4,23 @@
 
 @section('content')
     <div class="space-y-8">
-        <div class="space-y-2 text-left">
-            <p class="text-xs uppercase tracking-[0.4em] text-cyan-300">Payment Reports</p>
-            <h1 class="text-3xl font-bold">Payment Due Report - {{ $company->name }}</h1>
-            <p class="text-sm text-slate-400">
-                Month: <span class="font-semibold text-white">{{ $selectedMonth->format('F Y') }}</span> | 
-                Due Date: <span class="font-semibold text-white">{{ $dueDate->format('d M Y') }}</span> | 
-                Pay Day: <span class="font-semibold text-white">{{ $company->pay_day }}</span>
-            </p>
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="space-y-2 text-left">
+                <p class="text-xs uppercase tracking-[0.4em] text-cyan-300">Payment Reports</p>
+                <h1 class="text-3xl font-bold">Payment Due Report - {{ $company->name }}</h1>
+                <p class="text-sm text-slate-400">
+                    Month: <span class="font-semibold text-white">{{ $selectedMonth->format('F Y') }}</span> |
+                    Due Date: <span class="font-semibold text-white">{{ $dueDate->format('d M Y') }}</span> |
+                    Pay Day: <span class="font-semibold text-white">{{ $company->pay_day }}</span>
+                </p>
+            </div>
+
+            <a href="{{ $backUrl ?? route('admin.companies.payment-due-report', $company) }}" class="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-cyan-500/30 hover:from-cyan-600 hover:to-blue-700 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Month Selection
+            </a>
         </div>
 
         <!-- Summary Cards -->
@@ -125,15 +134,6 @@
             </div>
         </div>
         @endif
-
-        <div class="flex items-center justify-start">
-            <a href="{{ route('admin.companies.payment-due-report', $company) }}" class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-base font-medium text-slate-300 hover:bg-white/10 hover:border-white/30 transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Back to Month Selection
-            </a>
-        </div>
     </div>
 @endsection
 

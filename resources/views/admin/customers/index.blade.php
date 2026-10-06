@@ -23,12 +23,30 @@
             ]
         ])
 
+        @php
+            $currentSort = request('sort');
+            $currentDirection = request('direction', 'asc') === 'desc' ? 'desc' : 'asc';
+
+            $customerSortLink = function (string $column) use ($currentSort, $currentDirection): string {
+                $direction = ($currentSort === $column && $currentDirection === 'asc') ? 'desc' : 'asc';
+
+                return route('admin.customers.index', array_merge(
+                    request()->except('page'),
+                    ['sort' => $column, 'direction' => $direction]
+                ));
+            };
+        @endphp
+
         <x-admin.collapsible-filters
             panel-id="customer-filters-panel"
-            :filter-keys="['search', 'status', 'approval_status', 'loan_product_id', 'customer_group_id', 'company_id', 'date_from', 'date_to']"
+            :filter-keys="['search', 'status', 'approval_status', 'loan_product_id', 'customer_group_id', 'company_id', 'date_from', 'date_to', 'sort', 'direction']"
             expanded-hint="Refine the customer list below."
         >
             <form method="GET" action="{{ route('admin.customers.index') }}" class="space-y-4">
+                @if ($currentSort)
+                    <input type="hidden" name="sort" value="{{ $currentSort }}">
+                    <input type="hidden" name="direction" value="{{ $currentDirection }}">
+                @endif
                 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {{-- Search --}}
                     <div>
@@ -131,14 +149,34 @@
                 <table class="min-w-full w-full text-base text-slate-300">
                     <thead>
                         <tr class="font-semibold uppercase text-white/80 text-center">
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>National ID</th>
-                            <th>Product</th>
-                            <th>Company / Group</th>
-                            <th>Account Status</th>
-                            <th>Balance</th>
+                            <th scope="col" @if ($currentSort === 'name') aria-sort="{{ $currentDirection === 'asc' ? 'ascending' : 'descending' }}" @endif>
+                                <a href="{{ $customerSortLink('name') }}" class="inline-flex items-center justify-center gap-1 text-white/80 hover:text-white transition">
+                                    Name
+                                    <span class="sort-indicator" aria-hidden="true"><span class="sort-up">▲</span><span class="sort-down">▼</span></span>
+                                </a>
+                            </th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Phone</th>
+                            <th scope="col">National ID</th>
+                            <th scope="col" @if ($currentSort === 'product') aria-sort="{{ $currentDirection === 'asc' ? 'ascending' : 'descending' }}" @endif>
+                                <a href="{{ $customerSortLink('product') }}" class="inline-flex items-center justify-center gap-1 text-white/80 hover:text-white transition">
+                                    Product
+                                    <span class="sort-indicator" aria-hidden="true"><span class="sort-up">▲</span><span class="sort-down">▼</span></span>
+                                </a>
+                            </th>
+                            <th scope="col">Company / Group</th>
+                            <th scope="col" @if ($currentSort === 'status') aria-sort="{{ $currentDirection === 'asc' ? 'ascending' : 'descending' }}" @endif>
+                                <a href="{{ $customerSortLink('status') }}" class="inline-flex items-center justify-center gap-1 text-white/80 hover:text-white transition">
+                                    Account Status
+                                    <span class="sort-indicator" aria-hidden="true"><span class="sort-up">▲</span><span class="sort-down">▼</span></span>
+                                </a>
+                            </th>
+                            <th scope="col" @if ($currentSort === 'balance') aria-sort="{{ $currentDirection === 'asc' ? 'ascending' : 'descending' }}" @endif>
+                                <a href="{{ $customerSortLink('balance') }}" class="inline-flex items-center justify-center gap-1 text-white/80 hover:text-white transition">
+                                    Balance
+                                    <span class="sort-indicator" aria-hidden="true"><span class="sort-up">▲</span><span class="sort-down">▼</span></span>
+                                </a>
+                            </th>
                             <th scope="col" class="admin-data-table__actions">Actions</th>
                         </tr>
                     </thead>
@@ -198,7 +236,7 @@
                 </table>
             </div>
             <div class="admin-table-footer">
-                {{ $customers->withQueryString()->links() }}
+                {{ $customers->links() }}
             </div>
         </div>
     </div>

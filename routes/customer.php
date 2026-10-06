@@ -101,6 +101,7 @@ Route::middleware('guest:customer')->group(function (): void {
     // Customer Support (linked to customer account)
     Route::get('support', [SupportController::class, 'create'])->name('support');
     Route::post('support', [SupportController::class, 'store'])->name('support.store');
+    Route::get('support-tickets', [\App\Http\Controllers\Customer\SupportTicketController::class, 'index'])->name('support-tickets.index');
     Route::get('support-tickets/{supportTicket}/attachments/{attachment}', [\App\Http\Controllers\Customer\SupportTicketController::class, 'downloadAttachment'])->name('support-tickets.attachments.download');
     Route::get('support-tickets/{supportTicket}', [\App\Http\Controllers\Customer\SupportTicketController::class, 'show'])->name('support-tickets.show');
     Route::post('support-tickets/{supportTicket}/comments', [\App\Http\Controllers\Customer\SupportTicketController::class, 'storeComment'])->name('support-tickets.comments.store');

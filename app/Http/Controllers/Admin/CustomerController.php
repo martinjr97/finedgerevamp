@@ -27,6 +27,7 @@ use App\Services\CustomerNotificationService;
 use App\Support\NationalIdRules;
 use App\Support\ZambianPhoneRules;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -108,7 +109,16 @@ class CustomerController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $customers = $query->latest()->paginate(20);
+        $sort = $request->query('sort');
+        $direction = strtolower((string) $request->query('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        if (in_array($sort, ['name', 'product', 'status', 'balance'], true)) {
+            $this->applyCustomerIndexSorting($query, $sort, $direction);
+        } else {
+            $query->latest();
+        }
+
+        $customers = $query->paginate(20)->withQueryString();
 
         // Get filter options (also filtered by company if needed)
         $loanProductsQuery = LoanProduct::where('is_active', true);
@@ -1953,6 +1963,27 @@ class CustomerController extends Controller
         ];
 
         return view('admin.customers.repayments', compact('customer', 'repayments', 'summary'));
+    }
+
+    private function applyCustomerIndexSorting(Builder $query, string $sort, string $direction): void
+    {
+        match ($sort) {
+            'name' => $query->orderByRaw(
+                "TRIM(COALESCE(NULLIF(customers.registered_name, ''), CONCAT(COALESCE(customers.last_name, ''), ' ', COALESCE(customers.first_name, '')))) {$direction}"
+            ),
+            'product' => $query->orderBy(
+                LoanProduct::query()
+                    ->select('name')
+                    ->whereColumn('loan_products.id', 'customers.loan_product_id')
+                    ->limit(1),
+                $direction
+            ),
+            'status' => $query->orderBy('customers.status', $direction),
+            'balance' => $query->orderBy('outstanding_balance', $direction),
+            default => null,
+        };
+
+        $query->orderBy('customers.id', $direction);
     }
 
     private function referralCustomerOptions(?int $excludeCustomerId = null)

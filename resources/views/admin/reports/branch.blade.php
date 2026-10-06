@@ -191,57 +191,95 @@
             </div>
         </div>
 
-        {{-- Loan-level detail --}}
-        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-white">Loans by Branch</h2>
-                <p class="text-sm text-slate-400">Shows loans linked through customer groups and branches; arrears drive PAR.</p>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-base text-slate-300">
-                    <thead>
-                        <tr class="text-sm font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b-2 border-white/20">
-                            <th class="px-4 py-3 text-left">Branch</th>
-                            <th class="px-4 py-3 text-left">Group</th>
-                            <th class="px-4 py-3 text-left">Customer</th>
-                            <th class="px-4 py-3">Loan #</th>
-                            <th class="px-4 py-3">Product</th>
-                            <th class="px-4 py-3">Outstanding</th>
-                            <th class="px-4 py-3">Arrears</th>
-                            <th class="px-4 py-3">PAR Bucket</th>
-                            <th class="px-4 py-3">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($loans as $loan)
-                            <tr class="border-t border-white/10 hover:bg-white/5 transition">
-                                <td class="px-4 py-4 text-left text-white">
-                                    {{ $loan->customerGroup?->branch?->name ?? '—' }}
-                                </td>
-                                <td class="px-4 py-4 text-left">{{ $loan->customerGroup->name ?? '—' }}</td>
-                                <td class="px-4 py-4 text-left">
-                                    {{ $loan->customer?->full_name ?? '—' }}
-                                </td>
-                                <td class="px-4 py-4 text-center font-semibold text-white">{{ $loan->loan_number }}</td>
-                                <td class="px-4 py-4 text-center">{{ $loan->loanProduct->name ?? '—' }}</td>
-                                <td class="px-4 py-4 text-center text-white">ZMW {{ number_format($loan->outstanding_balance, 2) }}</td>
-                                <td class="px-4 py-4 text-center text-amber-300">ZMW {{ number_format($loan->arrears_amount, 2) }}</td>
-                                <td class="px-4 py-4 text-center">
-                                    <span class="text-sm font-medium {{ $loan->par_bucket ? 'text-rose-300' : 'text-emerald-300' }}">
-                                        {{ $loan->par_bucket ?? 'Current' }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-4 text-center capitalize">{{ str_replace('_', ' ', $loan->status) }}</td>
+        {{-- Loan-level detail (lazy-loaded) --}}
+        @php
+            $loansDetailUrl = route('admin.reports.branches', array_merge(request()->query(), ['show_loans' => 1]));
+        @endphp
+        <x-admin.collapsible-section
+            panel-id="branch-loans-detail"
+            title="Loans by Branch"
+            badge="Loan Detail"
+            badge-class="bg-cyan-500/20 border-cyan-500/50 text-cyan-300"
+            :expanded="$showLoansDetail"
+            :summary="$showLoansDetail
+                ? number_format($loans->count()).' loans loaded — click to collapse'
+                : number_format($totals['loans']).' active loans — load on demand to keep this page fast'"
+        >
+            @if ($showLoansDetail)
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-4 pb-2">
+                    <p class="text-sm text-slate-400">
+                        Shows loans linked through customer groups and branches; arrears drive PAR.
+                    </p>
+                    <a
+                        href="{{ route('admin.reports.branches', request()->except('show_loans')) }}"
+                        class="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
+                    >
+                        Hide loan detail
+                    </a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-base text-slate-300">
+                        <thead>
+                            <tr class="text-sm font-semibold uppercase tracking-[0.25em] text-white/80 text-center border-b-2 border-white/20">
+                                <th class="px-4 py-3 text-left">Branch</th>
+                                <th class="px-4 py-3 text-left">Group</th>
+                                <th class="px-4 py-3 text-left">Customer</th>
+                                <th class="px-4 py-3">Loan #</th>
+                                <th class="px-4 py-3">Product</th>
+                                <th class="px-4 py-3">Outstanding</th>
+                                <th class="px-4 py-3">Arrears</th>
+                                <th class="px-4 py-3">PAR Bucket</th>
+                                <th class="px-4 py-3">Status</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="px-4 py-6 text-center text-slate-400">No loans found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                        </thead>
+                        <tbody>
+                            @forelse($loans as $loan)
+                                <tr class="border-t border-white/10 hover:bg-white/5 transition">
+                                    <td class="px-4 py-4 text-left text-white">
+                                        {{ $loan->customerGroup?->branch?->name ?? '—' }}
+                                    </td>
+                                    <td class="px-4 py-4 text-left">{{ $loan->customerGroup->name ?? '—' }}</td>
+                                    <td class="px-4 py-4 text-left">
+                                        {{ $loan->customer?->full_name ?? '—' }}
+                                    </td>
+                                    <td class="px-4 py-4 text-center font-semibold text-white">{{ $loan->loan_number }}</td>
+                                    <td class="px-4 py-4 text-center">{{ $loan->loanProduct->name ?? '—' }}</td>
+                                    <td class="px-4 py-4 text-center text-white">ZMW {{ number_format($loan->outstanding_balance, 2) }}</td>
+                                    <td class="px-4 py-4 text-center text-amber-300">ZMW {{ number_format($loan->arrears_amount, 2) }}</td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="text-sm font-medium {{ $loan->par_bucket ? 'text-rose-300' : 'text-emerald-300' }}">
+                                            {{ $loan->par_bucket ?? 'Current' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 text-center capitalize">{{ str_replace('_', ' ', $loan->status) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="px-4 py-6 text-center text-slate-400">No loans found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="pt-4 space-y-4">
+                    <p class="text-sm text-slate-400">
+                        The summary cards and branch portfolio table above stay available without loading every loan row.
+                        Open loan-level detail when you need customer, product, and PAR bucket breakdowns.
+                    </p>
+                    @if ($totals['loans'] > 0)
+                        <a
+                            href="{{ $loansDetailUrl }}"
+                            class="inline-flex items-center gap-2 rounded-2xl bg-cyan-500/20 border border-cyan-500/50 px-6 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/30 transition"
+                        >
+                            Load {{ number_format($totals['loans']) }} loans
+                        </a>
+                    @else
+                        <p class="text-sm text-slate-500">No active portfolio loans match the current filters.</p>
+                    @endif
+                </div>
+            @endif
+        </x-admin.collapsible-section>
     </div>
 @endsection
 

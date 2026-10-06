@@ -110,20 +110,28 @@ class LoanBookReportTest extends TestCase
             'outstanding_balance' => 3200,
         ]);
 
-        $response = $this->actingAs($context['admin'], 'admin')
+        $summaryResponse = $this->actingAs($context['admin'], 'admin')
             ->get(route('admin.reports.loan-book'));
 
-        $response->assertOk();
-        $response->assertSee('Active Loans');
-        $response->assertSee('Active Portfolio Outstanding');
-        $response->assertSee($activeLoan->loan_number);
-        $response->assertDontSee($pendingDisbursement->loan_number);
-        $response->assertViewHas('stats', function (array $stats): bool {
+        $summaryResponse->assertOk();
+        $summaryResponse->assertSee('Active Loans');
+        $summaryResponse->assertSee('Active Portfolio Outstanding');
+        $summaryResponse->assertSee('View 1 loans');
+        $summaryResponse->assertDontSee($activeLoan->loan_number);
+        $summaryResponse->assertDontSee($pendingDisbursement->loan_number);
+        $summaryResponse->assertViewHas('stats', function (array $stats): bool {
             return (int) $stats['active_loans'] === 1
                 && (int) $stats['total_loans'] === 2
                 && (float) $stats['total_outstanding'] === 3200.0
                 && (float) $stats['active_principal'] === 5000.0;
         });
+        $summaryResponse->assertViewHas('filteredLoanCount', 1);
+
+        $this->actingAs($context['admin'], 'admin')
+            ->get(route('admin.reports.loan-book.loans'))
+            ->assertOk()
+            ->assertSee($activeLoan->loan_number)
+            ->assertDontSee($pendingDisbursement->loan_number);
     }
 
     public function test_loan_book_syncs_approved_disbursed_loans_to_active_on_load(): void
@@ -175,10 +183,14 @@ class LoanBookReportTest extends TestCase
             'disbursement_status' => 'pending',
         ]);
 
-        $response = $this->actingAs($context['admin'], 'admin')
-            ->get(route('admin.reports.loan-book', ['show_all' => 1]));
+        $this->actingAs($context['admin'], 'admin')
+            ->get(route('admin.reports.loan-book', ['show_all' => 1]))
+            ->assertOk()
+            ->assertDontSee($pendingDisbursement->loan_number);
 
-        $response->assertOk();
-        $response->assertSee($pendingDisbursement->loan_number);
+        $this->actingAs($context['admin'], 'admin')
+            ->get(route('admin.reports.loan-book.loans', ['show_all' => 1]))
+            ->assertOk()
+            ->assertSee($pendingDisbursement->loan_number);
     }
 }

@@ -402,6 +402,14 @@ class ReportController extends Controller
                     );
                 }
 
+                $individualCustomersCount = (int) $scopedCustomers->whereNull('customer_group_id')->count();
+                $groupCustomersCount = (int) $scopedCustomers->whereNotNull('customer_group_id')->count();
+                $customersCount = match ($filters['customer_type']) {
+                    'individual' => $individualCustomersCount,
+                    'group' => $groupCustomersCount,
+                    default => (int) $scopedCustomers->count(),
+                };
+
                 return [
                     'include_row' => $filters['par_bucket'] === 'all' || $portfolioLoans->isNotEmpty(),
                     'manager' => $manager,
@@ -413,7 +421,9 @@ class ReportController extends Controller
                     'par30_amount' => $parMetrics['par30_amount'],
                     'par60_amount' => $parMetrics['par60_amount'],
                     'par90_amount' => $parMetrics['par90_amount'],
-                    'individual_customers_count' => (int) $scopedCustomers->whereNull('customer_group_id')->count(),
+                    'customers_count' => $customersCount,
+                    'individual_customers_count' => $individualCustomersCount,
+                    'group_customers_count' => $groupCustomersCount,
                     'groups_count' => $filters['customer_type'] === 'individual' ? 0 : (int) $scopedGroups->count(),
                     'loans_disbursed_count' => $disbursementCount,
                     'loans_disbursed_amount' => $disbursementAmount,
@@ -1128,6 +1138,8 @@ class ReportController extends Controller
 
         $query = Loan::with([
             'customer.company.relationshipManager',
+            'customer.customerGroup.relationshipManager',
+            'customerGroup.relationshipManager',
             'loanProduct',
             'customerGroup',
             'paymentSchedules',
@@ -1291,7 +1303,7 @@ class ReportController extends Controller
                 ->orderBy('due_date')
                 ->first();
 
-            $relationshipManager = $loan->customer->company->relationshipManager ?? null;
+            $relationshipManager = $loan->resolvedRelationshipManager();
 
             $exportData[] = [
                 'Loan Number' => $loan->loan_number,
@@ -1301,7 +1313,7 @@ class ReportController extends Controller
                 'Product' => $loan->loanProduct->name ?? 'N/A',
                 'Group' => $loan->customerGroup->name ?? 'N/A',
                 'Company' => $loan->customer->company->name ?? 'N/A',
-                'Relationship Manager' => $relationshipManager ? ($relationshipManager->first_name . ' ' . $relationshipManager->last_name) : 'N/A',
+                'Relationship Manager' => $relationshipManager ? $relationshipManager->full_name : 'N/A',
                 'Principal Amount' => number_format($loan->principal_amount, 2),
                 'Booked Loan Total' => number_format($loan->total_amount, 2),
                 'Projected Repayment Total' => number_format($loan->getProjectedTotalAmount(), 2),
@@ -1647,6 +1659,8 @@ class ReportController extends Controller
     {
         return [
             'customer.company.relationshipManager',
+            'customer.customerGroup.relationshipManager',
+            'customerGroup.relationshipManager',
             'loanProduct',
             'customerGroup',
             'channel',
@@ -1690,9 +1704,9 @@ class ReportController extends Controller
         return $query;
     }
 
-    protected function loanBookQuery(Request $request): Builder
+    protected function loanBookBaseQuery(Request $request): Builder
     {
-        $query = Loan::with($this->loanBookRelations());
+        $query = Loan::query();
         $this->applyLoanBookScopeFilters($query, $request);
 
         $hasExplicitStatusFilter = $request->filled('status') || $request->filled('disbursement_status');
@@ -1710,6 +1724,11 @@ class ReportController extends Controller
         }
 
         return $query;
+    }
+
+    protected function loanBookQuery(Request $request): Builder
+    {
+        return $this->loanBookBaseQuery($request)->with($this->loanBookRelations());
     }
 
     /**
@@ -1748,14 +1767,32 @@ class ReportController extends Controller
     {
         Loan::syncActiveStatusForDisbursedLoans();
 
-        $query = $this->loanBookQuery($request);
-        $loans = $query->latest('loan_start_date')->paginate(20)->withQueryString();
+        $stats = $this->buildLoanBookStats($request);
+        $filteredLoanCount = $this->loanBookBaseQuery($request)->count();
+
+        $loanProducts = LoanProduct::where('is_active', true)->orderBy('name')->get();
+        $customerGroups = CustomerGroup::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.reports.loan-book', compact('stats', 'filteredLoanCount', 'loanProducts', 'customerGroups'));
+    }
+
+    /**
+     * Loan Book loan-level detail (loaded on demand).
+     */
+    public function loanBookLoans(Request $request): View
+    {
+        Loan::syncActiveStatusForDisbursedLoans();
+
+        $loans = $this->loanBookQuery($request)
+            ->latest('loan_start_date')
+            ->paginate(20)
+            ->withQueryString();
         $stats = $this->buildLoanBookStats($request);
 
         $loanProducts = LoanProduct::where('is_active', true)->orderBy('name')->get();
         $customerGroups = CustomerGroup::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.reports.loan-book', compact('loans', 'stats', 'loanProducts', 'customerGroups'));
+        return view('admin.reports.loan-book-loans', compact('loans', 'stats', 'loanProducts', 'customerGroups'));
     }
 
     /**
@@ -1769,8 +1806,8 @@ class ReportController extends Controller
 
         $exportData = [];
         foreach ($loans as $loan) {
-            $relationshipManager = $loan->customer->company->relationshipManager ?? null;
-            
+            $relationshipManager = $loan->resolvedRelationshipManager();
+
             $exportData[] = array_merge([
                 'Loan Number' => $loan->loan_number,
                 'Customer Name' => $loan->customer->full_name ?? 'N/A',
@@ -1779,7 +1816,7 @@ class ReportController extends Controller
                 'Product' => $loan->loanProduct->name ?? 'N/A',
                 'Group' => $loan->customerGroup->name ?? 'N/A',
                 'Company' => $loan->customer->company->name ?? 'N/A',
-                'Relationship Manager' => $relationshipManager ? ($relationshipManager->first_name . ' ' . $relationshipManager->last_name) : 'N/A',
+                'Relationship Manager' => $relationshipManager ? $relationshipManager->full_name : 'N/A',
                 'Principal Amount' => number_format($loan->principal_amount, 2),
                 'Processing Fee' => number_format($loan->processing_fee, 2),
                 'Interest Accrued' => number_format($loan->interest_accrued, 2),
@@ -2709,20 +2746,20 @@ class ReportController extends Controller
             ->orderBy('name')
             ->get();
 
-        $loans = Loan::with([
-                'customer:id,first_name,last_name,registered_name,customer_group_id',
-                'loanProduct:id,name',
-            'customerGroup:id,name,branch_id',
-            'paymentSchedules' => function ($q) use ($today) {
+        $showLoansDetail = $request->boolean('show_loans');
+
+        $branchLoanMetrics = Loan::query()
+            ->select(['id', 'customer_group_id', 'outstanding_balance'])
+            ->with(['customerGroup:id,name,branch_id'])
+            ->withSum(['paymentSchedules as arrears_amount' => function ($q) use ($today) {
                 $q->where(function ($query) use ($today) {
                     $query->where('status', 'overdue')
                         ->orWhere(function ($inner) use ($today) {
-                                $inner->where('due_date', '<', $today)
-                                    ->where('remaining_amount', '>', 0);
-                            });
-                    });
-                },
-            ])
+                            $inner->where('due_date', '<', $today)
+                                ->where('remaining_amount', '>', 0);
+                        });
+                });
+            }], 'remaining_amount')
             ->activePortfolio()
             ->when($selectedBranchId, function ($q) use ($selectedBranchId) {
                 $q->whereHas('customerGroup', function ($branchQuery) use ($selectedBranchId) {
@@ -2731,15 +2768,46 @@ class ReportController extends Controller
             })
             ->get()
             ->map(function ($loan) {
-                $loan->arrears_amount = $loan->paymentSchedules->sum('remaining_amount');
-                $loan->par_bucket = $loan->getPARStatus();
+                $loan->arrears_amount = (float) ($loan->arrears_amount ?? 0);
 
                 return $loan;
-            })
-            ->sortBy(function ($loan) {
-                return ($loan->customerGroup?->branch?->name ?? '') . '|' . $loan->loan_number;
-            })
-            ->values();
+            });
+
+        $loans = collect();
+        if ($showLoansDetail) {
+            $loans = Loan::with([
+                'customer:id,first_name,last_name,registered_name,customer_group_id',
+                'loanProduct:id,name',
+                'customerGroup:id,name,branch_id',
+                'customerGroup.branch:id,name',
+                'paymentSchedules' => function ($q) use ($today) {
+                    $q->where(function ($query) use ($today) {
+                        $query->where('status', 'overdue')
+                            ->orWhere(function ($inner) use ($today) {
+                                $inner->where('due_date', '<', $today)
+                                    ->where('remaining_amount', '>', 0);
+                            });
+                    });
+                },
+            ])
+                ->activePortfolio()
+                ->when($selectedBranchId, function ($q) use ($selectedBranchId) {
+                    $q->whereHas('customerGroup', function ($branchQuery) use ($selectedBranchId) {
+                        $branchQuery->where('branch_id', $selectedBranchId);
+                    });
+                })
+                ->get()
+                ->map(function ($loan) {
+                    $loan->arrears_amount = (float) $loan->paymentSchedules->sum('remaining_amount');
+                    $loan->par_bucket = $loan->getPARStatus();
+
+                    return $loan;
+                })
+                ->sortBy(function ($loan) {
+                    return ($loan->customerGroup?->branch?->name ?? '').'|'.$loan->loan_number;
+                })
+                ->values();
+        }
 
         // Time-filtered disbursements (principal amounts)
         $disbursementQuery = Loan::query()
@@ -2798,8 +2866,8 @@ class ReportController extends Controller
             $cursor->addDay();
         }
 
-        $branchRows = $branches->map(function ($branch) use ($loans) {
-            $branchLoans = $loans->filter(function ($loan) use ($branch) {
+        $branchRows = $branches->map(function ($branch) use ($branchLoanMetrics) {
+            $branchLoans = $branchLoanMetrics->filter(function ($loan) use ($branch) {
                 return $loan->customerGroup?->branch_id === $branch->id;
             });
 
@@ -2834,6 +2902,7 @@ class ReportController extends Controller
             'branchRows' => $branchRows,
             'branchOptions' => $branchOptions,
             'loans' => $loans,
+            'showLoansDetail' => $showLoansDetail,
             'selectedBranchId' => $selectedBranchId,
             'totals' => $totals,
             'period' => $period,
@@ -2851,6 +2920,41 @@ class ReportController extends Controller
      * Risk Heatmap Dashboard
      */
     public function riskHeatmap(Request $request): View
+    {
+        abort_unless(auth('admin')->user()?->can('reports.view'), 403);
+
+        $payload = $this->buildRiskHeatmapPayload(limitHighRiskBorrowers: true);
+
+        return view('admin.reports.risk-heatmap', $payload);
+    }
+
+    public function exportRiskHeatmap(Request $request, string $format)
+    {
+        abort_unless(auth('admin')->user()?->can('reports.view'), 403);
+
+        $dataset = strtolower((string) $request->query('dataset', 'all'));
+        if (! in_array($dataset, ['all', 'borrowers', 'branches', 'regions', 'officers'], true)) {
+            $dataset = 'all';
+        }
+
+        if (strtolower($format) !== 'excel') {
+            abort(404);
+        }
+
+        $payload = $this->buildRiskHeatmapPayload(limitHighRiskBorrowers: false);
+
+        return $this->exportRiskHeatmapExcel($payload, $dataset);
+    }
+
+    /**
+     * @return array{
+     *     highRiskBorrowers: \Illuminate\Support\Collection,
+     *     highRiskBranches: \Illuminate\Support\Collection,
+     *     delinquencyByRegion: \Illuminate\Support\Collection,
+     *     loanOfficerRisk: \Illuminate\Support\Collection
+     * }
+     */
+    private function buildRiskHeatmapPayload(bool $limitHighRiskBorrowers = true): array
     {
         // High-risk borrowers (credit score < 40, or overdue amount > 30% of total loan amount)
         $highRiskBorrowers = Customer::with(['company', 'loanProduct', 'customerGroup'])
@@ -2891,7 +2995,7 @@ class ReportController extends Controller
                 return $item['risk_score'] >= 30; // Only show borrowers with risk score >= 30
             })
             ->sortByDesc('risk_score')
-            ->take(50)
+            ->when($limitHighRiskBorrowers, fn ($collection) => $collection->take(50))
             ->values();
 
         // High-risk branches (delinquency rate > 20% or default rate > 10%)
@@ -2912,7 +3016,7 @@ class ReportController extends Controller
                             $totalLoans++;
                             $totalLoanAmount += $loan->total_amount;
                             $overdueAmount += $loan->getOverdueAmount();
-                            if ($loan->status === 'defaulted') {
+                            if ($loan->countsAsDefaultedForRiskReporting()) {
                                 $defaultedLoans++;
                             }
                         }
@@ -3002,7 +3106,7 @@ class ReportController extends Controller
                         $totalLoans++;
                         $totalLoanAmount += $loan->total_amount;
                         $overdueAmount += $loan->getOverdueAmount();
-                        if ($loan->status === 'defaulted') {
+                        if ($loan->countsAsDefaultedForRiskReporting()) {
                             $defaultedLoans++;
                         }
                     }
@@ -3052,7 +3156,7 @@ class ReportController extends Controller
                             $totalLoans++;
                             $totalLoanAmount += $loan->total_amount;
                             $overdueAmount += $loan->getOverdueAmount();
-                            if ($loan->status === 'defaulted') {
+                            if ($loan->countsAsDefaultedForRiskReporting()) {
                                 $defaultedLoans++;
                             }
                         }
@@ -3092,12 +3196,210 @@ class ReportController extends Controller
             ->sortByDesc('risk_score')
             ->values();
 
-        return view('admin.reports.risk-heatmap', compact(
+        return compact(
             'highRiskBorrowers',
             'highRiskBranches',
             'delinquencyByRegion',
             'loanOfficerRisk'
-        ));
+        );
+    }
+
+    private function riskHeatmapExportDatasets(string $dataset): array
+    {
+        return match ($dataset) {
+            'borrowers' => ['borrowers'],
+            'branches' => ['branches'],
+            'regions' => ['regions'],
+            'officers' => ['officers'],
+            default => ['borrowers', 'branches', 'regions', 'officers'],
+        };
+    }
+
+    private function riskHeatmapSheetTitle(string $dataset): string
+    {
+        return match ($dataset) {
+            'borrowers' => 'High-Risk Borrowers',
+            'branches' => 'High-Risk Branches',
+            'regions' => 'Delinquency by Region',
+            'officers' => 'Loan Officer Risk',
+            default => 'Risk Heatmap',
+        };
+    }
+
+    private function riskHeatmapExportHeadings(string $dataset): array
+    {
+        return match ($dataset) {
+            'borrowers' => [
+                'Customer Name',
+                'Phone',
+                'Email',
+                'Company',
+                'Product',
+                'Credit Score',
+                'Total Loans',
+                'Loan Amount',
+                'Overdue Amount',
+                'Overdue %',
+                'Risk Score',
+            ],
+            'branches' => [
+                'Branch',
+                'Code',
+                'Province',
+                'District',
+                'Total Loans',
+                'Loan Amount',
+                'Overdue Amount',
+                'Delinquency Rate %',
+                'Default Rate %',
+                'Risk Score',
+            ],
+            'regions' => [
+                'Province',
+                'Code',
+                'Total Loans',
+                'Loan Amount',
+                'Overdue Amount',
+                'Delinquency Rate %',
+                'Default Rate %',
+            ],
+            'officers' => [
+                'Loan Officer',
+                'Email',
+                'Customers',
+                'Total Loans',
+                'Loan Amount',
+                'Overdue Amount',
+                'Avg Credit Score',
+                'Delinquency Rate %',
+                'Default Rate %',
+                'Risk Score',
+            ],
+            default => [],
+        };
+    }
+
+    private function riskHeatmapExportRows(array $payload, string $dataset): array
+    {
+        return match ($dataset) {
+            'borrowers' => $payload['highRiskBorrowers']->map(function (array $item) {
+                $customer = $item['customer'];
+
+                return [
+                    trim($customer->first_name.' '.$customer->last_name),
+                    $customer->phone ?? '',
+                    $customer->email ?? '',
+                    $customer->company?->name ?? '',
+                    $customer->loanProduct?->name ?? '',
+                    $item['credit_score'] !== null ? round((float) $item['credit_score'], 1) : '',
+                    (int) $item['total_loans'],
+                    round((float) $item['total_loan_amount'], 2),
+                    round((float) $item['overdue_amount'], 2),
+                    round((float) $item['overdue_percentage'], 1),
+                    (int) $item['risk_score'],
+                ];
+            })->values()->all(),
+            'branches' => $payload['highRiskBranches']->map(function (array $item) {
+                $branch = $item['branch'];
+
+                return [
+                    $branch->name,
+                    $branch->code ?? '',
+                    $branch->province?->name ?? '',
+                    $branch->district?->name ?? '',
+                    (int) $item['total_loans'],
+                    round((float) $item['total_loan_amount'], 2),
+                    round((float) $item['overdue_amount'], 2),
+                    round((float) $item['delinquency_rate'], 1),
+                    round((float) $item['default_rate'], 1),
+                    (int) $item['risk_score'],
+                ];
+            })->values()->all(),
+            'regions' => $payload['delinquencyByRegion']->map(function (array $item) {
+                $province = $item['province'];
+
+                return [
+                    $province->name,
+                    $province->code ?? '',
+                    (int) $item['total_loans'],
+                    round((float) $item['total_loan_amount'], 2),
+                    round((float) $item['overdue_amount'], 2),
+                    round((float) $item['delinquency_rate'], 1),
+                    round((float) $item['default_rate'], 1),
+                ];
+            })->values()->all(),
+            'officers' => $payload['loanOfficerRisk']->map(function (array $item) {
+                $officer = $item['officer'];
+
+                return [
+                    $officer->full_name,
+                    $officer->email ?? '',
+                    (int) $item['customer_count'],
+                    (int) $item['total_loans'],
+                    round((float) $item['total_loan_amount'], 2),
+                    round((float) $item['overdue_amount'], 2),
+                    round((float) $item['avg_credit_score'], 1),
+                    round((float) $item['delinquency_rate'], 1),
+                    round((float) $item['default_rate'], 1),
+                    (int) $item['risk_score'],
+                ];
+            })->values()->all(),
+            default => [],
+        };
+    }
+
+    private function exportRiskHeatmapExcel(array $payload, string $dataset)
+    {
+        $datasets = $this->riskHeatmapExportDatasets($dataset);
+
+        $sheets = collect($datasets)->map(function (string $sheetDataset) use ($payload) {
+            return [
+                'title' => $this->riskHeatmapSheetTitle($sheetDataset),
+                'headings' => $this->riskHeatmapExportHeadings($sheetDataset),
+                'rows' => $this->riskHeatmapExportRows($payload, $sheetDataset),
+            ];
+        })->all();
+
+        $filename = 'risk_heatmap_'.$dataset.'_'.now()->format('Y-m-d_His').'.xlsx';
+
+        return Excel::download(new class($sheets) implements WithMultipleSheets {
+            public function __construct(private readonly array $sheets)
+            {
+            }
+
+            public function sheets(): array
+            {
+                return array_map(function (array $sheet) {
+                    return new class($sheet) implements FromCollection, WithHeadings, WithTitle, WithStyles {
+                        public function __construct(private readonly array $sheet)
+                        {
+                        }
+
+                        public function collection()
+                        {
+                            return collect($this->sheet['rows']);
+                        }
+
+                        public function headings(): array
+                        {
+                            return $this->sheet['headings'];
+                        }
+
+                        public function title(): string
+                        {
+                            return $this->sheet['title'];
+                        }
+
+                        public function styles(Worksheet $sheet)
+                        {
+                            return [
+                                1 => ['font' => ['bold' => true, 'size' => 11]],
+                            ];
+                        }
+                    };
+                }, $this->sheets);
+            }
+        }, $filename);
     }
 
     public function expenses(Request $request, ExpenseReportBuilder $builder): View

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Mail\SupportTicketSubmitted;
 use App\Models\Customer;
-use App\Models\SupportTicket;
 use App\Services\SupportTicketService;
 use App\Support\DocumentUploadRules;
 use App\Support\ZambianPhoneRules;
@@ -24,13 +23,8 @@ class SupportController extends Controller
     {
         if (auth('customer')->check()) {
             $customer = auth('customer')->user();
-            $supportTickets = SupportTicket::query()
-                ->where('customer_id', $customer->id)
-                ->latest('created_at')
-                ->limit(10)
-                ->get();
 
-            return view('customer.support', compact('customer', 'supportTickets'));
+            return view('customer.support', compact('customer'));
         }
 
         return view('public.support');

@@ -113,4 +113,56 @@ class LoanOverdueAmountTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_counts_as_defaulted_for_risk_reporting_includes_par90_active_loans(): void
+    {
+        Carbon::setTestNow('2026-08-31 12:00:00');
+
+        $suffix = Str::lower(Str::random(6));
+        $company = Company::create([
+            'name' => 'Default Co '.$suffix,
+            'slug' => 'default-co-'.$suffix,
+            'code' => 'DF'.$suffix,
+            'type' => 'partner',
+            'status' => 'active',
+            'approval_status' => 'approved',
+        ]);
+
+        $product = LoanProduct::create([
+            'company_id' => $company->id,
+            'name' => 'Character',
+            'code' => 'CHR-'.$suffix,
+            'category' => 'character',
+            'is_active' => true,
+        ]);
+
+        $customer = Customer::create([
+            'company_id' => $company->id,
+            'loan_product_id' => $product->id,
+            'first_name' => 'Default',
+            'last_name' => 'Borrower',
+            'email' => 'default-'.$suffix.'@example.com',
+            'phone' => '260955'.random_int(100000, 999999),
+            'password' => '1234',
+            'status' => 'active',
+        ]);
+
+        $loan = $this->makeLoanForCustomer($customer, $product, $suffix);
+
+        LoanPaymentSchedule::create([
+            'loan_id' => $loan->id,
+            'period_number' => 1,
+            'due_date' => now()->subDays(95)->toDateString(),
+            'expected_amount' => 1000,
+            'amount_paid' => 0,
+            'remaining_amount' => 1000,
+            'status' => 'overdue',
+            'days_overdue' => 95,
+        ]);
+
+        $this->assertTrue($loan->fresh()->countsAsDefaultedForRiskReporting());
+        $this->assertSame('PAR90', $loan->fresh()->getPARStatus());
+
+        Carbon::setTestNow();
+    }
 }

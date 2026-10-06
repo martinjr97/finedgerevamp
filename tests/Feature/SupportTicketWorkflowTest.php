@@ -256,6 +256,24 @@ class SupportTicketWorkflowTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_customer_can_view_their_support_ticket_index(): void
+    {
+        $customer = $this->customer($this->company());
+        $ticket = $this->openTicket($customer);
+
+        $this->actingAs($customer, 'customer')
+            ->get(route('customer.support'))
+            ->assertOk()
+            ->assertSee('View Previous Support Tickets');
+
+        $this->actingAs($customer, 'customer')
+            ->get(route('customer.support-tickets.index'))
+            ->assertOk()
+            ->assertSee('My Support Tickets')
+            ->assertSee($ticket->subject)
+            ->assertSee('View &amp; Reply', false);
+    }
+
     public function test_resolved_status_sets_resolved_at(): void
     {
         $company = $this->company();

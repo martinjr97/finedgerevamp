@@ -6,9 +6,10 @@ use App\Migration\LegacyConnection;
 use App\Migration\Phases\Support\CompanyMatcher;
 use App\Migration\Phases\Support\LegacyClientClassifier;
 use App\Migration\Phases\Support\ReferenceMatcher;
+use App\Models\Bank;
 use App\Models\Company;
-use App\Models\FinancialInstitution;
 use App\Models\LoanProduct;
+use App\Models\Wallet;
 use App\Models\WalletProvider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -60,7 +61,8 @@ class ReferenceDataMigrator
                 'SKIP_UNUSED' => 0,
                 'MANUAL_REVIEW' => 0,
             ],
-            'banks' => ['MATCHED_EXISTING' => 0, 'SKIP_TREASURY' => 0, 'MANUAL_REVIEW' => 0, 'WOULD_CREATE' => 0],
+            'banks' => ['MATCHED_EXISTING' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0, 'MANUAL_REVIEW' => 0],
+            'treasury_wallets' => ['MATCHED_EXISTING' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0, 'SKIPPED' => 0, 'MANUAL_REVIEW' => 0],
             'wallet_providers' => ['MATCHED_EXISTING' => 0, 'CREATED' => 0, 'SKIPPED' => 0, 'MANUAL_REVIEW' => 0, 'WOULD_CREATE' => 0],
             'branches' => ['MATCHED_EXISTING' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0, 'MANUAL_REVIEW' => 0],
             'relationship_managers' => ['MATCHED_EXISTING' => 0, 'CREATED' => 0, 'WOULD_CREATE' => 0, 'MANUAL_REVIEW' => 0],
@@ -91,7 +93,11 @@ class ReferenceDataMigrator
         }
 
         if (! $only || $only === 'banks') {
-            $this->migrateBanks($legacy, $runId, $promote, $stats);
+            $this->migrateTreasuryBanks($legacy, $runId, $promote, $stats);
+        }
+
+        if (! $only || $only === 'treasury_wallets') {
+            $this->migrateTreasuryWallets($legacy, $runId, $promote, $stats);
         }
 
         if (! $only || $only === 'wallet_providers' || $only === 'providers') {
@@ -265,75 +271,175 @@ class ReferenceDataMigrator
     }
 
     /**
+     * Legacy `banks` rows are operator treasury accounts — metadata only; balances start at zero.
+     *
      * @param  array<string, mixed>  $stats
      */
-    private function migrateBanks($legacy, int $runId, bool $promote, array &$stats): void
+    private function migrateTreasuryBanks($legacy, int $runId, bool $promote, array &$stats): void
     {
         foreach ($legacy->table('banks')->get() as $bank) {
             $bankArr = (array) $bank;
-            $legacyId = (string) ($bankArr['id'] ?? $bankArr['bank_code'] ?? uniqid());
+            $legacyId = (string) ($bankArr['id'] ?? uniqid());
+
+            $existingMap = $this->maps->find(MigrationEntityMapRepository::TYPE_BANK, $legacyId);
+            if ($existingMap) {
+                $stats['banks']['MATCHED_EXISTING']++;
+                $this->stageTreasuryBank($runId, $legacyId, $bankArr, (int) $existingMap->target_id, 'matched_existing', 'HIGH', null);
+
+                continue;
+            }
+
             $treasury = $this->referenceMatcher->matchTreasuryBank($bankArr);
+
             if ($treasury) {
                 $stats['banks']['MATCHED_EXISTING']++;
                 $this->maps->store(
                     MigrationEntityMapRepository::TYPE_BANK,
                     $legacyId,
-                    \App\Models\Bank::class,
+                    Bank::class,
                     $treasury->id,
                     'treasury_bank_matched',
                     'HIGH',
                     null,
                     $runId
                 );
-                $this->stageFinancialInstitution($runId, $legacyId, $bankArr, $treasury->id, 'matched_existing', 'HIGH', null);
+                $this->stageTreasuryBank($runId, $legacyId, $bankArr, $treasury->id, 'matched_existing', 'HIGH', null);
 
                 continue;
             }
 
-            $existingMap = $this->maps->find(MigrationEntityMapRepository::TYPE_FINANCIAL_INSTITUTION, $legacyId);
-            if ($existingMap) {
-                $stats['banks']['MATCHED_EXISTING']++;
-                $this->stageFinancialInstitution($runId, $legacyId, $bankArr, (int) $existingMap->target_id, 'matched_existing', 'HIGH', null);
-
-                continue;
-            }
-
-            $result = $this->referenceMatcher->resolveFinancialInstitution($bankArr);
-            if ($result->isConflict()) {
-                $stats['banks']['MANUAL_REVIEW']++;
-                $this->stageFinancialInstitution(
-                    $runId,
-                    $legacyId,
-                    $bankArr,
-                    null,
-                    'manual_review',
-                    'LOW',
-                    $result->reason,
-                    $result->candidateTargetIds
-                );
-
-                continue;
-            }
-
-            if ($result->isMatched() && $result->target instanceof FinancialInstitution) {
+            $accountNumber = $this->referenceMatcher->legacyTreasuryBankAccountNumber($bankArr);
+            $byAccountNumber = Bank::query()->where('account_number', $accountNumber)->first();
+            if ($byAccountNumber) {
                 $stats['banks']['MATCHED_EXISTING']++;
                 $this->maps->store(
-                    MigrationEntityMapRepository::TYPE_FINANCIAL_INSTITUTION,
+                    MigrationEntityMapRepository::TYPE_BANK,
                     $legacyId,
-                    FinancialInstitution::class,
-                    $result->target->id,
-                    $result->method,
+                    Bank::class,
+                    $byAccountNumber->id,
+                    'matched_by_placeholder_account',
                     'HIGH',
                     null,
                     $runId
                 );
-                $this->stageFinancialInstitution($runId, $legacyId, $bankArr, $result->target->id, 'matched_existing', 'HIGH', null);
+                $this->stageTreasuryBank($runId, $legacyId, $bankArr, $byAccountNumber->id, 'matched_existing', 'HIGH', null);
 
                 continue;
             }
 
-            $stats['banks']['MANUAL_REVIEW']++;
-            $this->stageFinancialInstitution($runId, $legacyId, $bankArr, null, 'manual_review', 'LOW', 'no_target_match');
+            if (! $promote) {
+                $stats['banks']['WOULD_CREATE']++;
+                $this->stageTreasuryBank($runId, $legacyId, $bankArr, null, 'would_create', 'MEDIUM', null);
+
+                continue;
+            }
+
+            $created = Bank::create($this->referenceMatcher->treasuryBankAttributes($bankArr));
+            $stats['banks']['CREATED']++;
+            $this->maps->store(
+                MigrationEntityMapRepository::TYPE_BANK,
+                $legacyId,
+                Bank::class,
+                $created->id,
+                'created',
+                'HIGH',
+                null,
+                $runId
+            );
+            $this->maps->trackCreated($runId, Bank::class, $created->id);
+            $this->stageTreasuryBank($runId, $legacyId, $bankArr, $created->id, 'created', 'HIGH', null);
+        }
+    }
+
+    /**
+     * Legacy `payment_wallets` operator floats — metadata only; balances start at zero.
+     *
+     * @param  array<string, mixed>  $stats
+     */
+    private function migrateTreasuryWallets($legacy, int $runId, bool $promote, array &$stats): void
+    {
+        $rows = collect();
+        try {
+            $rows = $legacy->table('payment_wallets')->orderBy('id')->get();
+        } catch (\Throwable) {
+            return;
+        }
+
+        foreach ($rows as $wallet) {
+            $walletArr = (array) $wallet;
+
+            if (strtoupper($walletArr['code'] ?? '') === 'OTHER') {
+                $stats['treasury_wallets']['SKIPPED']++;
+
+                continue;
+            }
+
+            $legacyId = (string) ($walletArr['id'] ?? uniqid());
+
+            $existingMap = $this->maps->find(MigrationEntityMapRepository::TYPE_TREASURY_WALLET, $legacyId);
+            if ($existingMap) {
+                $stats['treasury_wallets']['MATCHED_EXISTING']++;
+                $this->stageTreasuryWallet($runId, $legacyId, $walletArr, (int) $existingMap->target_id, 'matched_existing', 'HIGH', null);
+
+                continue;
+            }
+
+            $matched = $this->referenceMatcher->matchTreasuryWalletRecord($walletArr);
+            if ($matched) {
+                $stats['treasury_wallets']['MATCHED_EXISTING']++;
+                $this->maps->store(
+                    MigrationEntityMapRepository::TYPE_TREASURY_WALLET,
+                    $legacyId,
+                    Wallet::class,
+                    $matched->id,
+                    'treasury_wallet_matched',
+                    'HIGH',
+                    null,
+                    $runId
+                );
+                $this->stageTreasuryWallet($runId, $legacyId, $walletArr, $matched->id, 'matched_existing', 'HIGH', null);
+
+                continue;
+            }
+
+            $walletNumber = $this->referenceMatcher->legacyTreasuryWalletNumber($walletArr);
+            if (Wallet::query()->where('wallet_number', $walletNumber)->exists()) {
+                $stats['treasury_wallets']['MANUAL_REVIEW']++;
+                $this->stageTreasuryWallet(
+                    $runId,
+                    $legacyId,
+                    $walletArr,
+                    null,
+                    'manual_review',
+                    'LOW',
+                    'wallet_number_exists_without_map',
+                    Wallet::query()->where('wallet_number', $walletNumber)->pluck('id')->all()
+                );
+
+                continue;
+            }
+
+            if (! $promote) {
+                $stats['treasury_wallets']['WOULD_CREATE']++;
+                $this->stageTreasuryWallet($runId, $legacyId, $walletArr, null, 'would_create', 'MEDIUM', null);
+
+                continue;
+            }
+
+            $created = Wallet::create($this->referenceMatcher->treasuryWalletAttributes($walletArr));
+            $stats['treasury_wallets']['CREATED']++;
+            $this->maps->store(
+                MigrationEntityMapRepository::TYPE_TREASURY_WALLET,
+                $legacyId,
+                Wallet::class,
+                $created->id,
+                'created',
+                'HIGH',
+                null,
+                $runId
+            );
+            $this->maps->trackCreated($runId, Wallet::class, $created->id);
+            $this->stageTreasuryWallet($runId, $legacyId, $walletArr, $created->id, 'created', 'HIGH', null);
         }
     }
 
@@ -478,11 +584,11 @@ class ReferenceDataMigrator
      * @param  array<string, mixed>  $bankArr
      * @param  list<int>  $candidateTargetIds
      */
-    private function stageFinancialInstitution(
+    private function stageTreasuryBank(
         int $runId,
         string $legacyId,
         array $bankArr,
-        ?int $mappedId,
+        ?int $mappedBankId,
         string $status,
         string $confidence,
         ?string $exception,
@@ -495,12 +601,53 @@ class ReferenceDataMigrator
             ],
             [
                 'legacy_bank_id' => is_numeric($bankArr['id'] ?? null) ? (int) $bankArr['id'] : null,
-                'mapped_financial_institution_id' => $mappedId,
+                'mapped_financial_institution_id' => null,
                 'migration_status' => $status,
                 'confidence' => $confidence,
                 'exception' => $exception,
                 'raw_context' => json_encode([
+                    'entity_kind' => 'treasury_bank',
                     'legacy' => $bankArr,
+                    'mapped_bank_id' => $mappedBankId,
+                    'opening_balance_migrated' => false,
+                    'candidate_target_ids' => $candidateTargetIds,
+                ]),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $walletArr
+     * @param  list<int>  $candidateTargetIds
+     */
+    private function stageTreasuryWallet(
+        int $runId,
+        string $legacyId,
+        array $walletArr,
+        ?int $mappedWalletId,
+        string $status,
+        string $confidence,
+        ?string $exception,
+        array $candidateTargetIds = [],
+    ): void {
+        DB::table('migration_wallet_providers')->updateOrInsert(
+            [
+                'migration_run_id' => $runId,
+                'legacy_identifier' => 'treasury:'.$legacyId,
+            ],
+            [
+                'legacy_wallet_id' => is_numeric($walletArr['id'] ?? null) ? (int) $walletArr['id'] : null,
+                'mapped_wallet_provider_id' => null,
+                'migration_status' => $status,
+                'confidence' => $confidence,
+                'exception' => $exception,
+                'raw_context' => json_encode([
+                    'entity_kind' => 'treasury_wallet',
+                    'legacy' => $walletArr,
+                    'mapped_wallet_id' => $mappedWalletId,
+                    'opening_balance_migrated' => false,
                     'candidate_target_ids' => $candidateTargetIds,
                 ]),
                 'updated_at' => now(),

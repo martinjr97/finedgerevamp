@@ -391,6 +391,16 @@ class Customer extends Authenticatable
     }
 
     /**
+     * Resolve the relationship manager for this customer.
+     * Prefers the customer group assignment, then falls back to company RM.
+     */
+    public function resolvedRelationshipManager(): ?Admin
+    {
+        return $this->customerGroup?->relationshipManager
+            ?? $this->company?->relationshipManager;
+    }
+
+    /**
      * Calculate total overdue amount across all active loans
      */
     public function getTotalOverdueAmount(): float

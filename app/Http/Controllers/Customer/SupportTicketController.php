@@ -17,6 +17,18 @@ class SupportTicketController extends Controller
         protected SupportTicketService $supportTicketService
     ) {}
 
+    public function index(): View
+    {
+        $customer = auth('customer')->user();
+
+        $supportTickets = SupportTicket::query()
+            ->where('customer_id', $customer->id)
+            ->latest('created_at')
+            ->paginate(15);
+
+        return view('customer.support-tickets.index', compact('supportTickets'));
+    }
+
     public function show(SupportTicket $supportTicket): View
     {
         $customer = auth('customer')->user();

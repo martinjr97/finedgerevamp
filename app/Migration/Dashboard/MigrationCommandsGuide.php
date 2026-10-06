@@ -68,7 +68,7 @@ class MigrationCommandsGuide
             [
                 'number' => 1,
                 'title' => 'Reference data',
-                'description' => 'Products, MOU employers, banks, wallet providers, Marketeer group/markets, branches, and relationship managers.',
+                'description' => 'Products, MOU employers, treasury banks/wallets (metadata only — opening balances entered separately), wallet providers, Marketeer group/markets, branches, and relationship managers.',
                 'steps' => [
                     [
                         'label' => 'Dry-run (preview)',
@@ -77,6 +77,11 @@ class MigrationCommandsGuide
                     [
                         'label' => 'Promote reference data',
                         'command' => 'php artisan migration:reference-data --promote',
+                        'destructive' => true,
+                    ],
+                    [
+                        'label' => 'Promote treasury banks & wallets (zero balances)',
+                        'command' => 'php artisan migration:reference-data --only=banks --promote && php artisan migration:reference-data --only=treasury_wallets --promote',
                         'destructive' => true,
                     ],
                     [

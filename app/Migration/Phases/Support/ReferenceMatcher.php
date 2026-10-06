@@ -6,6 +6,7 @@ use App\Models\Admin;
 use App\Models\Bank;
 use App\Models\Branch;
 use App\Models\FinancialInstitution;
+use App\Models\Wallet;
 use App\Models\WalletProvider;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -234,6 +235,120 @@ class ReferenceMatcher
         $name = strtolower((string) ($legacyWallet['name'] ?? $legacyWallet['wallet_name'] ?? ''));
 
         return str_contains($name, 'kazang') || str_contains($name, 'treasury') || str_contains($name, 'operator');
+    }
+
+    /**
+     * @param  array<string, mixed>  $legacyWallet
+     */
+    public function matchTreasuryWalletRecord(array $legacyWallet): ?Wallet
+    {
+        $legacyId = (string) ($legacyWallet['id'] ?? '');
+        $candidates = Wallet::query()->get();
+
+        if ($legacyId !== '') {
+            $byPlaceholder = $candidates->first(
+                fn (Wallet $wallet) => $wallet->wallet_number === $this->legacyTreasuryWalletNumber($legacyWallet)
+            );
+            if ($byPlaceholder) {
+                return $byPlaceholder;
+            }
+        }
+
+        $name = $this->normalize((string) ($legacyWallet['name'] ?? $legacyWallet['wallet_name'] ?? ''));
+        if ($name === '') {
+            return null;
+        }
+
+        $exact = $candidates->filter(
+            fn (Wallet $wallet) => $this->normalize($wallet->name) === $name
+        );
+        if ($exact->count() === 1) {
+            return $exact->first();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $legacyWallet
+     * @return array<string, mixed>
+     */
+    public function treasuryWalletAttributes(array $legacyWallet): array
+    {
+        $legacyId = (string) ($legacyWallet['id'] ?? uniqid());
+        $code = strtoupper(trim((string) ($legacyWallet['code'] ?? '')));
+
+        return [
+            'name' => (string) ($legacyWallet['name'] ?? $legacyWallet['wallet_name'] ?? 'Legacy Treasury Wallet'),
+            'wallet_number' => $this->legacyTreasuryWalletNumber($legacyWallet),
+            'provider' => $this->inferTreasuryWalletProvider($code),
+            'currency' => 'ZMW',
+            'opening_balance' => 0,
+            'current_balance' => 0,
+            'is_active' => (bool) ($legacyWallet['is_active'] ?? true),
+            'notes' => 'Migrated from legacy payment_wallet #'.$legacyId.'. Enter opening balance separately.',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $legacyBank
+     * @return array<string, mixed>
+     */
+    public function treasuryBankAttributes(array $legacyBank): array
+    {
+        $legacyId = (string) ($legacyBank['id'] ?? uniqid());
+        $name = (string) ($legacyBank['name'] ?? 'Legacy Treasury Bank');
+        $code = strtoupper(trim((string) ($legacyBank['code'] ?? '')));
+
+        return [
+            'name' => $name,
+            'account_number' => $this->legacyTreasuryBankAccountNumber($legacyBank),
+            'account_name' => $name,
+            'bank_name' => $code !== '' ? $code : $name,
+            'branch' => null,
+            'currency' => 'ZMW',
+            'opening_balance' => 0,
+            'current_balance' => 0,
+            'is_active' => (bool) ($legacyBank['is_active'] ?? true),
+            'notes' => 'Migrated from legacy bank #'.$legacyId.'. Enter opening balance separately.',
+        ];
+    }
+
+    public function inferTreasuryWalletProvider(string $code): string
+    {
+        $code = strtoupper(trim($code));
+
+        return match (true) {
+            str_contains($code, 'MTN') => 'mtn',
+            str_contains($code, 'AIRTEL') => 'airtel',
+            str_contains($code, 'ZAMTEL') => 'zamtel',
+            default => 'other',
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $legacyWallet
+     */
+    public function legacyTreasuryWalletNumber(array $legacyWallet): string
+    {
+        $existing = $legacyWallet['account_number'] ?? $legacyWallet['wallet_number'] ?? null;
+        if (filled($existing)) {
+            return (string) $existing;
+        }
+
+        $legacyId = (string) ($legacyWallet['id'] ?? uniqid());
+
+        return 'LEG-WAL-'.$legacyId;
+    }
+
+    /**
+     * @param  array<string, mixed>  $legacyBank
+     */
+    public function legacyTreasuryBankAccountNumber(array $legacyBank): string
+    {
+        $legacyId = (string) ($legacyBank['id'] ?? uniqid());
+
+        return 'LEG-BANK-'.$legacyId;
     }
 
     /**
