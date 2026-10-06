@@ -85,7 +85,7 @@ class QueryGatewayAttemptStatusJob implements ShouldQueue
         }
 
         $gateway = $attempt->paymentGateway;
-        if (! $gateway) {
+        if (! $gateway || ! $gateway->supports_polling) {
             return;
         }
 

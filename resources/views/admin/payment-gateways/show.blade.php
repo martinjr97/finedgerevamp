@@ -95,6 +95,14 @@
                                 </button>
                             </form>
                         @endif
+                        @if ($canCheckKazangBalance ?? false)
+                            <form method="POST" action="{{ route('admin.payment-gateways.kazang-balance', $gateway) }}">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/40 to-orange-500/40 border border-amber-400/70 px-3 py-1.5 text-sm font-semibold text-amber-100 hover:text-white transition">
+                                    Check Kazang Balance
+                                </button>
+                            </form>
+                        @endif
                         @if ($financialAccountUrl)
                             <a href="{{ $financialAccountUrl }}" class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500/40 to-purple-500/40 border border-blue-400/70 px-3 py-1.5 text-sm font-semibold text-blue-200 hover:text-white transition">
                                 Open Account
@@ -123,6 +131,8 @@
                         </p>
                         @if ($canCheckCgrateBalance ?? false)
                             <p class="mt-1 text-xs text-slate-500">FineEdge books only. Use Check cGrate Balance for live merchant float.</p>
+                        @elseif ($canCheckKazangBalance ?? false)
+                            <p class="mt-1 text-xs text-slate-500">FineEdge books only. Use Check Kazang Balance for live merchant float.</p>
                         @endif
                     </div>
                     <div>
@@ -315,6 +325,47 @@
                     icon: 'error',
                     title: 'cGrate balance check failed',
                     text: @json(session('cgrate_balance_error')),
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#ef4444',
+                });
+            @endif
+
+            @if(session('kazang_balance'))
+                @php
+                    $kazangCheckedAt = session('kazang_balance.checked_at');
+                    try {
+                        $kazangCheckedAtDisplay = $kazangCheckedAt
+                            ? \Illuminate\Support\Carbon::parse($kazangCheckedAt)->timezone(config('app.timezone'))->format('Y-m-d H:i:s')
+                            : '—';
+                    } catch (\Throwable) {
+                        $kazangCheckedAtDisplay = (string) ($kazangCheckedAt ?? '—');
+                    }
+                @endphp
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Kazang merchant balance',
+                    html: `
+                        <p style="font-size: 1.75rem; font-weight: 700; margin: 0.5rem 0;">
+                            {{ session('kazang_balance.currency', 'ZMW') }}
+                            {{ number_format((float) session('kazang_balance.balance', 0), 2) }}
+                        </p>
+                        <p style="font-size: 0.875rem; opacity: 0.8; margin: 0;">
+                            Checked at {{ $kazangCheckedAtDisplay }}
+                        </p>
+                        <p style="font-size: 0.75rem; opacity: 0.65; margin-top: 0.75rem;">
+                            Diagnostic only — FineEdge linked wallet balance was not changed.
+                        </p>
+                    `,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#f59e0b',
+                });
+            @endif
+
+            @if(session('kazang_balance_error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Kazang balance check failed',
+                    text: @json(session('kazang_balance_error')),
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#ef4444',
                 });

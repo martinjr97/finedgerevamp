@@ -7,37 +7,37 @@ use App\Models\Wallet;
 use App\PaymentPlatform\Enums\FinancialAccountType;
 use App\PaymentPlatform\Enums\PaymentGatewayStatus;
 use App\PaymentPlatform\Enums\PaymentGatewayType;
-use App\PaymentPlatform\Providers\CGrate\CGratePaymentGateway;
+use App\PaymentPlatform\Providers\Kazang\KazangPaymentGateway;
 use Illuminate\Database\Seeder;
 
-class CGratePaymentGatewaySeeder extends Seeder
+class KazangPaymentGatewaySeeder extends Seeder
 {
     public function run(): void
     {
-        $wallet = Wallet::query()->where('wallet_number', 'CGRATE-TREASURY')->first();
+        $wallet = Wallet::query()->where('wallet_number', 'KAZANG-TREASURY')->first();
 
         PaymentGateway::updateOrCreate(
-            ['code' => 'cgrate'],
+            ['code' => 'kazang'],
             [
-                'name' => 'cGrate',
-                'provider_class' => CGratePaymentGateway::class,
+                'name' => 'Kazang',
+                'provider_class' => KazangPaymentGateway::class,
                 'type' => PaymentGatewayType::Both,
                 'status' => PaymentGatewayStatus::Inactive,
-                'priority' => 10,
-                'is_default' => true,
+                'priority' => 20,
+                'is_default' => false,
                 'supports_collections' => true,
                 'supports_disbursements' => true,
                 'supports_mobile_money' => true,
-                'supports_bank' => true,
+                'supports_bank' => false,
                 'supports_callbacks' => true,
-                'supports_polling' => true,
+                'supports_polling' => false,
                 'financial_account_type' => $wallet ? FinancialAccountType::Wallet : null,
                 'financial_account_id' => $wallet?->id,
                 'config' => [],
                 'metadata' => [
-                    'description' => 'cGrate mobile money and bank disbursements via SOAP API',
+                    'description' => 'Kazang mobile money collections via RabbitMQ and direct XML-RPC disbursements.',
                 ],
-            ]
+            ],
         );
     }
 }

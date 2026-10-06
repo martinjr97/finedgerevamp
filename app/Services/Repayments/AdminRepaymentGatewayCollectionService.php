@@ -23,8 +23,12 @@ class AdminRepaymentGatewayCollectionService
         private readonly GatewayIntegrationService $gatewayIntegrationService,
     ) {}
 
-    public function previewForChannel(Channel $channel, ?float $amount = null, ?string $phone = null): RepaymentGatewayCollectionPreview
-    {
+    public function previewForChannel(
+        Channel $channel,
+        ?float $amount = null,
+        ?string $phone = null,
+        ?int $loanProductId = null,
+    ): RepaymentGatewayCollectionPreview {
         $routeKey = $this->routeService->routeKeyForCollectionChannel($channel);
 
         if ($routeKey === null) {
@@ -40,7 +44,7 @@ class AdminRepaymentGatewayCollectionService
         $gateway = $route?->paymentGateway;
         $gatewayName = $gateway?->name;
         $linkedAccountLabel = $gateway?->linkedAccountLabel();
-        $resolution = $this->routeService->resolveRouteForCollection($channel);
+        $resolution = $this->routeService->resolveRouteForCollection($channel, $loanProductId);
 
         if (! $resolution->available) {
             return RepaymentGatewayCollectionPreview::notReady(
@@ -112,7 +116,13 @@ class AdminRepaymentGatewayCollectionService
 
     public function initiateForRepayment(Repayment $repayment, Channel $channel, ?string $phone): RepaymentGatewayCollectionResult
     {
-        $preview = $this->previewForChannel($channel, (float) $repayment->total_amount, $phone);
+        $repayment->loadMissing('customer');
+        $preview = $this->previewForChannel(
+            $channel,
+            (float) $repayment->total_amount,
+            $phone,
+            $repayment->customer?->loan_product_id,
+        );
 
         if (! $preview->ready) {
             if ($preview->applicable && $preview->reason) {

@@ -160,6 +160,8 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::resource('wallets', WalletController::class);
         Route::get('payment-gateway-routing', [\App\Http\Controllers\Admin\PaymentGatewayRoutingController::class, 'index'])->name('payment-gateway-routing.index');
         Route::put('payment-gateway-routing/{paymentGatewayRoute}', [\App\Http\Controllers\Admin\PaymentGatewayRoutingController::class, 'update'])->name('payment-gateway-routing.update');
+        Route::get('payment-gateway-product-rules', [\App\Http\Controllers\Admin\PaymentGatewayProductRuleController::class, 'index'])->name('payment-gateway-product-rules.index');
+        Route::put('payment-gateway-product-rules/{paymentGatewayProductRule}', [\App\Http\Controllers\Admin\PaymentGatewayProductRuleController::class, 'update'])->name('payment-gateway-product-rules.update');
         Route::redirect('payment-gateways/routing', '/admin/payment-gateway-routing')->name('payment-gateways.routing');
         Route::get('payment-gateway-destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'index'])->name('payment-gateway-destination-mappings.index');
         Route::post('payment-gateway-destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'store'])->name('payment-gateway-destination-mappings.store');
@@ -168,6 +170,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('payment-gateway-destination-mappings/sync-cgrate-issuers', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'syncCgrateIssuers'])->name('payment-gateway-destination-mappings.sync-cgrate-issuers');
         Route::resource('payment-gateways', \App\Http\Controllers\Admin\PaymentGatewayController::class)->only(['index', 'show', 'edit', 'update']);
         Route::post('payment-gateways/{paymentGateway}/cgrate-balance', [\App\Http\Controllers\Admin\PaymentGatewayController::class, 'checkCgrateBalance'])->name('payment-gateways.cgrate-balance');
+        Route::post('payment-gateways/{paymentGateway}/kazang-balance', [\App\Http\Controllers\Admin\PaymentGatewayController::class, 'checkKazangBalance'])->name('payment-gateways.kazang-balance');
         Route::get('payment-gateways/{paymentGateway}/destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'legacyIndex'])->name('payment-gateways.destination-mappings.index');
         Route::post('payment-gateways/{paymentGateway}/destination-mappings', [\App\Http\Controllers\Admin\PaymentGatewayDestinationMappingsController::class, 'legacyStore'])->name('payment-gateways.destination-mappings.store');
         Route::get('payment-operations', [\App\Http\Controllers\Admin\PaymentOperationsController::class, 'index'])->name('payment-operations.index');

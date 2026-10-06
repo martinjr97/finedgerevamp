@@ -14,6 +14,8 @@ use App\PaymentPlatform\Enums\GatewayAttemptStatus;
 use App\PaymentPlatform\Enums\PaymentGatewayStatus;
 use App\PaymentPlatform\Providers\CGrate\CGrateClient;
 use App\PaymentPlatform\Providers\CGrate\CGrateException;
+use App\PaymentPlatform\Providers\Kazang\KazangApiClient;
+use App\PaymentPlatform\Providers\Kazang\KazangException;
 use App\Support\PaymentGatewayAdminUi;
 use App\Support\PaymentGatewayRoutingAdminUi;
 use Illuminate\Http\RedirectResponse;
@@ -95,6 +97,11 @@ class PaymentGatewayController extends Controller
                     auth('admin')->user()?->can('payment-gateways.view')
                     || auth('admin')->user()?->can('payment-gateways.manage')
                 ),
+            'canCheckKazangBalance' => $paymentGateway->code === 'kazang'
+                && (
+                    auth('admin')->user()?->can('payment-gateways.view')
+                    || auth('admin')->user()?->can('payment-gateways.manage')
+                ),
         ]);
     }
 
@@ -154,6 +161,64 @@ class PaymentGatewayController extends Controller
         return redirect()
             ->route('admin.payment-gateways.show', $paymentGateway)
             ->with('cgrate_balance', $result);
+    }
+
+    /**
+     * Diagnostic-only: query live Kazang merchant float via authClient. Does not mutate wallets or payment attempts.
+     */
+    public function checkKazangBalance(PaymentGateway $paymentGateway): RedirectResponse
+    {
+        abort_unless(
+            auth('admin')->user()?->can('payment-gateways.view')
+            || auth('admin')->user()?->can('payment-gateways.manage'),
+            403
+        );
+
+        abort_unless($paymentGateway->code === 'kazang', 404);
+
+        try {
+            $result = app(KazangApiClient::class)->getMerchantBalance();
+        } catch (KazangException $e) {
+            return redirect()
+                ->route('admin.payment-gateways.show', $paymentGateway)
+                ->with('kazang_balance_error', $e->getMessage());
+        }
+
+        $admin = auth('admin')->user();
+        if (Schema::hasTable('audit_logs') && $admin) {
+            AuditLog::withoutEvents(function () use ($paymentGateway, $admin, $result): void {
+                AuditLog::query()->create([
+                    'event' => 'pg.kazang_balance_check',
+                    'auditable_type' => $paymentGateway::class,
+                    'auditable_id' => (string) $paymentGateway->getKey(),
+                    'old_values' => null,
+                    'new_values' => [
+                        'balance' => $result['balance'],
+                        'currency' => $result['currency'],
+                        'response_code' => $result['response_code'],
+                        'checked_at' => $result['checked_at'],
+                    ],
+                    'changed_fields' => ['balance', 'currency', 'response_code', 'checked_at'],
+                    'actor_type' => $admin::class,
+                    'actor_id' => (string) $admin->getKey(),
+                    'actor_name' => $admin->full_name ?? $admin->name ?? $admin->email,
+                    'actor_guard' => 'admin',
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                    'url' => request()->fullUrl(),
+                    'http_method' => request()->method(),
+                    'metadata' => [
+                        'route_name' => request()->route()?->getName(),
+                        'action_label' => 'Checked Kazang merchant balance',
+                        'gateway' => $paymentGateway->code,
+                    ],
+                ]);
+            });
+        }
+
+        return redirect()
+            ->route('admin.payment-gateways.show', $paymentGateway)
+            ->with('kazang_balance', $result);
     }
 
     public function edit(PaymentGateway $paymentGateway): View

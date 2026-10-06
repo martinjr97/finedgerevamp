@@ -3,6 +3,7 @@
 namespace App\PaymentPlatform\Jobs;
 
 use App\Models\PaymentGatewayAttempt;
+use App\Models\Repayment;
 use App\PaymentPlatform\DTOs\CollectMoneyRequest;
 use App\PaymentPlatform\Enums\GatewayAttemptStatus;
 use App\PaymentPlatform\Jobs\Concerns\InteractsWithGatewayCorrelation;
@@ -55,13 +56,16 @@ class DispatchGatewayCollectionJob implements ShouldQueue
         }
 
         if ($attempt->status !== GatewayAttemptStatus::Initiated) {
-            $this->schedulePolling($attempt->id, $pollInterval);
+            if ($gateway->supports_polling) {
+                $this->schedulePolling($attempt->id, $pollInterval);
+            }
 
             return;
         }
 
         try {
             $provider = $gateway->resolveProvider();
+            $metadata = $this->collectionMetadata($attempt);
 
             $result = $provider->collect(new CollectMoneyRequest(
                 internalReference: (string) $attempt->internal_reference,
@@ -70,6 +74,7 @@ class DispatchGatewayCollectionJob implements ShouldQueue
                 currency: (string) $attempt->currency,
                 customerPhone: $attempt->customer_phone,
                 providerReference: (string) ($attempt->provider_reference ?? $attempt->internal_reference),
+                metadata: $metadata,
             ));
 
             DB::transaction(function () use ($attempt, $result) {
@@ -111,9 +116,26 @@ class DispatchGatewayCollectionJob implements ShouldQueue
 
         $attempt->refresh();
 
-        if ($attempt->status === GatewayAttemptStatus::Pending) {
+        if ($attempt->status === GatewayAttemptStatus::Pending && $gateway->supports_polling) {
             $this->schedulePolling($attempt->id, $pollInterval);
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function collectionMetadata(PaymentGatewayAttempt $attempt): array
+    {
+        $attempt->loadMissing('attemptable');
+
+        if ($attempt->attemptable instanceof Repayment) {
+            return [
+                'repayment_id' => $attempt->attemptable->id,
+                'customer_id' => $attempt->attemptable->customer_id,
+            ];
+        }
+
+        return [];
     }
 
     private function schedulePolling(int $attemptId, int $pollInterval): void

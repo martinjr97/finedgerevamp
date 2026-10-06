@@ -73,4 +73,9 @@ class LoanProduct extends Model
     {
         return $this->hasMany(GroupLoanApplication::class);
     }
+
+    public function paymentGatewayProductRules(): HasMany
+    {
+        return $this->hasMany(PaymentGatewayProductRule::class);
+    }
 }

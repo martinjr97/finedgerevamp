@@ -16,13 +16,16 @@ class GatewaySelectionService
     /**
      * Select the gateway configured for this collection route.
      */
-    public function selectForCollection(Channel $channel, bool $requireLinkedAccount = false): ?PaymentGateway
-    {
+    public function selectForCollection(
+        Channel $channel,
+        bool $requireLinkedAccount = false,
+        ?int $loanProductId = null,
+    ): ?PaymentGateway {
         if ($this->mapChannelToPaymentMethod($channel) === null) {
             return null;
         }
 
-        $resolution = $this->routeService->resolveRouteForCollection($channel);
+        $resolution = $this->routeService->resolveRouteForCollection($channel, $loanProductId);
 
         if (! $resolution->available) {
             return null;

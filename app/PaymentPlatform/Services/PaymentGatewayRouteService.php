@@ -5,6 +5,7 @@ namespace App\PaymentPlatform\Services;
 use App\Models\Channel;
 use App\Models\Loan;
 use App\Models\PaymentGateway;
+use App\Models\PaymentGatewayProductRule;
 use App\Models\PaymentGatewayRoute;
 use App\PaymentPlatform\DTOs\GatewayRouteResolution;
 use App\PaymentPlatform\Enums\GatewayRouteKey;
@@ -20,7 +21,12 @@ class PaymentGatewayRouteService
         private readonly PaymentGatewayDestinationMappingResolver $destinationMappingResolver,
     ) {}
 
-    public function resolveRoute(GatewayRouteKey $routeKey, ?float $amount = null, ?Loan $loan = null): GatewayRouteResolution
+    public function resolveRoute(
+        GatewayRouteKey $routeKey,
+        ?float $amount = null,
+        ?Loan $loan = null,
+        ?int $loanProductId = null,
+    ): GatewayRouteResolution
     {
         $route = PaymentGatewayRoute::query()
             ->with('paymentGateway')
@@ -59,6 +65,13 @@ class PaymentGatewayRouteService
                 $fallback,
                 $route,
             );
+        }
+
+        $resolvedLoanProductId = $loanProductId ?? $loan?->loan_product_id;
+        $productGateway = $this->resolveProductGateway($resolvedLoanProductId, $routeKey);
+
+        if ($productGateway) {
+            $gateway = $productGateway;
         }
 
         $capabilityFailure = $this->validateGatewayCapabilities($routeKey, $gateway);
@@ -157,7 +170,7 @@ class PaymentGatewayRouteService
         return GatewayRouteResolution::available($routeKey, $route, $gateway, $balanceWarning);
     }
 
-    public function resolveRouteForCollection(Channel $channel): GatewayRouteResolution
+    public function resolveRouteForCollection(Channel $channel, ?int $loanProductId = null): GatewayRouteResolution
     {
         $routeKey = $this->routeKeyForCollectionChannel($channel);
 
@@ -168,7 +181,7 @@ class PaymentGatewayRouteService
             );
         }
 
-        return $this->resolveRoute($routeKey);
+        return $this->resolveRoute($routeKey, loanProductId: $loanProductId);
     }
 
     public function resolveRouteForDisbursement(Loan $loan): GatewayRouteResolution
@@ -189,7 +202,26 @@ class PaymentGatewayRouteService
             default => GatewayRouteKey::WalletDisbursement,
         };
 
-        return $this->resolveRoute($routeKey, (float) $loan->principal_amount, $loan);
+        return $this->resolveRoute($routeKey, (float) $loan->principal_amount, $loan, $loan->loan_product_id);
+    }
+
+    public function resolveProductGateway(?int $loanProductId, GatewayRouteKey $routeKey): ?PaymentGateway
+    {
+        if (! $loanProductId) {
+            return null;
+        }
+
+        $rule = PaymentGatewayProductRule::query()
+            ->with('paymentGateway')
+            ->where('loan_product_id', $loanProductId)
+            ->where('direction', $routeKey->direction()->value)
+            ->where('payment_method', $routeKey->paymentMethod()->value)
+            ->where('enabled', true)
+            ->orderBy('priority')
+            ->orderBy('id')
+            ->first();
+
+        return $rule?->paymentGateway;
     }
 
     /**

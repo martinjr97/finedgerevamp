@@ -22,6 +22,13 @@
                         'href' => route('admin.payment-gateway-routing.index'),
                     ]
                     : null,
+                auth('admin')->user()?->can('payment-gateways.view') || auth('admin')->user()?->can('payment-gateways.manage')
+                    ? [
+                        'action' => 'secondary',
+                        'text' => 'Product Rules →',
+                        'href' => route('admin.payment-gateway-product-rules.index'),
+                    ]
+                    : null,
             ]),
         ])
 

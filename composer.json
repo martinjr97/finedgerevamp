@@ -8,11 +8,13 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "kissifrot/php-ixr": "^1.8",
         "laravel/framework": "^12.0",
         "laravel/horizon": "^5.47",
         "laravel/sanctum": "^4.2",
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^3.1",
+        "php-amqplib/php-amqplib": "^3.0",
         "spatie/laravel-permission": "^6.23"
     },
     "require-dev": {

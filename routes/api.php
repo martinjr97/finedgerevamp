@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('repayment/kazang/callback', \App\Http\Controllers\Api\KazangCallbackController::class)
+    ->name('api.repayment.kazang.callback');
+
 // Public routes (no authentication required)
 Route::prefix('v1')->group(function () {
     // Health check

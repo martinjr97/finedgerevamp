@@ -32,8 +32,11 @@ class DatabaseSeeder extends Seeder
 	                FinancialCategorySeeder::class,
 	                SecurityQuestionSeeder::class,
 	                RateTableSeeder::class,
+					TreasuryWalletSeeder::class,
 					CGratePaymentGatewaySeeder::class,
+					KazangPaymentGatewaySeeder::class,
 					PaymentGatewayRouteSeeder::class,
+					PaymentGatewayProductRuleSeeder::class,
 					SmsTemplateSeeder::class,
 	            ]);
     }

@@ -144,11 +144,11 @@ class PaymentGateway extends Model
 
     public function isProviderEnabled(): bool
     {
-        if ($this->code === 'cgrate') {
-            return (bool) config('cgrate.enabled', false);
-        }
-
-        return true;
+        return match ($this->code) {
+            'cgrate' => (bool) config('cgrate.enabled', false),
+            'kazang' => (bool) config('kazang.enabled', false),
+            default => true,
+        };
     }
 
     public function linkedAccountBalance(): ?float

@@ -42,7 +42,11 @@ class GatewayIntegrationService
      */
     public function initiateCollection(Repayment $repayment, \App\Models\Channel $channel, ?string $phoneNumber): array
     {
-        $gateway = $this->selectionService->selectForCollection($channel);
+        $repayment->loadMissing('customer');
+        $gateway = $this->selectionService->selectForCollection(
+            $channel,
+            loanProductId: $repayment->customer?->loan_product_id,
+        );
 
         if (! $gateway) {
             return [
@@ -336,7 +340,8 @@ class GatewayIntegrationService
                 $this->finalizeConfirmedAttempt($attempt);
             }
         } elseif ($attempt->status === GatewayAttemptStatus::Pending) {
-            if ($attempt->direction !== GatewayDirection::Disbursement) {
+            if ($attempt->direction !== GatewayDirection::Disbursement
+                && $attempt->paymentGateway?->supports_polling) {
                 $this->scheduleQuery($attempt);
             }
         } elseif (in_array($attempt->status, [GatewayAttemptStatus::Failed, GatewayAttemptStatus::Rejected, GatewayAttemptStatus::Expired], true)) {
