@@ -743,8 +743,11 @@ class LoanController extends Controller
 
         $canCancelLoan = app(LoanCancellationService::class)->canCancel($loan);
 
+        $loanStatement = $loan->getSimpleStatementSummary();
+
         return view('admin.loans.show', compact(
             'loan',
+            'loanStatement',
             'disbursementType',
             'banks',
             'wallets',

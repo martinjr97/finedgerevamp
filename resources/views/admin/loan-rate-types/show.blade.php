@@ -155,8 +155,24 @@
                                     <td class="px-4 py-3 font-medium text-white">{{ $rate->tenure_months }}</td>
                                     <td class="px-4 py-3">{{ number_format($rate->processing_fee_percentage, 2) }}%</td>
                                     <td class="px-4 py-3">{{ $rate->term_interest_percentage !== null ? number_format($rate->term_interest_percentage, 2).'%' : '—' }}</td>
-                                    <td class="px-4 py-3">{{ $rate->daily_rate !== null ? number_format($rate->daily_rate, 5) : '—' }}</td>
-                                    <td class="px-4 py-3">{{ $rate->weekly_rate !== null ? number_format($rate->weekly_rate, 5) : '—' }}</td>
+                                    @php
+                                        $displayDaily = $rowService->formatDisplayDailyRate($rate, $loanRateType);
+                                        $displayWeekly = $rowService->formatDisplayWeeklyRate($rate, $loanRateType);
+                                    @endphp
+                                    <td class="px-4 py-3" @if($displayDaily['approximate'] ?? false) title="Approximate from term % (tenure × {{ LoanRateRowService::PREVIEW_TERM_DAYS_PER_MONTH }} days)" @endif>
+                                        @if($displayDaily)
+                                            @if($displayDaily['approximate'])<span class="text-slate-400">~</span>@endif{{ $displayDaily['value'] }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3" @if($displayWeekly['approximate'] ?? false) title="Approximate from term % (tenure × {{ LoanRateRowService::PREVIEW_TERM_WEEKS_PER_MONTH }} weeks)" @endif>
+                                        @if($displayWeekly)
+                                            @if($displayWeekly['approximate'])<span class="text-slate-400">~</span>@endif{{ $displayWeekly['value'] }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3">{{ $rate->derived_daily_rate !== null ? number_format($rate->derived_daily_rate, 8) : '—' }}</td>
                                     <td class="px-4 py-3 text-xs">
                                         @if($rate->min_principal === null && $rate->max_principal === null)

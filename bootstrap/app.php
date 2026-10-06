@@ -29,12 +29,49 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
-        // Run daily loan interest accrual at 1:00 AM
+        $timezone = 'Africa/Lusaka';
+
         $schedule->command('loans:accrue-interest')
-            ->dailyAt('01:00')
-            ->timezone('Africa/Lusaka')
+            ->dailyAt('02:00')
+            ->timezone($timezone)
             ->withoutOverlapping()
             ->runInBackground();
+
+        $schedule->command('loans:refresh-schedule-aging')
+            ->dailyAt('01:00')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        $schedule->command('loans:sync-active-status')
+            ->dailyAt('00:30')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        $schedule->command('repayments:send-reminders')
+            ->dailyAt('09:00')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        $pollInterval = max(5, min(59, (int) config('legacy-parallel-run.poll_interval_minutes', 30)));
+
+        if (config('legacy-parallel-run.loan_polling_enabled')) {
+            $schedule->command('migration:poll-legacy-loans')
+                ->cron("*/{$pollInterval} * * * *")
+                ->timezone($timezone)
+                ->withoutOverlapping()
+                ->runInBackground();
+        }
+
+        if (config('legacy-parallel-run.repayment_polling_enabled')) {
+            $schedule->command('migration:poll-legacy-repayments')
+                ->cron("*/{$pollInterval} * * * *")
+                ->timezone($timezone)
+                ->withoutOverlapping()
+                ->runInBackground();
+        }
 
         $schedule->call(function () {
             app(\App\PaymentPlatform\Services\GatewayPollingService::class)->dispatchDueAttempts();

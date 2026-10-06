@@ -11,7 +11,32 @@
         $phases = $summary['phases'] ?? [];
         $repayments = $summary['repayments'] ?? [];
         $attention = $summary['attention'] ?? [];
+        $parallel = $summary['parallel_run'] ?? [];
+        $pendingLoans = (int) ($parallel['pending_loans'] ?? 0);
+        $pendingRepayments = (int) ($parallel['pending_repayments'] ?? 0);
     @endphp
+
+    @if($pendingLoans > 0 || $pendingRepayments > 0)
+        <div class="mb-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-4 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="font-semibold text-amber-950">Parallel-run sync queue</p>
+                    <p class="text-sm text-amber-900">
+                        @if($pendingLoans > 0)
+                            <strong>{{ number_format($pendingLoans) }}</strong> new legacy loan(s) need import review.
+                        @endif
+                        @if($pendingRepayments > 0)
+                            @if($pendingLoans > 0) · @endif
+                            <strong>{{ number_format($pendingRepayments) }}</strong> legacy repayment(s) pending sync.
+                        @endif
+                    </p>
+                </div>
+                <a href="{{ route('legacy.migration-dashboard.loans.pending') }}" class="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
+                    Review pending loans
+                </a>
+            </div>
+        </div>
+    @endif
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-2xl border bg-white p-4 shadow-sm">

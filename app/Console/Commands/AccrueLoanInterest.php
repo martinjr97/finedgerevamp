@@ -13,7 +13,11 @@ class AccrueLoanInterest extends Command
      *
      * @var string
      */
-    protected $signature = 'loans:accrue-interest {--date=}';
+    protected $signature = 'loans:accrue-interest
+        {--date= : Single accrual date (Y-m-d)}
+        {--loan-id= : Limit to one loan}
+        {--from= : Catch-up start date (Y-m-d, inclusive)}
+        {--to= : Catch-up end date (Y-m-d, inclusive; defaults to yesterday)}';
 
     /**
      * The console command description.
@@ -27,49 +31,105 @@ class AccrueLoanInterest extends Command
      */
     public function handle()
     {
-        $date = $this->option('date') 
-            ? Carbon::parse($this->option('date')) 
+        if ($this->option('from')) {
+            return $this->handleCatchUpRange();
+        }
+
+        $date = $this->option('date')
+            ? Carbon::parse($this->option('date'))
             : Carbon::today();
 
+        $loans = $this->eligibleLoans($date);
         $this->info("Processing interest accrual for date: {$date->format('Y-m-d')}");
-
-        // Get all active loans with daily accrual type
-        $loans = Loan::where('accrual_type', 'daily')
-            ->where('status', 'active')
-            ->whereDate('loan_start_date', '<=', $date)
-            ->whereDate('loan_end_date', '>=', $date)
-            ->get();
-
         $this->info("Found {$loans->count()} active loans with daily accrual type");
 
+        [$processed, $skipped] = $this->accrueLoansForDate($loans, $date);
+
+        $this->info("\nCompleted: {$processed} loans processed, {$skipped} skipped");
+
+        return Command::SUCCESS;
+    }
+
+    private function handleCatchUpRange(): int
+    {
+        $from = Carbon::parse($this->option('from'))->startOfDay();
+        $to = $this->option('to')
+            ? Carbon::parse($this->option('to'))->startOfDay()
+            : Carbon::yesterday()->startOfDay();
+
+        if ($from->gt($to)) {
+            $this->error('--from must be on or before --to');
+
+            return Command::FAILURE;
+        }
+
+        $totalProcessed = 0;
+        $totalSkipped = 0;
+
+        for ($date = $from->copy(); $date->lte($to); $date->addDay()) {
+            $loans = $this->eligibleLoans($date);
+            [$processed, $skipped] = $this->accrueLoansForDate($loans, $date, quiet: true);
+            $totalProcessed += $processed;
+            $totalSkipped += $skipped;
+        }
+
+        $this->info("Catch-up complete from {$from->toDateString()} to {$to->toDateString()}: {$totalProcessed} accruals created, {$totalSkipped} skipped.");
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, Loan>
+     */
+    private function eligibleLoans(Carbon $date)
+    {
+        $query = Loan::query()
+            ->where('accrual_type', 'daily')
+            ->where('status', 'active')
+            ->whereDate('loan_start_date', '<=', $date)
+            ->where(function ($q) use ($date) {
+                $q->whereNull('loan_end_date')->orWhereDate('loan_end_date', '>=', $date);
+            });
+
+        if ($this->option('loan-id')) {
+            $query->where('id', (int) $this->option('loan-id'));
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, Loan>  $loans
+     * @return array{0: int, 1: int}
+     */
+    private function accrueLoansForDate($loans, Carbon $date, bool $quiet = false): array
+    {
         $processed = 0;
         $skipped = 0;
 
         foreach ($loans as $loan) {
             try {
-                // Check if accrual already exists for this date
                 $existingAccrual = $loan->accruals()
                     ->whereDate('accrual_date', $date)
                     ->first();
 
                 if ($existingAccrual) {
-                    $this->warn("Loan {$loan->loan_number} already has accrual for {$date->format('Y-m-d')}");
                     $skipped++;
+
                     continue;
                 }
 
-                // Accrue interest for this date
                 $loan->accrueInterestForDate($date);
                 $processed++;
 
-                $this->info("✓ Processed loan {$loan->loan_number}");
+                if (! $quiet) {
+                    $this->info("✓ Processed loan {$loan->loan_number}");
+                }
             } catch (\Exception $e) {
                 $this->error("✗ Failed to process loan {$loan->loan_number}: {$e->getMessage()}");
             }
         }
 
-        $this->info("\nCompleted: {$processed} loans processed, {$skipped} skipped");
-        
-        return Command::SUCCESS;
+        return [$processed, $skipped];
     }
 }

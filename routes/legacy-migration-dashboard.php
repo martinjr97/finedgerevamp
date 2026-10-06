@@ -22,6 +22,14 @@ Route::middleware(['auth:admin', 'password.changed', 'legacy.migration.dashboard
         Route::post('/identity/resolve', [LegacyMigrationDashboardController::class, 'storeIdentityResolution'])
             ->middleware('migration.manage')
             ->name('identity.store');
+        Route::get('/loans/pending', [LegacyMigrationDashboardController::class, 'pendingLoans'])->name('loans.pending');
+        Route::get('/loans/pending/{legacyLoanId}', [LegacyMigrationDashboardController::class, 'showPendingLoan'])->name('loans.pending.show');
+        Route::post('/loans/pending/{legacyLoanId}/import', [LegacyMigrationDashboardController::class, 'importPendingLoan'])
+            ->middleware('migration.manage')
+            ->name('loans.pending.import');
+        Route::post('/loans/pending/{legacyLoanId}/dismiss', [LegacyMigrationDashboardController::class, 'dismissPendingLoan'])
+            ->middleware('migration.manage')
+            ->name('loans.pending.dismiss');
         Route::get('/loans', [LegacyMigrationDashboardController::class, 'loans'])->name('loans.index');
         Route::get('/loans/{legacyLoanId}', [LegacyMigrationDashboardController::class, 'showLoan'])->name('loans.show');
         Route::get('/repayments', [LegacyMigrationDashboardController::class, 'repayments'])->name('repayments.index');

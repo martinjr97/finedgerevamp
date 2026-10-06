@@ -27,14 +27,25 @@ class RepaymentMigrator
     /**
      * @return array<string, mixed>
      */
-    public function run(bool $promote = false, ?int $legacyUserId = null, ?string $runUuid = null): array
-    {
+    /**
+     * @param  list<int>|null  $legacyRepaymentIds
+     * @return array<string, mixed>
+     */
+    public function run(
+        bool $promote = false,
+        ?int $legacyUserId = null,
+        ?string $runUuid = null,
+        ?int $replayRunId = null,
+        ?array $legacyRepaymentIds = null,
+    ): array {
         if ($promote && ! $this->gate->hasAnyLoanMaps()) {
             throw new \RuntimeException('No loan mappings found. Run migration:active-loans --promote first.');
         }
 
-        $replaySummary = $this->replayService->dryRun(null, null);
-        $replayRunId = (int) $replaySummary['migration_run_id'];
+        if ($replayRunId === null) {
+            $replaySummary = $this->replayService->dryRun(null, null, $legacyUserId ? [$legacyUserId] : null);
+            $replayRunId = (int) $replaySummary['migration_run_id'];
+        }
 
         $run = $this->runManager->start('m2-repayments', $legacyUserId ? 'single' : 'active-portfolio', $runUuid);
         $runId = $run['id'];
@@ -48,6 +59,7 @@ class RepaymentMigrator
         $repayments = DB::table('migration_repayments')
             ->where('migration_run_id', $replayRunId)
             ->when($legacyUserId, fn ($q) => $q->where('legacy_user_id', $legacyUserId))
+            ->when($legacyRepaymentIds, fn ($q) => $q->whereIn('legacy_repayment_id', $legacyRepaymentIds))
             ->get();
 
         $stats = [

@@ -214,6 +214,14 @@
                         Issue Refund
                     </button>
                 @endif
+                <button type="button"
+                        onclick="openLoanStatementModal()"
+                        class="inline-flex items-center gap-2 rounded-2xl border border-teal-300/40 bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-3 font-semibold text-white shadow-lg shadow-teal-500/30 hover:from-teal-700 hover:to-cyan-700 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Loan Statement
+                </button>
                 @if ($hasRepaymentSchedule)
                     <button type="button"
                             onclick="openRepaymentScheduleModal()"
@@ -1572,6 +1580,8 @@
 
         @include('admin.loans.partials.settlement-panel')
 
+        @include('admin.loans.partials.loan-statement-modal')
+
         {{-- Repayment Schedule Modal --}}
         @if ($hasRepaymentSchedule)
             <div id="repaymentScheduleModal"
@@ -1746,13 +1756,13 @@
                 <div class="overflow-x-auto">
                     <table class="min-w-full w-full text-sm text-slate-300">
                         <thead>
-                            <tr class="text-sm font-semibold uppercase tracking-[0.25em] text-center border-b-2 border-cyan-500/30 bg-gradient-to-r from-cyan-500/20 to-blue-500/20">
-                                <th class="px-4 py-4 text-base text-white font-bold">Accrual Date</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Principal Balance</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Daily Interest</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Cumulative Interest</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Total Balance</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Rate Used (%)</th>
+                            <tr class="bg-slate-100 text-center text-sm font-semibold uppercase tracking-[0.2em] border-b border-slate-300">
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Accrual Date</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Principal Balance</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Daily Interest</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Cumulative Interest</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Total Balance</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Rate Used (%)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1779,20 +1789,20 @@
                 <div class="overflow-x-auto">
                     <table class="min-w-full w-full text-sm text-slate-300">
                         <thead>
-                            <tr class="text-sm font-semibold uppercase tracking-[0.25em] text-center border-b-2 border-cyan-500/30 bg-gradient-to-r from-cyan-500/20 to-blue-500/20">
-                                <th class="px-4 py-4 text-base text-white font-bold">Repayment #</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Type</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Recovery Method</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Date</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Amount</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Principal</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Interest</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Processing Fee</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Balance Before</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Balance After</th>
-                                <th class="px-4 py-4 text-base text-white font-bold">Reference</th>
+                            <tr class="bg-slate-100 text-center text-sm font-semibold uppercase tracking-[0.2em] border-b border-slate-300">
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Repayment #</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Type</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Recovery Method</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Date</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Amount</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Principal</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Interest</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Processing Fee</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Balance Before</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Balance After</th>
+                                <th class="px-4 py-4 text-base text-slate-800 font-bold">Reference</th>
                                 @if ($canRefundRepayments)
-                                    <th class="px-4 py-4 text-base text-white font-bold">Actions</th>
+                                    <th class="px-4 py-4 text-base text-slate-800 font-bold">Actions</th>
                                 @endif
                             </tr>
                         </thead>

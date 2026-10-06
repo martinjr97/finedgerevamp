@@ -9,8 +9,10 @@ use App\Migration\Dashboard\MigrationCommandsGuide;
 use App\Migration\Dashboard\MigrationDashboardService;
 use App\Migration\Dashboard\MigrationExceptionReportService;
 use App\Migration\Dashboard\MigrationMappingReportService;
+use App\Migration\Dashboard\MigrationParallelRunReportService;
 use App\Migration\Dashboard\MigrationReconciliationReportService;
 use App\Migration\Dashboard\MigrationRunReportService;
+use App\Migration\ParallelRun\ParallelRunLoanImportService;
 use App\Migration\Phases\MigrationEntityMapRepository;
 use App\Migration\RepaymentAttributionService;
 use Illuminate\Http\RedirectResponse;
@@ -184,6 +186,60 @@ class LegacyMigrationDashboardController extends Controller
             'legacyLoanId' => $legacyLoanId,
             'detail' => $detail,
         ]);
+    }
+
+    public function pendingLoans(Request $request, MigrationParallelRunReportService $parallelRun): View
+    {
+        return view('legacy.migration-dashboard.loans.pending', [
+            'loans' => $parallelRun->paginatePendingLoans($request->only(['status', 'search'])),
+            'summary' => $parallelRun->summary(),
+            'filters' => $request->only(['status', 'search']),
+            'canManage' => auth('admin')->user()?->can('migration.manage') ?? false,
+        ]);
+    }
+
+    public function showPendingLoan(int $legacyLoanId, MigrationParallelRunReportService $parallelRun): View
+    {
+        $detail = $parallelRun->pendingLoanDetail($legacyLoanId);
+        abort_if($detail === null, 404);
+
+        return view('legacy.migration-dashboard.loans.pending-show', [
+            'legacyLoanId' => $legacyLoanId,
+            'detail' => $detail,
+            'canManage' => auth('admin')->user()?->can('migration.manage') ?? false,
+        ]);
+    }
+
+    public function importPendingLoan(int $legacyLoanId, ParallelRunLoanImportService $importService): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('migration.manage'), 403);
+
+        try {
+            $result = $importService->importConfirmed($legacyLoanId, (int) auth('admin')->id());
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('legacy.migration-dashboard.loans.pending.show', $legacyLoanId)
+                ->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('legacy.migration-dashboard.loans.show', $legacyLoanId)
+            ->with('status', "Legacy loan {$legacyLoanId} imported as target loan #{$result['target_loan_id']}. Repayments synced; {$result['accrual_days_caught_up']} accrual day(s) caught up.");
+    }
+
+    public function dismissPendingLoan(Request $request, int $legacyLoanId, ParallelRunLoanImportService $importService): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('migration.manage'), 403);
+
+        $validated = $request->validate([
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $importService->dismiss($legacyLoanId, (int) auth('admin')->id(), $validated['notes'] ?? null);
+
+        return redirect()
+            ->route('legacy.migration-dashboard.loans.pending')
+            ->with('status', "Legacy loan {$legacyLoanId} dismissed from import queue.");
     }
 
     public function repayments(Request $request, MigrationReconciliationReportService $reports, MigrationExceptionReportService $exceptions, MigrationDashboardService $dashboard): View

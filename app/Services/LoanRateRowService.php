@@ -9,12 +9,15 @@ use Illuminate\Validation\Rule;
 /**
  * Validates and prepares loan rate rows for forms and import.
  *
- * Preview term days for derived_daily_rate on rate rows use tenure_months × 30.
+ * Preview approximations on rate rows use tenure_months × 30 days / × 4 weeks (display only).
+ * Stored derived_daily_rate uses the same 30-day preview for daily_accrual term-% rows.
  * Actual loan quotes use LoanPricingService::calculateTermDays(start_date, tenure_months).
  */
 class LoanRateRowService
 {
     public const PREVIEW_TERM_DAYS_PER_MONTH = 30;
+
+    public const PREVIEW_TERM_WEEKS_PER_MONTH = 4;
 
     public function __construct(
         private readonly LoanPricingService $pricing,
@@ -182,6 +185,91 @@ class LoanRateRowService
     public function previewTermDays(int $tenureMonths): int
     {
         return max(1, $tenureMonths * self::PREVIEW_TERM_DAYS_PER_MONTH);
+    }
+
+    public function previewTermWeeks(int $tenureMonths): int
+    {
+        return max(1, $tenureMonths * self::PREVIEW_TERM_WEEKS_PER_MONTH);
+    }
+
+    /**
+     * Display-only approximate daily multiplier from term % (tenure × 30 days).
+     * Not used for loan pricing or accrual.
+     */
+    public function previewApproximateDailyRateFromTerm(float|int|string $termInterestPercentage, int $tenureMonths): string
+    {
+        return $this->pricing->calculateDerivedDailyRateFromTerm(
+            $termInterestPercentage,
+            $this->previewTermDays($tenureMonths)
+        );
+    }
+
+    /**
+     * Display-only approximate weekly multiplier from term % (tenure × 4 weeks).
+     * Not used for loan pricing or accrual.
+     */
+    public function previewApproximateWeeklyRateFromTerm(float|int|string $termInterestPercentage, int $tenureMonths): string
+    {
+        return $this->pricing->calculateDerivedDailyRateFromTerm(
+            $termInterestPercentage,
+            $this->previewTermWeeks($tenureMonths)
+        );
+    }
+
+    /**
+     * @return array{value: string, approximate: bool}|null
+     */
+    public function formatDisplayDailyRate(LoanRate $rate, LoanRateType $rateType): ?array
+    {
+        if ($rate->daily_rate !== null) {
+            return [
+                'value' => number_format((float) $rate->daily_rate, 5),
+                'approximate' => false,
+            ];
+        }
+
+        if ($this->resolveRateInputMode($rateType) !== LoanRateType::RATE_INPUT_TERM_PERCENTAGE
+            || $rate->term_interest_percentage === null) {
+            return null;
+        }
+
+        $raw = $rate->derived_daily_rate !== null
+            ? (string) $rate->derived_daily_rate
+            : $this->previewApproximateDailyRateFromTerm($rate->term_interest_percentage, (int) $rate->tenure_months);
+
+        return [
+            'value' => number_format((float) $raw, 5),
+            'approximate' => true,
+        ];
+    }
+
+    /**
+     * @return array{value: string, approximate: bool}|null
+     */
+    public function formatDisplayWeeklyRate(LoanRate $rate, LoanRateType $rateType): ?array
+    {
+        if ($rate->weekly_rate !== null) {
+            return [
+                'value' => number_format((float) $rate->weekly_rate, 5),
+                'approximate' => false,
+            ];
+        }
+
+        if ($this->resolveRateInputMode($rateType) !== LoanRateType::RATE_INPUT_TERM_PERCENTAGE
+            || $rate->term_interest_percentage === null) {
+            return null;
+        }
+
+        return [
+            'value' => number_format(
+                (float) $this->previewApproximateWeeklyRateFromTerm(
+                    $rate->term_interest_percentage,
+                    (int) $rate->tenure_months
+                ),
+                5
+            ),
+            'approximate' => true,
+        ];
     }
 
     public function resolveRateInputMode(LoanRateType $rateType): string

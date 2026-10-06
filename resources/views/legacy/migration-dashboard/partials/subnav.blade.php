@@ -7,6 +7,7 @@
         ['label' => 'Marketeers', 'route' => 'legacy.migration-dashboard.marketeers.index'],
         ['label' => 'Customers', 'route' => 'legacy.migration-dashboard.customers.index'],
         ['label' => 'Identity', 'route' => 'legacy.migration-dashboard.identity.index'],
+        ['label' => 'Pending Loans', 'route' => 'legacy.migration-dashboard.loans.pending'],
         ['label' => 'Loans', 'route' => 'legacy.migration-dashboard.loans.index'],
         ['label' => 'Repayments', 'route' => 'legacy.migration-dashboard.repayments.index'],
         ['label' => 'Exceptions', 'route' => 'legacy.migration-dashboard.exceptions.index'],

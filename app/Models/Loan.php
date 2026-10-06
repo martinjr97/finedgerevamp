@@ -840,6 +840,102 @@ class Loan extends Model
     }
 
     /**
+     * Plain-language cost breakdown for the admin loan statement modal.
+     *
+     * @return array{
+     *     principal: float,
+     *     processing_fee: float,
+     *     interest_mode: string,
+     *     interest_mode_label: string,
+     *     is_daily_accrual: bool,
+     *     interest_accrued_to_date: float,
+     *     interest_full_term: float,
+     *     interest_remaining: float,
+     *     booked_at_origination: float,
+     *     total_if_held_to_term: float,
+     * }
+     */
+    public function getSimpleStatementSummary(): array
+    {
+        $plan = $this->getSchedulePlan();
+        $principal = (float) $plan['principal'];
+        $processingFee = (float) $plan['processing_fee'];
+        $isDailyAccrual = $this->showsDailyAccrualDisclosure();
+
+        $accruedToDate = (float) $this->interest_accrued;
+        $latestAccrual = $this->relationLoaded('accruals')
+            ? $this->accruals->sortByDesc('accrual_date')->first()
+            : $this->accruals()->latest('accrual_date')->first();
+
+        if ($latestAccrual) {
+            $accruedToDate = (float) $latestAccrual->cumulative_interest;
+        }
+
+        if ($isDailyAccrual) {
+            $fullTermInterest = $this->resolveFullTermProjectedInterest();
+            $remainingInterest = max(0, round($fullTermInterest - $accruedToDate, 2));
+            $bookedAtOrigination = round($principal + $processingFee, 2);
+        } else {
+            $fullTermInterest = (float) $plan['interest'];
+            $accruedToDate = $fullTermInterest;
+            $remainingInterest = 0.0;
+            $bookedAtOrigination = round($principal + $processingFee + $fullTermInterest, 2);
+        }
+
+        return [
+            'principal' => $principal,
+            'processing_fee' => $processingFee,
+            'interest_mode' => $isDailyAccrual ? 'daily_accrual' : 'booked',
+            'interest_mode_label' => $this->getInterestBehaviorLabel(),
+            'is_daily_accrual' => $isDailyAccrual,
+            'interest_accrued_to_date' => round($accruedToDate, 2),
+            'interest_full_term' => round($fullTermInterest, 2),
+            'interest_remaining' => round($remainingInterest, 2),
+            'booked_at_origination' => $bookedAtOrigination,
+            'total_if_held_to_term' => round($principal + $processingFee + $fullTermInterest, 2),
+        ];
+    }
+
+    /**
+     * Projected interest over the full loan term (daily accrual disclosure).
+     */
+    public function resolveFullTermProjectedInterest(): float
+    {
+        $fromMeta = data_get($this->metadata, 'projected_interest');
+        if ($fromMeta !== null && (float) $fromMeta > 0) {
+            return (float) $fromMeta;
+        }
+
+        $planInterest = (float) $this->getSchedulePlan()['interest'];
+        if ($planInterest > 0) {
+            return $planInterest;
+        }
+
+        if (! $this->loan_start_date || ! $this->loan_end_date) {
+            return (float) $this->interest_accrued;
+        }
+
+        $accrualPeriod = $this->accrual_period ?? ($this->loanRate?->loanRateType?->accrual_period ?? 'daily');
+        $days = max(0, $this->loan_start_date->diffInDays($this->loan_end_date));
+
+        if ($accrualPeriod === 'weekly') {
+            $weeklyRate = (float) ($this->weekly_rate ?? $this->loanRate?->weekly_rate ?? 0);
+            if ($weeklyRate > 0) {
+                $weeks = (int) ceil($days / 7);
+
+                return round((float) $this->principal_amount * $weeklyRate * $weeks, 2);
+            }
+        }
+
+        $dailyInterest = $this->calculateDailyInterest();
+        if ($dailyInterest > 0 && $days > 0) {
+            return round($dailyInterest * $days, 2);
+        }
+
+        return (float) $this->interest_accrued;
+    }
+
+    /**
      * Get the monthly payment amount (based on schedule expected total, not booked balance).
      */
     public function getMonthlyPayment(): float

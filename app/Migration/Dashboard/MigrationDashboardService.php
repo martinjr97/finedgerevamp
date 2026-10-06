@@ -16,6 +16,7 @@ class MigrationDashboardService
     public function __construct(
         private readonly MigrationStatusService $statusService,
         private readonly MigrationReconciliationReportService $reconciliationReport,
+        private readonly MigrationParallelRunReportService $parallelRunReport,
     ) {}
 
     /**
@@ -49,6 +50,7 @@ class MigrationDashboardService
             'repayments' => $repaymentStats,
             'reconciliation' => $this->reconciliationReport->summary(),
             'attention' => $this->attentionCounts(),
+            'parallel_run' => $this->parallelRunReport->summary(),
             'latest_runs' => $status['latest_runs'] ?? collect(),
         ];
     }
@@ -130,7 +132,11 @@ class MigrationDashboardService
      */
     public function attentionCounts(): array
     {
+        $parallel = $this->parallelRunReport->summary();
+
         return [
+            'pending_legacy_loans' => (int) ($parallel['pending_loans'] ?? 0),
+            'pending_legacy_repayments' => (int) ($parallel['pending_repayments'] ?? 0),
             'customer_manual_review' => (int) DB::table('migration_customers')->where('migration_status', 'manual_review')->count(),
             'loan_manual_review' => (int) DB::table('migration_loans')->where('migration_status', 'manual_review')->count(),
             'company_manual_review' => (int) DB::table('migration_companies')->where('migration_status', 'manual_review')->count(),

@@ -54,6 +54,8 @@ auth:admin → password.changed → legacy.migration.dashboard → migration.vie
 | `/legacy/migration-dashboard/customers` | Customer staging rows |
 | `/legacy/migration-dashboard/customers/{legacyUserId}` | Customer audit detail |
 | `/legacy/migration-dashboard/identity` | Approved NRC alias resolutions |
+| `/legacy/migration-dashboard/loans/pending` | Parallel-run inbox — new legacy loans awaiting confirm import |
+| `/legacy/migration-dashboard/loans/pending/{legacyLoanId}` | Review + confirm import (requires `migration.manage`) |
 | `/legacy/migration-dashboard/loans` | Active loan migration / replay |
 | `/legacy/migration-dashboard/loans/{legacyLoanId}` | Loan detail |
 | `/legacy/migration-dashboard/repayments` | Repayment attribution |

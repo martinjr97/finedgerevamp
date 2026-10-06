@@ -8,16 +8,23 @@
             ? LoanRateType::RATE_INPUT_WEEKLY_MULTIPLIER
             : LoanRateType::RATE_INPUT_DAILY_MULTIPLIER);
     $interestBehavior = $loanRateType->interest_behavior ?? LoanRateType::INTEREST_BEHAVIOR_DAILY_ACCRUAL;
-    $previewTermDays = app(LoanRateRowService::class)->previewTermDays((int) old('tenure_months', $loanRate?->tenure_months ?? 1));
+    $rowService = app(LoanRateRowService::class);
+    $previewTenure = (int) old('tenure_months', $loanRate?->tenure_months ?? 1);
     $derivedPreview = null;
-    if ($rateInputMode === LoanRateType::RATE_INPUT_TERM_PERCENTAGE
-        && $interestBehavior === LoanRateType::INTEREST_BEHAVIOR_DAILY_ACCRUAL) {
+    $weeklyPreview = null;
+    if ($rateInputMode === LoanRateType::RATE_INPUT_TERM_PERCENTAGE) {
         $termPct = old('term_interest_percentage', $loanRate?->term_interest_percentage);
         if ($termPct !== null && $termPct !== '') {
-            $derivedPreview = app(\App\Services\LoanPricingService::class)
-                ->calculateDerivedDailyRateFromTerm((float) $termPct, $previewTermDays);
+            $derivedPreview = $rowService->previewApproximateDailyRateFromTerm((float) $termPct, $previewTenure);
+            $weeklyPreview = $rowService->previewApproximateWeeklyRateFromTerm((float) $termPct, $previewTenure);
         } elseif ($loanRate?->derived_daily_rate !== null) {
             $derivedPreview = $loanRate->derived_daily_rate;
+        }
+        if ($weeklyPreview === null && $loanRate?->term_interest_percentage !== null) {
+            $weeklyPreview = $rowService->previewApproximateWeeklyRateFromTerm(
+                (float) $loanRate->term_interest_percentage,
+                $previewTenure
+            );
         }
     }
 @endphp
@@ -29,19 +36,25 @@
         tenure: @js((int) old('tenure_months', $loanRate?->tenure_months ?? 1)),
         termPct: @js(old('term_interest_percentage', $loanRate?->term_interest_percentage ?? '')),
         previewDaysPerMonth: {{ LoanRateRowService::PREVIEW_TERM_DAYS_PER_MONTH }},
+        previewWeeksPerMonth: {{ LoanRateRowService::PREVIEW_TERM_WEEKS_PER_MONTH }},
         derivedPreview: @js($derivedPreview),
+        weeklyPreview: @js($weeklyPreview),
         updateDerived() {
-            if (this.mode !== 'term_percentage' || this.behavior !== 'daily_accrual') {
+            if (this.mode !== 'term_percentage') {
                 this.derivedPreview = null;
+                this.weeklyPreview = null;
                 return;
             }
             const pct = parseFloat(this.termPct);
             const tenure = parseInt(this.tenure, 10) || 1;
             const termDays = Math.max(1, tenure * this.previewDaysPerMonth);
+            const termWeeks = Math.max(1, tenure * this.previewWeeksPerMonth);
             if (!isNaN(pct) && pct >= 0) {
                 this.derivedPreview = ((pct / 100) / termDays).toFixed(8);
+                this.weeklyPreview = ((pct / 100) / termWeeks).toFixed(8);
             } else {
                 this.derivedPreview = null;
+                this.weeklyPreview = null;
             }
         }
     }"
@@ -88,11 +101,19 @@
             @enderror
         </div>
 
-        <div x-show="mode === 'term_percentage' && behavior === 'daily_accrual'" x-cloak>
-            <label class="text-sm font-medium {{ $labelClass }}">Derived Daily Rate (preview)</label>
+        <div x-show="mode === 'term_percentage'" x-cloak>
+            <label class="text-sm font-medium {{ $labelClass }}">Approx. Daily Rate (preview)</label>
             <input type="text" readonly class="mt-2 w-full rounded-2xl {{ $inputClass }} text-slate-300 px-4 py-3 opacity-80" :value="derivedPreview ?? '—'">
             <p class="mt-1 text-xs {{ $helpClass }}">
-                Preview uses tenure × {{ LoanRateRowService::PREVIEW_TERM_DAYS_PER_MONTH }} days. Loan quotes use calendar months.
+                Display only: term % ÷ (tenure × {{ LoanRateRowService::PREVIEW_TERM_DAYS_PER_MONTH }} days). Loan quotes use calendar months.
+            </p>
+        </div>
+
+        <div x-show="mode === 'term_percentage'" x-cloak>
+            <label class="text-sm font-medium {{ $labelClass }}">Approx. Weekly Rate (preview)</label>
+            <input type="text" readonly class="mt-2 w-full rounded-2xl {{ $inputClass }} text-slate-300 px-4 py-3 opacity-80" :value="weeklyPreview ?? '—'">
+            <p class="mt-1 text-xs {{ $helpClass }}">
+                Display only: term % ÷ (tenure × {{ LoanRateRowService::PREVIEW_TERM_WEEKS_PER_MONTH }} weeks). Not used for loan pricing.
             </p>
         </div>
 

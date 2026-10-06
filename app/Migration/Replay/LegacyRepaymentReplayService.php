@@ -28,9 +28,10 @@ class LegacyRepaymentReplayService
 
     /**
      * @param  list<int>|null  $activeLoanIds  limit to specific legacy loan ids
+     * @param  list<int>|null  $legacyUserIds  limit to specific legacy user ids (parallel-run incremental replay)
      * @return array<string, mixed>
      */
-    public function dryRun(?array $activeLoanIds = null, ?string $productFilter = null): array
+    public function dryRun(?array $activeLoanIds = null, ?string $productFilter = null, ?array $legacyUserIds = null): array
     {
         LegacyConnection::configureFromLegacyEnvFile();
         $db = LegacyConnection::connection();
@@ -39,13 +40,20 @@ class LegacyRepaymentReplayService
         if ($activeLoanIds) {
             $activeLoansQuery->whereIn('id', $activeLoanIds);
         }
+        if ($legacyUserIds) {
+            $activeLoansQuery->whereIn('user_id', $legacyUserIds);
+        }
         $activeLoans = $activeLoansQuery->get()->map(fn ($r) => (array) $r);
-        $userIds = $activeLoans->pluck('user_id')->unique()->values()->all();
+        $userIds = $legacyUserIds
+            ? array_values(array_unique(array_map('intval', $legacyUserIds)))
+            : $activeLoans->pluck('user_id')->unique()->values()->all();
+
+        $scope = $activeLoanIds ? 'subset' : ($legacyUserIds ? 'users-'.count($userIds) : 'active-752');
 
         $runId = DB::table('migration_runs')->insertGetId([
             'name' => 'm1-replay-dry-run-'.now()->format('Ymd-His'),
             'phase' => 'm1.1',
-            'scope' => $activeLoanIds ? 'subset' : 'active-752',
+            'scope' => $scope,
             'status' => 'running',
             'started_at' => now(),
             'created_at' => now(),

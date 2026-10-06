@@ -5,6 +5,7 @@ namespace App\Migration\Phases;
 use App\Migration\LegacyConnection;
 use App\Migration\LegacyLoanBalanceCalculator;
 use App\Migration\LegacyProductMapper;
+use App\Migration\Phases\Support\MigratedLoanAccrualAttributes;
 use App\Migration\Phases\Support\MigratedLoanAttributes;
 use App\Models\Loan;
 use App\Models\LoanProduct;
@@ -160,7 +161,9 @@ class ActiveLoanMigrator
             $firstPaymentDate = MigratedLoanAttributes::resolveFirstPaymentDate($loan, $productMap['code']);
             $disbursedAt = MigratedLoanAttributes::resolveDisbursedAt($loan);
 
-            $target = Loan::create([
+            $accrualFields = MigratedLoanAccrualAttributes::resolve($loan, $loanProduct);
+
+            $target = Loan::create(array_merge([
                 'customer_id' => $customerId,
                 'loan_product_id' => $loanProduct->id,
                 'loan_number' => $loanNumber,
@@ -182,7 +185,7 @@ class ActiveLoanMigrator
                     'migration_cohort' => $cohort,
                     'repayment_structure' => MigratedLoanAttributes::repaymentStructureForProduct($productMap['code']),
                 ],
-            ]);
+            ], $accrualFields));
 
             $target->createPaymentSchedule();
 
