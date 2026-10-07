@@ -42,11 +42,6 @@
         </div>
     @endif
 
-    @include('legacy.migration-dashboard.partials.treasury-cutover', [
-        'summary' => $summary,
-        'canManage' => $canManage ?? false,
-    ])
-
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-2xl border bg-white p-4 shadow-sm">
             <p class="text-xs uppercase tracking-wide text-slate-500">True Customers</p>
@@ -148,4 +143,9 @@
             </div>
         </div>
     @endif
+
+    @include('legacy.migration-dashboard.partials.treasury-cutover', [
+        'summary' => $summary,
+        'canManage' => $canManage ?? false,
+    ])
 @endsection
