@@ -103,6 +103,60 @@ class ParallelRunMigrationTest extends TestCase
             ->assertSee('9002');
     }
 
+    public function test_pending_loan_review_page_shows_import_comparison(): void
+    {
+        $repo = app(MigrationLoanInboxRepository::class);
+        $repo->upsertDetected(9010, 510, [
+            'id' => 9010,
+            'user_id' => 510,
+            'status_code' => '301',
+            'obtained_amount' => 5000,
+            'loan_amount' => 6390,
+            'repaid_amount' => 0,
+            'payment_period' => 1,
+            'created_at' => '2026-10-01 09:15:00',
+            'due_date' => '2026-11-01',
+            'salary_based' => 0,
+            'gvnt_loan' => 0,
+        ]);
+
+        $this->actingAs($this->superAdmin(), 'admin')
+            ->get(route('legacy.migration-dashboard.loans.pending.show', 9010))
+            ->assertOk()
+            ->assertSee('Field comparison')
+            ->assertSee('Legacy (source)')
+            ->assertSee('Revamp (after import)')
+            ->assertSee('LEG-9010');
+    }
+
+    public function test_migration_home_shows_treasury_cutover_section(): void
+    {
+        $this->actingAs($this->superAdmin(), 'admin')
+            ->get(route('legacy.migration-dashboard.index'))
+            ->assertOk()
+            ->assertSee('Treasury cutover balances')
+            ->assertSee('Set current balances from opening');
+    }
+
+    public function test_treasury_cutover_sync_updates_current_balance(): void
+    {
+        \App\Models\Wallet::create([
+            'name' => 'Dashboard Cutover Wallet',
+            'wallet_number' => 'W-CUTOVER-1',
+            'opening_balance' => 12000,
+            'current_balance' => 0,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->superAdmin(), 'admin')
+            ->post(route('legacy.migration-dashboard.treasury.sync-current-balances'))
+            ->assertRedirect(route('legacy.migration-dashboard.index'))
+            ->assertSessionHas('status');
+
+        $wallet = \App\Models\Wallet::query()->where('wallet_number', 'W-CUTOVER-1')->first();
+        $this->assertEqualsWithDelta(12000.0, (float) $wallet->current_balance, 0.01);
+    }
+
     public function test_migration_home_shows_parallel_run_alert(): void
     {
         app(MigrationLoanInboxRepository::class)->upsertDetected(9003, 502, [
@@ -154,6 +208,7 @@ class ParallelRunMigrationTest extends TestCase
         $this->artisan('migration:poll-legacy-loans')->assertSuccessful();
         $this->artisan('migration:poll-legacy-repayments', ['--no-sync' => true])->assertSuccessful();
         $this->artisan('migration:sync-legacy-repayments')->assertSuccessful();
+        $this->artisan('migration:poll-legacy-expenses', ['--no-sync' => true])->assertSuccessful();
         $this->artisan('loans:refresh-schedule-aging')->assertSuccessful();
         $this->artisan('loans:accrue-interest', [
             '--from' => '2026-10-01',

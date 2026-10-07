@@ -3,9 +3,11 @@
 namespace App\Migration\Dashboard;
 
 use App\Migration\LegacyConnection;
+use App\Migration\ParallelRun\MigrationExpenseInboxRepository;
 use App\Migration\ParallelRun\MigrationLoanInboxRepository;
 use App\Migration\ParallelRun\MigrationRepaymentInboxRepository;
 use App\Migration\ParallelRun\MigrationSyncState;
+use App\Migration\ParallelRun\PendingLoanImportPreviewService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +16,9 @@ class MigrationParallelRunReportService
     public function __construct(
         private readonly MigrationLoanInboxRepository $loanInbox,
         private readonly MigrationRepaymentInboxRepository $repaymentInbox,
+        private readonly MigrationExpenseInboxRepository $expenseInbox,
         private readonly MigrationSyncState $syncState,
+        private readonly PendingLoanImportPreviewService $importPreview,
     ) {}
 
     /**
@@ -25,14 +29,20 @@ class MigrationParallelRunReportService
         return [
             'pending_loans' => $this->loanInbox->countPending(),
             'pending_repayments' => $this->repaymentInbox->countPending(),
+            'pending_expenses' => $this->expenseInbox->countPending(),
             'failed_repayments' => (int) DB::table('migration_repayment_inbox')->where('status', MigrationRepaymentInboxRepository::STATUS_FAILED)->count(),
+            'failed_expenses' => (int) DB::table('migration_expense_inbox')->where('status', MigrationExpenseInboxRepository::STATUS_FAILED)->count(),
             'imported_loans' => (int) DB::table('migration_loan_inbox')->where('status', MigrationLoanInboxRepository::STATUS_IMPORTED)->count(),
             'last_loan_poll_at' => $this->syncState->get(MigrationSyncState::KEY_LAST_LOAN_POLL_AT),
             'last_repayment_poll_at' => $this->syncState->get(MigrationSyncState::KEY_LAST_REPAYMENT_POLL_AT),
             'last_repayment_sync_at' => $this->syncState->get(MigrationSyncState::KEY_LAST_REPAYMENT_SYNC_AT),
+            'last_expense_poll_at' => $this->syncState->get(MigrationSyncState::KEY_LAST_EXPENSE_POLL_AT),
+            'last_expense_sync_at' => $this->syncState->get(MigrationSyncState::KEY_LAST_EXPENSE_SYNC_AT),
             'polling_enabled' => (bool) config('legacy-parallel-run.enabled'),
             'loan_polling_enabled' => (bool) config('legacy-parallel-run.loan_polling_enabled'),
             'repayment_polling_enabled' => (bool) config('legacy-parallel-run.repayment_polling_enabled'),
+            'expense_polling_enabled' => (bool) config('legacy-parallel-run.expense_polling_enabled'),
+            'finance_on_import_enabled' => (bool) config('legacy-parallel-run.finance_on_import_enabled'),
         ];
     }
 
@@ -64,10 +74,13 @@ class MigrationParallelRunReportService
             $live = [];
         }
 
+        $preview = $this->importPreview->build($legacyLoanId, $inbox, $snapshot, $live);
+
         return [
             'inbox' => $inbox,
             'snapshot' => $snapshot,
             'live' => $live,
+            'preview' => $preview,
         ];
     }
 }

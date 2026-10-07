@@ -8,6 +8,7 @@ use App\Migration\Phases\MigrationEntityMapRepository;
 use App\Migration\Phases\RepaymentMigrator;
 use App\Migration\Replay\LegacyRepaymentReplayService;
 use App\Models\Loan;
+use App\Models\Repayment;
 use App\Services\LoanPortfolioMaintenanceService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -22,6 +23,8 @@ class ParallelRunLoanImportService
         private readonly LegacyRepaymentSyncService $repaymentSync,
         private readonly LoanPortfolioMaintenanceService $portfolioMaintenance,
         private readonly MigrationEntityMapRepository $maps,
+        private readonly ParallelRunLoanFinanceService $loanFinance,
+        private readonly ParallelRunRepaymentFinanceService $repaymentFinance,
     ) {}
 
     /**
@@ -70,12 +73,16 @@ class ParallelRunLoanImportService
 
         $loan = Loan::query()->findOrFail((int) $map->target_id);
 
+        $loanFinanceSummary = $this->loanFinance->postDisbursementFromLegacy($loan, $legacyLoanId);
+
         $replay = $this->replayService->dryRun(null, null, [$legacyUserId]);
         $repaymentSummary = $this->repaymentMigrator->run(
             promote: true,
             legacyUserId: $legacyUserId,
             replayRunId: (int) $replay['migration_run_id'],
         );
+
+        $repaymentFinanceSummary = $this->postFinanceForLegacyUserRepayments($legacy, $legacyUserId);
 
         $accrualDays = $this->portfolioMaintenance->catchUpDailyAccrual($loan);
         $schedulesRefreshed = $this->portfolioMaintenance->refreshScheduleAging($loan);
@@ -86,7 +93,9 @@ class ParallelRunLoanImportService
             (int) $loan->id,
             json_encode([
                 'loan_summary' => $loanSummary,
+                'loan_finance_summary' => $loanFinanceSummary,
                 'repayment_summary' => $repaymentSummary,
+                'repayment_finance_summary' => $repaymentFinanceSummary,
                 'accrual_days_caught_up' => $accrualDays,
                 'schedules_refreshed' => $schedulesRefreshed,
             ])
@@ -96,10 +105,52 @@ class ParallelRunLoanImportService
             'legacy_loan_id' => $legacyLoanId,
             'target_loan_id' => $loan->id,
             'loan_summary' => $loanSummary,
+            'loan_finance_summary' => $loanFinanceSummary,
             'repayment_summary' => $repaymentSummary,
+            'repayment_finance_summary' => $repaymentFinanceSummary,
             'accrual_days_caught_up' => $accrualDays,
             'schedules_refreshed' => $schedulesRefreshed,
         ];
+    }
+
+    /**
+     * @return array{posted: int, skipped: int, already_posted: int}
+     */
+    private function postFinanceForLegacyUserRepayments($legacy, int $legacyUserId): array
+    {
+        $stats = ['posted' => 0, 'skipped' => 0, 'already_posted' => 0];
+
+        $legacyRepayments = $legacy->table('repayments')
+            ->where('user_id', $legacyUserId)
+            ->where('status_code', 215)
+            ->get();
+
+        foreach ($legacyRepayments as $legacyRepaymentRow) {
+            $legacyRepayment = (array) $legacyRepaymentRow;
+            $legacyRepaymentId = (int) ($legacyRepayment['id'] ?? 0);
+            if ($legacyRepaymentId < 1) {
+                continue;
+            }
+
+            $repayment = Repayment::query()
+                ->where('external_reference', 'LEG-R-'.$legacyRepaymentId)
+                ->first();
+
+            if (! $repayment) {
+                $stats['skipped']++;
+
+                continue;
+            }
+
+            $result = $this->repaymentFinance->postCollectionFromLegacy($repayment, $legacyRepayment);
+            match ($result['status'] ?? 'skipped') {
+                'posted' => $stats['posted']++,
+                'already_posted' => $stats['already_posted']++,
+                default => $stats['skipped']++,
+            };
+        }
+
+        return $stats;
     }
 
     public function dismiss(int $legacyLoanId, int $adminId, ?string $notes = null): void

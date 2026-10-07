@@ -12,6 +12,12 @@ class MigrationSyncState
 
     public const KEY_LAST_REPAYMENT_SYNC_AT = 'last_repayment_sync_at';
 
+    public const KEY_LAST_EXPENSE_POLL_AT = 'last_expense_poll_at';
+
+    public const KEY_LAST_EXPENSE_SYNC_AT = 'last_expense_sync_at';
+
+    public const KEY_TREASURY_CUTOVER_AT = 'treasury_cutover_at';
+
     public function get(string $key): ?string
     {
         $row = DB::table('migration_sync_state')->where('key', $key)->first();

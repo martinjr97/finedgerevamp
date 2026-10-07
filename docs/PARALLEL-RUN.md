@@ -36,10 +36,15 @@ LEGACY_MIGRATION_DASHBOARD_ENABLED=true
 LEGACY_PARALLEL_RUN_ENABLED=true
 LEGACY_LOAN_POLLING_ENABLED=true
 LEGACY_REPAYMENT_POLLING_ENABLED=true
+LEGACY_EXPENSE_POLLING_ENABLED=true
+LEGACY_PARALLEL_RUN_FINANCE_ENABLED=true
+LEGACY_PARALLEL_RUN_FINANCIAL_FROM_DATE=2026-10-01
+LEGACY_PARALLEL_RUN_DEFAULT_WALLET_CODE=KAZANG
 LEGACY_LOAN_POLL_WATERMARK=19221
 LEGACY_POLL_INTERVAL_MINUTES=30
 LEGACY_POLL_BATCH_LIMIT=200
 LEGACY_REPAYMENT_SYNC_BATCH_LIMIT=100
+LEGACY_EXPENSE_SYNC_BATCH_LIMIT=100
 ```
 
 | Variable | Purpose |
@@ -48,10 +53,15 @@ LEGACY_REPAYMENT_SYNC_BATCH_LIMIT=100
 | `LEGACY_PARALLEL_RUN_ENABLED` | Master flag documented for ops; pollers use the specific flags below |
 | `LEGACY_LOAN_POLLING_ENABLED` | Schedule + run `migration:poll-legacy-loans` |
 | `LEGACY_REPAYMENT_POLLING_ENABLED` | Schedule + run `migration:poll-legacy-repayments` (+ auto sync) |
+| `LEGACY_EXPENSE_POLLING_ENABLED` | Schedule + run `migration:poll-legacy-expenses` (+ auto sync) |
+| `LEGACY_PARALLEL_RUN_FINANCE_ENABLED` | Update bank/wallet balances when importing loans, repayments, and expenses |
+| `LEGACY_PARALLEL_RUN_FINANCIAL_FROM_DATE` | Only poll legacy expenses on/after this date |
+| `LEGACY_PARALLEL_RUN_DEFAULT_WALLET_CODE` | Fallback treasury wallet when legacy source is missing (e.g. Kazang) |
 | `LEGACY_LOAN_POLL_WATERMARK` | Ignore legacy loans with `id <= watermark`; only new disbursements after bulk M2 promote |
 | `LEGACY_POLL_INTERVAL_MINUTES` | Cron interval for both pollers (5–59 minutes) |
 | `LEGACY_POLL_BATCH_LIMIT` | Max rows per poll cycle |
 | `LEGACY_REPAYMENT_SYNC_BATCH_LIMIT` | Max repayment inbox rows promoted per sync |
+| `LEGACY_EXPENSE_SYNC_BATCH_LIMIT` | Max expense inbox rows promoted per sync |
 
 Config file: `config/legacy-parallel-run.php`.
 
@@ -70,6 +80,16 @@ echo (int) \App\Migration\LegacyConnection::connection()
 Set `LEGACY_LOAN_POLL_WATERMARK` to that value. Only legacy loans with `id > watermark` and `status_code = 301` appear in the pending import queue.
 
 **Current local value (Oct 2026):** `19221` (756 active legacy loans at id ≤ 19221).
+
+---
+
+## Treasury cutover (wallet / bank balances)
+
+Legacy migration does **not** copy treasury balances. On the [migration dashboard home](/legacy/migration-dashboard):
+
+1. Edit each wallet/bank **opening balance** (Admin → Wallets / Banks) to match legacy as at cutover.
+2. Click **Set current balances from opening** (requires `migration.manage`).
+3. When ready for parallel-run imports to move balances, set `LEGACY_PARALLEL_RUN_FINANCE_ENABLED=true` in `.env` (default is `false`).
 
 ---
 
@@ -104,7 +124,9 @@ Set `LEGACY_LOAN_POLL_WATERMARK` to that value. Only legacy loans with `id > wat
 Import automatically:
 
 - Promotes the loan into revamp (`ActiveLoanMigrator`)
+- **Debits treasury** via legacy `LOAN-DISB-{id}` expense (or default Kazang wallet)
 - Replays and promotes repayments for that customer
+- **Credits treasury** for each synced repayment (legacy `bank_id` / `wallet_id`)
 - Catch-up daily accrual from loan start through yesterday
 - Refreshes schedule aging (`days_overdue`)
 
@@ -119,8 +141,17 @@ No manual action needed when polling is enabled:
 - `migration:poll-legacy-repayments` detects repayments for mapped customers
 - Promotes A_DIRECT / B_RECONSTRUCTED attributions
 - Updates loan ledgers and schedule aging
+- **Credits treasury** (bank/wallet) for each promoted repayment
 
 Check pending count on the dashboard; failed rows stay in `migration_repayment_inbox` with `sync_error`.
+
+### 3. Ongoing legacy expenses
+
+When `LEGACY_EXPENSE_POLLING_ENABLED=true`:
+
+- `migration:poll-legacy-expenses` detects new legacy expenses (from `LEGACY_PARALLEL_RUN_FINANCIAL_FROM_DATE`)
+- Skips `LOAN-DISB-*` rows (handled on loan import) and in-house transfer categories
+- Creates revamp `financial_transactions` and **debits** the mapped bank/wallet
 
 ---
 
@@ -131,6 +162,7 @@ Check pending count on the dashboard; failed rows stay in `migration_repayment_i
 | `migration:poll-legacy-loans` | Stage new legacy 301 loans in inbox |
 | `migration:poll-legacy-repayments` | Stage + sync repayments (use `--no-sync` to poll only) |
 | `migration:sync-legacy-repayments` | Promote pending repayment inbox rows |
+| `migration:poll-legacy-expenses` | Stage + sync expenses (use `--no-sync` to poll only) |
 | `loans:refresh-schedule-aging` | Refresh `days_overdue` on all active loans |
 | `loans:accrue-interest` | Daily accrual (use `--from` / `--to` for catch-up) |
 | `loans:sync-active-status` | Mark disbursed loans as active |

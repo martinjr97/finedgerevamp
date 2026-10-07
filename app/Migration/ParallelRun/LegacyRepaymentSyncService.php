@@ -2,10 +2,12 @@
 
 namespace App\Migration\ParallelRun;
 
+use App\Migration\LegacyConnection;
 use App\Migration\Phases\MigrationEntityMapRepository;
 use App\Migration\Phases\RepaymentMigrator;
 use App\Migration\Replay\LegacyRepaymentReplayService;
 use App\Migration\RepaymentAttributionService;
+use App\Models\Repayment;
 use App\Services\LoanPortfolioMaintenanceService;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +19,7 @@ class LegacyRepaymentSyncService
         private readonly LegacyRepaymentReplayService $replayService,
         private readonly RepaymentMigrator $repaymentMigrator,
         private readonly LoanPortfolioMaintenanceService $portfolioMaintenance,
+        private readonly ParallelRunRepaymentFinanceService $repaymentFinance,
     ) {}
 
     /**
@@ -84,6 +87,8 @@ class LegacyRepaymentSyncService
                         ->where('legacy_identifier', (string) $legacyRepaymentId)
                         ->value('target_id');
 
+                    $this->postRepaymentFinance($legacyRepaymentId);
+
                     $this->inbox->markSynced($legacyRepaymentId, $mappedId ? (int) $mappedId : null, $class);
                     $stats['synced']++;
                 } else {
@@ -101,6 +106,31 @@ class LegacyRepaymentSyncService
         $this->syncState->touchNow(MigrationSyncState::KEY_LAST_REPAYMENT_SYNC_AT);
 
         return $stats;
+    }
+
+    private function postRepaymentFinance(int $legacyRepaymentId): void
+    {
+        $repayment = Repayment::query()
+            ->where('external_reference', 'LEG-R-'.$legacyRepaymentId)
+            ->first();
+
+        if (! $repayment) {
+            return;
+        }
+
+        try {
+            LegacyConnection::configureFromLegacyEnvFile();
+            $legacy = LegacyConnection::connection();
+            $legacyRepayment = (array) $legacy->table('repayments')->where('id', $legacyRepaymentId)->first();
+        } catch (\Throwable) {
+            return;
+        }
+
+        if ($legacyRepayment === []) {
+            return;
+        }
+
+        $this->repaymentFinance->postCollectionFromLegacy($repayment, $legacyRepayment);
     }
 
     /**

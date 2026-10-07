@@ -14,7 +14,7 @@
         </div>
     @endif
 
-    <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+    <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 text-sm">
         <div class="rounded-xl border bg-white p-3">
             <p class="text-xs uppercase text-slate-500">Pending loans</p>
             <p class="text-xl font-bold text-primary">{{ number_format($parallel['pending_loans'] ?? 0) }}</p>
@@ -24,12 +24,20 @@
             <p class="text-xl font-bold text-primary">{{ number_format($parallel['pending_repayments'] ?? 0) }}</p>
         </div>
         <div class="rounded-xl border bg-white p-3">
+            <p class="text-xs uppercase text-slate-500">Pending expenses</p>
+            <p class="text-xl font-bold text-primary">{{ number_format($parallel['pending_expenses'] ?? 0) }}</p>
+        </div>
+        <div class="rounded-xl border bg-white p-3">
+            <p class="text-xs uppercase text-slate-500">Treasury sync</p>
+            <p class="font-semibold">{{ ($parallel['finance_on_import_enabled'] ?? false) ? 'Enabled' : 'Disabled' }}</p>
+        </div>
+        <div class="rounded-xl border bg-white p-3">
             <p class="text-xs uppercase text-slate-500">Last loan poll</p>
             <p class="font-semibold">{{ $parallel['last_loan_poll_at'] ?? 'Never' }}</p>
         </div>
         <div class="rounded-xl border bg-white p-3">
-            <p class="text-xs uppercase text-slate-500">Last repayment sync</p>
-            <p class="font-semibold">{{ $parallel['last_repayment_sync_at'] ?? 'Never' }}</p>
+            <p class="text-xs uppercase text-slate-500">Last expense sync</p>
+            <p class="font-semibold">{{ $parallel['last_expense_sync_at'] ?? 'Never' }}</p>
         </div>
     </div>
 

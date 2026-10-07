@@ -12,6 +12,11 @@ return [
 
     'repayment_polling_enabled' => (bool) env('LEGACY_REPAYMENT_POLLING_ENABLED', false),
 
+    'expense_polling_enabled' => (bool) env('LEGACY_EXPENSE_POLLING_ENABLED', false),
+
+    /** Apply treasury balance updates when importing parallel-run loans/repayments/expenses. */
+    'finance_on_import_enabled' => (bool) env('LEGACY_PARALLEL_RUN_FINANCE_ENABLED', false),
+
     /** Minimum legacy loan id at parallel-run start (skip bulk portfolio). */
     'loan_watermark_id' => env('LEGACY_LOAN_POLL_WATERMARK') !== null
         ? (int) env('LEGACY_LOAN_POLL_WATERMARK')
@@ -25,4 +30,17 @@ return [
 
     /** Max repayment inbox rows promoted per sync cycle. */
     'repayment_sync_batch_limit' => (int) env('LEGACY_REPAYMENT_SYNC_BATCH_LIMIT', 100),
+
+    /** Max expense inbox rows promoted per sync cycle. */
+    'expense_sync_batch_limit' => (int) env('LEGACY_EXPENSE_SYNC_BATCH_LIMIT', 100),
+
+    /** Only poll legacy expenses on/after this date (parallel-run window). */
+    'financial_from_date' => env('LEGACY_PARALLEL_RUN_FINANCIAL_FROM_DATE'),
+
+    /** Fallback wallet when legacy LOAN-DISB expense row is missing. */
+    'default_disbursement_wallet_code' => env('LEGACY_PARALLEL_RUN_DEFAULT_WALLET_CODE', 'KAZANG'),
+
+    'default_disbursement_wallet_id' => env('LEGACY_PARALLEL_RUN_DEFAULT_WALLET_ID') !== null
+        ? (int) env('LEGACY_PARALLEL_RUN_DEFAULT_WALLET_ID')
+        : null,
 ];

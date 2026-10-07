@@ -8,6 +8,9 @@ Route::middleware(['auth:admin', 'password.changed', 'legacy.migration.dashboard
     ->name('legacy.migration-dashboard.')
     ->group(function (): void {
         Route::get('/', [LegacyMigrationDashboardController::class, 'index'])->name('index');
+        Route::post('/treasury/sync-current-balances', [LegacyMigrationDashboardController::class, 'syncTreasuryCurrentBalances'])
+            ->middleware('migration.manage')
+            ->name('treasury.sync-current-balances');
         Route::get('/runs', [LegacyMigrationDashboardController::class, 'runs'])->name('runs.index');
         Route::get('/runs/{run}', [LegacyMigrationDashboardController::class, 'showRun'])->name('runs.show');
         Route::get('/customers', [LegacyMigrationDashboardController::class, 'customers'])->name('customers.index');

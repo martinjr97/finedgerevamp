@@ -16,6 +16,10 @@
         $pendingRepayments = (int) ($parallel['pending_repayments'] ?? 0);
     @endphp
 
+    @if(session('status'))
+        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
+    @endif
+
     @if($pendingLoans > 0 || $pendingRepayments > 0)
         <div class="mb-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-4 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -37,6 +41,11 @@
             </div>
         </div>
     @endif
+
+    @include('legacy.migration-dashboard.partials.treasury-cutover', [
+        'summary' => $summary,
+        'canManage' => $canManage ?? false,
+    ])
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-2xl border bg-white p-4 shadow-sm">

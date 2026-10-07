@@ -3,13 +3,13 @@
 @section('dashboard-content')
     @php
         $inbox = $detail['inbox'];
-        $snapshot = $detail['snapshot'] ?? [];
-        $live = $detail['live'] ?? [];
+        $preview = $detail['preview'] ?? [];
+        $readiness = $preview['readiness'] ?? [];
     @endphp
 
     @include('partials.admin.page-header', [
         'title' => 'Review Legacy Loan #'.$legacyLoanId,
-        'description' => 'Confirm import into revamp shadow portfolio (includes repayments + accrual catch-up).',
+        'description' => 'Compare legacy vs revamp before confirming import (repayments sync + accrual catch-up).',
     ])
 
     <div class="mb-4">
@@ -20,46 +20,40 @@
         <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">{{ session('error') }}</div>
     @endif
 
-    <div class="grid gap-4 lg:grid-cols-2">
-        <div class="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 class="text-lg font-semibold text-primary mb-4">Inbox</h2>
-            <dl class="space-y-2 text-sm">
-                <div class="flex justify-between"><dt>Status</dt><dd>@include('legacy.migration-dashboard.partials.badge', ['label' => $inbox->status])</dd></div>
-                <div class="flex justify-between"><dt>Legacy user</dt><dd>{{ $inbox->legacy_user_id }}</dd></div>
-                <div class="flex justify-between"><dt>Detected</dt><dd>{{ $inbox->detected_at }}</dd></div>
-                @if($inbox->block_reason)
-                    <div class="flex justify-between"><dt>Block reason</dt><dd class="text-rose-700">{{ $inbox->block_reason }}</dd></div>
-                @endif
-            </dl>
-        </div>
-
-        <div class="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 class="text-lg font-semibold text-primary mb-4">Legacy snapshot</h2>
-            <dl class="space-y-2 text-sm">
-                <div class="flex justify-between"><dt>Loan amount</dt><dd>{{ \App\Migration\Dashboard\MigrationDashboardSupport::formatZmw($snapshot['loan_amount'] ?? 0) }}</dd></div>
-                <div class="flex justify-between"><dt>Repaid</dt><dd>{{ \App\Migration\Dashboard\MigrationDashboardSupport::formatZmw($snapshot['repaid_amount'] ?? 0) }}</dd></div>
-                <div class="flex justify-between"><dt>Due date</dt><dd>{{ $snapshot['due_date'] ?? '—' }}</dd></div>
-                <div class="flex justify-between"><dt>Created</dt><dd>{{ $snapshot['created_at'] ?? '—' }}</dd></div>
-            </dl>
-        </div>
+    <div class="mb-6 rounded-2xl border bg-white p-4 shadow-sm">
+        <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+            <div>
+                <dt class="text-xs uppercase text-slate-500">Inbox status</dt>
+                <dd class="mt-1">@include('legacy.migration-dashboard.partials.badge', ['label' => $inbox->status])</dd>
+            </div>
+            <div>
+                <dt class="text-xs uppercase text-slate-500">Legacy user</dt>
+                <dd class="mt-1 font-semibold">#{{ $inbox->legacy_user_id }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs uppercase text-slate-500">Detected</dt>
+                <dd class="mt-1">{{ $inbox->detected_at }}</dd>
+            </div>
+            @if($inbox->block_reason)
+                <div class="sm:col-span-2">
+                    <dt class="text-xs uppercase text-slate-500">Block reason</dt>
+                    <dd class="mt-1 text-rose-700">{{ $inbox->block_reason }}</dd>
+                </div>
+            @endif
+        </dl>
     </div>
 
-    @if($live !== [])
-        <div class="mt-4 rounded-2xl border bg-slate-50 p-6 shadow-sm">
-            <h2 class="text-lg font-semibold text-primary mb-2">Live legacy row</h2>
-            <p class="text-xs text-slate-500 mb-3">Read-only check against legacy DB at review time.</p>
-            <dl class="grid gap-2 sm:grid-cols-2 text-sm">
-                <div><dt class="text-slate-500">Status code</dt><dd class="font-semibold">{{ $live['status_code'] ?? '—' }}</dd></div>
-                <div><dt class="text-slate-500">Current balance</dt><dd class="font-semibold">{{ \App\Migration\Dashboard\MigrationDashboardSupport::formatZmw($live['current_loan_amount'] ?? 0) }}</dd></div>
-            </dl>
-        </div>
-    @endif
+    @include('legacy.migration-dashboard.loans.partials.import-preview-comparison', ['preview' => $preview])
 
     @if($canManage && in_array($inbox->status, ['pending_review', 'blocked'], true))
         <div class="mt-6 flex flex-wrap gap-3">
             <form method="POST" action="{{ route('legacy.migration-dashboard.loans.pending.import', $legacyLoanId) }}" onsubmit="return confirm('Import this loan into revamp? This will promote the loan, sync repayments, and catch up daily accrual.');">
                 @csrf
-                <button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90">
+                <button
+                    type="submit"
+                    @disabled(!($readiness['can_import'] ?? false))
+                    class="rounded-xl px-5 py-2.5 text-sm font-semibold text-white {{ ($readiness['can_import'] ?? false) ? 'bg-primary hover:opacity-90' : 'bg-slate-300 cursor-not-allowed' }}"
+                >
                     Confirm import
                 </button>
             </form>
@@ -72,5 +66,8 @@
                 </button>
             </form>
         </div>
+        @unless($readiness['can_import'] ?? false)
+            <p class="mt-2 text-xs text-slate-500">Confirm import is disabled until blockers above are resolved.</p>
+        @endunless
     @endif
 @endsection

@@ -17,6 +17,7 @@ class MigrationDashboardService
         private readonly MigrationStatusService $statusService,
         private readonly MigrationReconciliationReportService $reconciliationReport,
         private readonly MigrationParallelRunReportService $parallelRunReport,
+        private readonly MigrationTreasuryCutoverService $treasuryCutover,
     ) {}
 
     /**
@@ -51,6 +52,7 @@ class MigrationDashboardService
             'reconciliation' => $this->reconciliationReport->summary(),
             'attention' => $this->attentionCounts(),
             'parallel_run' => $this->parallelRunReport->summary(),
+            'treasury_cutover' => $this->treasuryCutover->summary(),
             'latest_runs' => $status['latest_runs'] ?? collect(),
         ];
     }

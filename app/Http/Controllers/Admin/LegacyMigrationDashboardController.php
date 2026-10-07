@@ -12,6 +12,7 @@ use App\Migration\Dashboard\MigrationMappingReportService;
 use App\Migration\Dashboard\MigrationParallelRunReportService;
 use App\Migration\Dashboard\MigrationReconciliationReportService;
 use App\Migration\Dashboard\MigrationRunReportService;
+use App\Migration\Dashboard\MigrationTreasuryCutoverService;
 use App\Migration\ParallelRun\ParallelRunLoanImportService;
 use App\Migration\Phases\MigrationEntityMapRepository;
 use App\Migration\RepaymentAttributionService;
@@ -25,7 +26,22 @@ class LegacyMigrationDashboardController extends Controller
     {
         return view('legacy.migration-dashboard.index', [
             'summary' => $dashboard->homeSummary(),
+            'canManage' => auth('admin')->user()?->can('migration.manage') ?? false,
         ]);
+    }
+
+    public function syncTreasuryCurrentBalances(MigrationTreasuryCutoverService $cutover): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('migration.manage'), 403);
+
+        $result = $cutover->syncCurrentToOpening((int) auth('admin')->id());
+
+        return redirect()
+            ->route('legacy.migration-dashboard.index')
+            ->with(
+                'status',
+                "Treasury cutover complete: {$result['updated']} account(s) updated, {$result['skipped']} already matched opening balance."
+            );
     }
 
     public function runs(MigrationRunReportService $runs): View
