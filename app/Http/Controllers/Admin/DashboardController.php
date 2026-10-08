@@ -258,6 +258,37 @@ class DashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $todayDate = $today->toDateString();
+        $weekFromDate = $startOfWeek->toDateString();
+        $weekToDate = $endOfWeek->toDateString();
+
+        $completedRepaymentFilter = static fn (string $from, string $to): array => [
+            'status' => 'completed',
+            'processed_date_from' => $from,
+            'processed_date_to' => $to,
+        ];
+
+        $activityStatLinks = [
+            'today' => [
+                'loans_created' => route('admin.loans.index', ['created_from' => $todayDate, 'created_to' => $todayDate]),
+                'loans_approved' => route('admin.loans.index', ['approved_from' => $todayDate, 'approved_to' => $todayDate]),
+                'loans_disbursed' => route('admin.loans.index', ['disbursed_from' => $todayDate, 'disbursed_to' => $todayDate]),
+                'total_disbursed' => route('admin.loans.index', ['disbursed_from' => $todayDate, 'disbursed_to' => $todayDate]),
+                'repayments_received' => route('admin.repayments.index', $completedRepaymentFilter($todayDate, $todayDate)),
+                'total_repayments' => route('admin.repayments.index', $completedRepaymentFilter($todayDate, $todayDate)),
+                'new_customers' => route('admin.customers.index', ['date_from' => $todayDate, 'date_to' => $todayDate]),
+            ],
+            'week' => [
+                'loans_created' => route('admin.loans.index', ['created_from' => $weekFromDate, 'created_to' => $weekToDate]),
+                'loans_approved' => route('admin.loans.index', ['approved_from' => $weekFromDate, 'approved_to' => $weekToDate]),
+                'loans_disbursed' => route('admin.loans.index', ['disbursed_from' => $weekFromDate, 'disbursed_to' => $weekToDate]),
+                'total_disbursed' => route('admin.loans.index', ['disbursed_from' => $weekFromDate, 'disbursed_to' => $weekToDate]),
+                'repayments_received' => route('admin.repayments.index', $completedRepaymentFilter($weekFromDate, $weekToDate)),
+                'total_repayments' => route('admin.repayments.index', $completedRepaymentFilter($weekFromDate, $weekToDate)),
+                'new_customers' => route('admin.customers.index', ['date_from' => $weekFromDate, 'date_to' => $weekToDate]),
+            ],
+        ];
+
         return view('admin.dashboard', [
             'todayStats' => $todayStats,
             'weekStats' => $weekStats,
@@ -271,6 +302,7 @@ class DashboardController extends Controller
             'gatewayAutoDisbursementBalanceAlerts' => $gatewayAutoDisbursementBalanceAlerts,
             'newAssignedSupportTickets' => $newAssignedSupportTickets,
             'dashboardToday' => $today,
+            'activityStatLinks' => $activityStatLinks,
         ]);
     }
 }

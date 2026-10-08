@@ -133,9 +133,10 @@
         </div>
 
         <div>
-            <label class="text-sm font-medium {{ $labelClass }}">Arrear Rate <span class="{{ $requiredClass }}">*</span></label>
-            <input type="number" name="arrear_rate" value="{{ old('arrear_rate', $loanRate?->arrear_rate) }}" required min="0" step="0.00001" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}" placeholder="e.g., 0.01">
-            @error('arrear_rate')
+            <label class="text-sm font-medium {{ $labelClass }}">Daily Arrears Rate (%) <span class="{{ $requiredClass }}">*</span></label>
+            <input type="number" name="arrear_rate_percent" value="{{ old('arrear_rate_percent', $loanRate ? \App\Support\ArrearRate::toPercentage((string) $loanRate->arrear_rate) : '') }}" required min="0" max="100" step="0.01" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}" placeholder="e.g., 1">
+            <p class="mt-1 text-xs text-slate-400">Enter the percentage charged per day on unpaid overdue installments. Example: 1 = 1% per day.</p>
+            @error('arrear_rate_percent')
                 <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
             @enderror
         </div>

@@ -3,13 +3,31 @@
 namespace App\Services;
 
 use App\Models\Loan;
+use App\Services\Loans\LoanArrearsSummaryService;
 
 class LoanRepaymentLedgerService
 {
+    public function __construct(
+        private readonly LoanArrearsSummaryService $arrearsSummary,
+    ) {}
     /**
      * Net paid = sum of all loan repayment amounts (positive payments + negative refunds).
      */
+    /**
+     * Full settlement obligation: contractual schedule total plus outstanding arrears interest.
+     */
     public function getExpectedSettlementAmount(Loan $loan): float
+    {
+        $contractual = $this->getContractualSettlementAmount($loan);
+        $arrearsOutstanding = $this->arrearsSummary->outstandingArrearsInterest($loan);
+
+        return round($contractual + $arrearsOutstanding, 2);
+    }
+
+    /**
+     * Contractual amount due from schedules (or booked total) excluding arrears interest.
+     */
+    public function getContractualSettlementAmount(Loan $loan): float
     {
         if ($loan->paymentSchedules()->exists()) {
             return round((float) $loan->getScheduleExpectedTotal(), 2);
@@ -34,9 +52,8 @@ class LoanRepaymentLedgerService
     public function calculateOutstandingBalance(Loan $loan, ?float $netPaid = null): float
     {
         $netPaid ??= $this->calculateNetPaid($loan);
-        $expected = $this->getExpectedSettlementAmount($loan);
 
-        return round(max(0, $expected - $netPaid), 2);
+        return round(max(0, $this->getExpectedSettlementAmount($loan) - $netPaid), 2);
     }
 
     /**

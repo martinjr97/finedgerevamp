@@ -10,10 +10,19 @@ use App\Models\FinancialTransaction;
 use App\Models\IncomeCategory;
 use App\Models\Wallet;
 use App\Services\CreditorBalanceService;
+use App\Support\CreditorDetailExportBuilder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CreditorController extends Controller
 {
@@ -85,6 +94,61 @@ class CreditorController extends Controller
         $wallets = Wallet::query()->where('is_active', true)->orderBy('name')->get();
 
         return view('admin.creditors.show', compact('creditor', 'payments', 'totalPayments', 'banks', 'wallets'));
+    }
+
+    /**
+     * Export creditor profile, payments, and conversions to Excel.
+     */
+    public function export(Creditor $creditor, CreditorDetailExportBuilder $builder): BinaryFileResponse
+    {
+        abort_unless(auth('admin')->user()?->can('creditors.view'), 403);
+
+        $sheets = collect($builder->sheets($creditor))->map(function (array $sheet) {
+            $rows = $sheet['rows'];
+
+            return [
+                'title' => $sheet['title'],
+                'headings' => $rows[0] ?? [],
+                'rows' => array_slice($rows, 1),
+            ];
+        })->all();
+
+        $filename = $builder->filename($creditor);
+
+        return Excel::download(new class($sheets) implements WithMultipleSheets {
+            public function __construct(private readonly array $sheets) {}
+
+            public function sheets(): array
+            {
+                return array_map(function (array $sheet) {
+                    return new class($sheet) implements FromCollection, WithHeadings, WithTitle, WithStyles {
+                        public function __construct(private readonly array $sheet) {}
+
+                        public function collection()
+                        {
+                            return collect($this->sheet['rows']);
+                        }
+
+                        public function headings(): array
+                        {
+                            return $this->sheet['headings'];
+                        }
+
+                        public function title(): string
+                        {
+                            return $this->sheet['title'];
+                        }
+
+                        public function styles(Worksheet $worksheet)
+                        {
+                            return [
+                                1 => ['font' => ['bold' => true, 'size' => 11]],
+                            ];
+                        }
+                    };
+                }, $this->sheets);
+            }
+        }, $filename);
     }
 
     /**

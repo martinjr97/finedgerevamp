@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\LoanRate;
 use App\Models\LoanRateType;
+use App\Support\ArrearRate;
 use Illuminate\Validation\Rule;
 
 /**
@@ -125,7 +126,7 @@ class LoanRateRowService
             'weekly_rate' => 'nullable|numeric|min:0',
             'min_principal' => 'nullable|numeric|min:0',
             'max_principal' => 'nullable|numeric|min:0|gte:min_principal',
-            'arrear_rate' => 'required|numeric|min:0',
+            'arrear_rate_percent' => 'required|numeric|min:0|max:100',
             'is_active' => 'boolean',
         ];
 
@@ -161,7 +162,9 @@ class LoanRateRowService
             'derived_daily_rate' => null,
             'min_principal' => $data['min_principal'] ?? null,
             'max_principal' => $data['max_principal'] ?? null,
-            'arrear_rate' => $data['arrear_rate'] ?? 0,
+            'arrear_rate' => isset($data['arrear_rate_percent'])
+                ? ArrearRate::fromPercentage($data['arrear_rate_percent'])
+                : ($data['arrear_rate'] ?? 0),
             'is_active' => (bool) ($data['is_active'] ?? true),
         ];
 

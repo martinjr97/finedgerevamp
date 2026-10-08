@@ -63,6 +63,11 @@
                                 </td>
                                 <td>
                                     <div class="inline-flex flex-wrap items-center justify-center gap-2">
+                                        @can('financial-categories.view')
+                                            <a href="{{ route('admin.financial-categories.expense.show', $category) }}#subcategories" class="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/50 bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/20 transition">
+                                                View Subcategories
+                                            </a>
+                                        @endcan
                                         @can('financial-categories.create')
                                             <a href="{{ route('admin.financial-categories.expense.subcategory.create', $category) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/50 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/20 transition">
                                                 Add Subcategory

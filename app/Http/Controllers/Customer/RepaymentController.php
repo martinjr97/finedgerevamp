@@ -40,12 +40,16 @@ class RepaymentController extends Controller
 
         $totalOutstandingBalance = $customer->getTotalOutstandingBalance();
         $totalOverdueAmount = $customer->getTotalOverdueAmount();
+        $totalArrearsInterest = $customer->getTotalOutstandingArrearsInterest();
+        $totalArrearsExposure = $customer->getTotalArrearsExposure();
         $hasOverdue = $customer->hasOverdueLoans();
 
         return view('customer.repayments.select-type', [
             'activeLoans' => $activeLoans,
             'totalOutstandingBalance' => $totalOutstandingBalance,
             'totalOverdueAmount' => $totalOverdueAmount,
+            'totalArrearsInterest' => $totalArrearsInterest,
+            'totalArrearsExposure' => $totalArrearsExposure,
             'hasOverdue' => $hasOverdue,
         ]);
     }
@@ -372,7 +376,7 @@ class RepaymentController extends Controller
                 return min($amount ?? 0, $maxAmount);
 
             case 'overdue':
-                return $customer->getTotalOverdueAmount();
+                return $customer->getTotalArrearsExposure();
 
             case 'full':
                 return $customer->getTotalOutstandingBalance();

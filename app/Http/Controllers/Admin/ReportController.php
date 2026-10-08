@@ -17,6 +17,7 @@ use App\Models\Province;
 use App\Models\Admin;
 use App\Models\Employee;
 use App\Models\FinancialTransaction;
+use App\Support\CreditorReportBuilder;
 use App\Support\ExpenseReportBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
@@ -1262,10 +1263,18 @@ class ReportController extends Controller
             $daysOverdue = $primarySchedule ? (int) $primarySchedule->days_overdue : 0;
         }
 
+        $arrearsSummary = app(\App\Services\Loans\LoanArrearsSummaryService::class)->summarize($loan);
+
         return [
             'loan' => $loan,
             'overdue_amount' => round($overdueAmount, 2),
             'booked_outstanding' => round($bookedOutstanding, 2),
+            'arrears_interest_outstanding' => $arrearsSummary['outstanding_arrears_interest'],
+            'total_arrears_exposure' => $arrearsSummary['total_arrears_exposure'],
+            'arrear_rate' => $arrearsSummary['arrear_rate'],
+            'performance_status' => $arrearsSummary['performance_status'],
+            'npl_at' => $arrearsSummary['npl_at'],
+            'npl_cutoff_date' => $arrearsSummary['npl_cutoff_date'],
             'days_overdue' => $daysOverdue,
             'par_status' => $upcomingWindow ? null : $loan->getPARStatus(),
             'overdue_installments_count' => $matchingSchedules->count(),
@@ -3391,6 +3400,72 @@ class ReportController extends Controller
                         }
 
                         public function styles(Worksheet $sheet)
+                        {
+                            return [
+                                1 => ['font' => ['bold' => true, 'size' => 11]],
+                            ];
+                        }
+                    };
+                }, $this->sheets);
+            }
+        }, $filename);
+    }
+
+    public function creditors(Request $request, CreditorReportBuilder $builder): View
+    {
+        abort_unless(auth('admin')->user()?->can('reports.view'), 403);
+
+        $report = $builder->build($request);
+
+        return view('admin.reports.creditors', [
+            'summary' => $report['summary'],
+            'creditors' => $report['creditors'],
+            'payments' => $report['payments'],
+            'filters' => $report['filters'],
+        ]);
+    }
+
+    public function exportCreditors(Request $request, CreditorReportBuilder $builder)
+    {
+        abort_unless(auth('admin')->user()?->can('reports.view'), 403);
+
+        $sheets = collect($builder->exportSheets($request))->map(function (array $sheet) {
+            $rows = $sheet['rows'];
+
+            return [
+                'title' => $sheet['title'],
+                'headings' => $rows[0] ?? [],
+                'rows' => array_slice($rows, 1),
+            ];
+        })->all();
+
+        $filename = 'creditors_report_'.now()->format('Y-m-d_His').'.xlsx';
+
+        return Excel::download(new class($sheets) implements WithMultipleSheets {
+            public function __construct(private readonly array $sheets) {}
+
+            public function sheets(): array
+            {
+                return array_map(function (array $sheet) {
+                    return new class($sheet) implements FromCollection, WithHeadings, WithTitle, WithStyles {
+                        public function __construct(private readonly array $sheet) {}
+
+                        public function collection()
+                        {
+                            return collect($this->sheet['rows']);
+                        }
+
+                        public function headings(): array
+                        {
+                            return $this->sheet['headings'];
+                        }
+
+                        public function title(): string
+                        {
+                            return $this->sheet['title'];
+                        }
+
+                        public function styles(Worksheet $worksheet)
                         {
                             return [
                                 1 => ['font' => ['bold' => true, 'size' => 11]],

@@ -9,6 +9,8 @@ use App\Models\LoanPaymentSchedule;
 use App\Models\LoanRepayment;
 use App\Models\Repayment;
 use App\PaymentPlatform\Services\GatewayIntegrationService;
+use App\Services\Loans\LoanArrearsAccrualService;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -16,6 +18,7 @@ class RepaymentProcessingService
 {
     public function __construct(
         private readonly LoanRepaymentLedgerService $ledgerService,
+        private readonly LoanArrearsAccrualService $arrearsAccrualService,
     ) {}
 
     /**
@@ -217,15 +220,19 @@ class RepaymentProcessingService
         $principalAmount = (float) $allocation['principal_amount'];
         $interestAmount = (float) $allocation['interest_amount'];
         $processingFeeAmount = (float) $allocation['processing_fee_amount'];
+        $arrearsInterestAmount = (float) ($allocation['arrears_interest_amount'] ?? 0);
 
-        $totalAllocated = $principalAmount + $interestAmount + $processingFeeAmount;
+        $totalAllocated = $principalAmount + $interestAmount + $processingFeeAmount + $arrearsInterestAmount;
         if (abs($totalAllocated - $amount) > 0.01) {
             $principalAmount += ($amount - $totalAllocated);
             $principalAmount = max(0, $principalAmount);
         }
 
         if ($loan->paymentSchedules()->exists()) {
-            $loan->updatePaymentSchedule($amount);
+            $scheduleApplied = LoanRepayment::scheduleAppliedAmountFromAllocation($allocation);
+            if ($scheduleApplied > 0) {
+                $loan->updatePaymentSchedule($scheduleApplied);
+            }
         }
 
         $netPaidAfter = round($netPaidBefore + $amount, 2);
@@ -237,6 +244,8 @@ class RepaymentProcessingService
             $loanRepaymentNotes .= ' | Overpayment reason: '.$overpaymentMeta['reason'];
         }
 
+        $effectiveDateString = LoanRepayment::resolveEffectiveDateString($repayment);
+
         $existing = LoanRepayment::query()
             ->where('repayment_id', $repayment->id)
             ->where('loan_id', $loan->id)
@@ -246,9 +255,11 @@ class RepaymentProcessingService
         if ($existing) {
             $existing->update([
                 'amount' => round((float) $existing->amount + $amount, 2),
+                'effective_date' => $existing->effective_date ?? $effectiveDateString,
                 'principal_amount' => round((float) $existing->principal_amount + $principalAmount, 2),
                 'interest_amount' => round((float) $existing->interest_amount + $interestAmount, 2),
                 'processing_fee_amount' => round((float) $existing->processing_fee_amount + $processingFeeAmount, 2),
+                'arrears_interest_amount' => round((float) ($existing->arrears_interest_amount ?? 0) + $arrearsInterestAmount, 2),
                 'outstanding_balance_after' => $outstandingBalanceAfter,
                 'notes' => trim($existing->notes.' | '.$loanRepaymentNotes),
                 'metadata' => is_array($overpaymentMeta)
@@ -261,9 +272,11 @@ class RepaymentProcessingService
                 'loan_id' => $loan->id,
                 'transaction_type' => LoanRepayment::TRANSACTION_TYPE_PAYMENT,
                 'amount' => $amount,
+                'effective_date' => $effectiveDateString,
                 'principal_amount' => round($principalAmount, 2),
                 'interest_amount' => round($interestAmount, 2),
                 'processing_fee_amount' => round($processingFeeAmount, 2),
+                'arrears_interest_amount' => round($arrearsInterestAmount, 2),
                 'outstanding_balance_before' => $outstandingBalanceBefore,
                 'outstanding_balance_after' => $outstandingBalanceAfter,
                 'notes' => $loanRepaymentNotes,
@@ -271,7 +284,15 @@ class RepaymentProcessingService
             ]);
         }
 
-        $this->ledgerService->syncLoanLedger($loan->fresh());
+        $loan = $loan->fresh();
+        $this->ledgerService->syncLoanLedger($loan);
+
+        if ((float) ($loan->arrear_rate ?? 0) > 0) {
+            $this->arrearsAccrualService->reconcileAccrualsAfterPayment(
+                $loan,
+                Carbon::parse($effectiveDateString, config('arrears.timezone', 'Africa/Lusaka'))
+            );
+        }
     }
 
     private function refreshCustomerCreditScore(Customer $customer): void

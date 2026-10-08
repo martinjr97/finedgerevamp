@@ -65,7 +65,8 @@ class PermissionMatrix
             'delete' => 'Delete',
             'approve' => 'Approve',
             'reject' => 'Reject',
-            default => ucfirst($action),
+            'update-category' => 'Update category',
+            default => ucfirst(str_replace('-', ' ', $action)),
         };
     }
 }

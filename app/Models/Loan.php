@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\DisbursementDestinationService;
 use App\Services\LoanPricingService;
+use App\Services\Loans\LoanArrearsSummaryService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,6 +41,7 @@ class Loan extends Model
         'processing_fee_percentage',
         'daily_rate',
         'weekly_rate',
+        'arrear_rate',
         'accrual_period',
         'interest_accrued',
         'total_amount',
@@ -54,6 +56,9 @@ class Loan extends Model
         'quoted_term_rate',
         'interest_behavior',
         'last_accrual_date',
+        'arrears_last_accrual_date',
+        'performance_status',
+        'npl_at',
         'loan_settled_date',
         'settlement_amount',
         'settlement_date',
@@ -87,6 +92,7 @@ class Loan extends Model
             'processing_fee_percentage' => 'decimal:2',
             'daily_rate' => 'decimal:8',
             'weekly_rate' => 'decimal:8',
+            'arrear_rate' => 'decimal:5',
             'quoted_term_rate' => 'decimal:4',
             'interest_accrued' => 'decimal:2',
             'settlement_amount' => 'decimal:2',
@@ -101,6 +107,8 @@ class Loan extends Model
             'last_payment_date' => 'date',
             'loan_settled_date' => 'date',
             'last_accrual_date' => 'date',
+            'arrears_last_accrual_date' => 'date',
+            'npl_at' => 'datetime',
             'approved_at' => 'datetime',
             'disbursed_at' => 'datetime',
             'metadata' => 'array',
@@ -326,6 +334,11 @@ class Loan extends Model
     public function accruals(): HasMany
     {
         return $this->hasMany(LoanAccrual::class)->orderBy('accrual_date');
+    }
+
+    public function arrearsAccruals(): HasMany
+    {
+        return $this->hasMany(LoanArrearsAccrual::class)->orderBy('accrual_date');
     }
 
     public function collateralLoanDetail(): HasOne
@@ -882,6 +895,8 @@ class Loan extends Model
             $bookedAtOrigination = round($principal + $processingFee + $fullTermInterest, 2);
         }
 
+        $arrearsSummary = app(LoanArrearsSummaryService::class)->summarize($this);
+
         return [
             'principal' => $principal,
             'processing_fee' => $processingFee,
@@ -893,6 +908,10 @@ class Loan extends Model
             'interest_remaining' => round($remainingInterest, 2),
             'booked_at_origination' => $bookedAtOrigination,
             'total_if_held_to_term' => round($principal + $processingFee + $fullTermInterest, 2),
+            'arrears_overdue_installment_amount' => $arrearsSummary['overdue_installment_amount'],
+            'arrears_interest_accrued' => $arrearsSummary['arrears_interest_accrued'],
+            'arrears_interest_outstanding' => $arrearsSummary['outstanding_arrears_interest'],
+            'total_arrears_exposure' => $arrearsSummary['total_arrears_exposure'],
         ];
     }
 
@@ -955,7 +974,7 @@ class Loan extends Model
      * IMPORTANT: principal_amount + interest_amount + processing_fee_amount MUST equal paymentAmount
      *
      * @param  float  $paymentAmount  The amount being paid
-     * @return array{principal_amount: float, interest_amount: float, processing_fee_amount: float}
+     * @return array{principal_amount: float, interest_amount: float, processing_fee_amount: float, arrears_interest_amount: float}
      */
     public function calculateRepaymentAllocation(float $paymentAmount): array
     {
@@ -964,92 +983,96 @@ class Loan extends Model
                 'principal_amount' => 0,
                 'interest_amount' => 0,
                 'processing_fee_amount' => 0,
+                'arrears_interest_amount' => 0,
             ];
         }
 
-        // Check if processing fee should be considered (only for MOU/Government customers)
         $hasProcessingFee = $this->processing_fee > 0 &&
             $this->loanProduct &&
             in_array($this->loanProduct->category, ['mou', 'government', 'group_loans'], true);
 
-        // Calculate outstanding amounts
-        $totalOwed = $this->principal_amount + $this->interest_accrued;
+        $arrearsSummary = app(LoanArrearsSummaryService::class);
+        $unpaidArrearsInterest = $arrearsSummary->outstandingArrearsInterest($this);
+
+        $totalOwed = $this->principal_amount + $this->interest_accrued + $unpaidArrearsInterest;
         if ($hasProcessingFee) {
             $totalOwed += $this->processing_fee;
         }
 
-        // Calculate how much is still unpaid for each component
-        $totalPaid = $this->amount_paid;
         $outstandingBalance = $this->outstanding_balance;
 
-        if ($outstandingBalance <= 0 || $totalOwed <= 0) {
-            // Everything is paid or nothing owed, all payment goes to principal
+        if ($outstandingBalance <= 0 && $unpaidArrearsInterest <= 0) {
             return [
                 'principal_amount' => $paymentAmount,
                 'interest_amount' => 0,
                 'processing_fee_amount' => 0,
+                'arrears_interest_amount' => 0,
             ];
         }
 
-        // Calculate unpaid portions based on outstanding balance proportion
+        if ($totalOwed <= 0) {
+            return [
+                'principal_amount' => $paymentAmount,
+                'interest_amount' => 0,
+                'processing_fee_amount' => 0,
+                'arrears_interest_amount' => 0,
+            ];
+        }
+
         $principalRatio = $this->principal_amount / $totalOwed;
         $interestRatio = $this->interest_accrued / $totalOwed;
+        $arrearsRatio = $unpaidArrearsInterest / $totalOwed;
         $processingFeeRatio = $hasProcessingFee ? ($this->processing_fee / $totalOwed) : 0;
 
-        // Estimate unpaid amounts based on outstanding balance
-        $unpaidPrincipal = min($this->principal_amount, $outstandingBalance * $principalRatio);
-        $unpaidInterest = min($this->interest_accrued, $outstandingBalance * $interestRatio);
-        $unpaidProcessingFee = $hasProcessingFee ? min($this->processing_fee, $outstandingBalance * $processingFeeRatio) : 0;
+        $basis = max($outstandingBalance, $unpaidArrearsInterest);
+        $unpaidPrincipal = min($this->principal_amount, $basis * $principalRatio);
+        $unpaidInterest = min($this->interest_accrued, $basis * $interestRatio);
+        $unpaidProcessingFee = $hasProcessingFee ? min($this->processing_fee, $basis * $processingFeeRatio) : 0;
 
-        $principalAmount = 0;
-        $interestAmount = 0;
-        $processingFeeAmount = 0;
+        $principalAmount = 0.0;
+        $interestAmount = 0.0;
+        $processingFeeAmount = 0.0;
+        $arrearsInterestAmount = 0.0;
         $remainingPayment = $paymentAmount;
 
-        // First, allocate to processing fee if applicable and outstanding
         if ($hasProcessingFee && $unpaidProcessingFee > 0 && $remainingPayment > 0) {
             $processingFeeAmount = min($unpaidProcessingFee, $remainingPayment);
             $remainingPayment -= $processingFeeAmount;
         }
 
-        // Allocate remaining payment proportionally between principal and interest
+        if ($unpaidArrearsInterest > 0 && $remainingPayment > 0) {
+            $arrearsInterestAmount = min($unpaidArrearsInterest, $remainingPayment);
+            $remainingPayment -= $arrearsInterestAmount;
+        }
+
         if ($remainingPayment > 0) {
             $totalUnpaidPrincipalInterest = $unpaidPrincipal + $unpaidInterest;
 
             if ($totalUnpaidPrincipalInterest > 0) {
-                // Calculate proportions for principal and interest
                 $principalProportion = $unpaidPrincipal / $totalUnpaidPrincipalInterest;
                 $interestProportion = $unpaidInterest / $totalUnpaidPrincipalInterest;
 
-                // Allocate based on proportions
                 $principalAmount = $remainingPayment * $principalProportion;
                 $interestAmount = $remainingPayment * $interestProportion;
 
-                // Ensure we don't exceed unpaid amounts
                 $principalAmount = min($principalAmount, $unpaidPrincipal);
                 $interestAmount = min($interestAmount, $unpaidInterest);
 
-                // Handle rounding - any remainder goes to principal
                 $allocated = $principalAmount + $interestAmount;
                 if ($allocated < $remainingPayment) {
                     $diff = $remainingPayment - $allocated;
                     $principalAmount = min($principalAmount + $diff, $unpaidPrincipal);
-                    // Recalculate interest if principal took more
                     $interestAmount = min($remainingPayment - $principalAmount, $unpaidInterest);
                 }
             } else {
-                // If no principal/interest outstanding, all goes to principal
                 $principalAmount = $remainingPayment;
             }
         }
 
-        // CRITICAL: Ensure the sum equals paymentAmount (handle any rounding errors)
-        $totalAllocated = $principalAmount + $interestAmount + $processingFeeAmount;
+        $totalAllocated = $principalAmount + $interestAmount + $processingFeeAmount + $arrearsInterestAmount;
         if (abs($totalAllocated - $paymentAmount) > 0.01) {
-            // Adjust principal to make up the difference
             $difference = $paymentAmount - $totalAllocated;
             $principalAmount += $difference;
-            // Ensure principal doesn't go negative
             if ($principalAmount < 0) {
                 $interestAmount += $principalAmount;
                 $principalAmount = 0;
@@ -1060,6 +1083,7 @@ class Loan extends Model
             'principal_amount' => round(max(0, $principalAmount), 2),
             'interest_amount' => round(max(0, $interestAmount), 2),
             'processing_fee_amount' => round(max(0, $processingFeeAmount), 2),
+            'arrears_interest_amount' => round(max(0, $arrearsInterestAmount), 2),
         ];
     }
 

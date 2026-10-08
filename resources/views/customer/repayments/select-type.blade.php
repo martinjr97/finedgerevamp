@@ -50,9 +50,21 @@
                 <p class="text-4xl font-bold text-primary">ZMW {{ number_format($totalOutstandingBalance, 2) }}</p>
             </div>
             @if($hasOverdue && $totalOverdueAmount > 0)
-                <div class="bg-red-50 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-600 rounded-xl p-4">
-                    <p class="text-xs uppercase tracking-wider text-red-700 dark:text-red-300 mb-1 font-semibold">Overdue Amount</p>
-                    <p class="text-lg font-bold text-red-900 dark:text-white">ZMW {{ number_format($totalOverdueAmount, 2) }}</p>
+                <div class="bg-red-50 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-600 rounded-xl p-4 space-y-2">
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-red-700 dark:text-red-300 mb-1 font-semibold">Overdue repayments</p>
+                        <p class="text-lg font-bold text-red-900 dark:text-white">ZMW {{ number_format($totalOverdueAmount, 2) }}</p>
+                    </div>
+                    @if(($totalArrearsInterest ?? 0) > 0)
+                        <div>
+                            <p class="text-xs uppercase tracking-wider text-red-700 dark:text-red-300 mb-1 font-semibold">Arrears interest</p>
+                            <p class="text-base font-bold text-red-900 dark:text-white">ZMW {{ number_format($totalArrearsInterest, 2) }}</p>
+                        </div>
+                    @endif
+                    <div class="border-t border-red-200 dark:border-red-700 pt-2">
+                        <p class="text-xs uppercase tracking-wider text-red-700 dark:text-red-300 mb-1 font-semibold">Total overdue due</p>
+                        <p class="text-lg font-bold text-red-900 dark:text-white">ZMW {{ number_format($totalArrearsExposure ?? $totalOverdueAmount, 2) }}</p>
+                    </div>
                 </div>
             @endif
         </div>

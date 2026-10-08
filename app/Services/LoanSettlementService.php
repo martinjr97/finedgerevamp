@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Loan;
+use App\Services\Loans\LoanArrearsAccrualService;
+use App\Services\Loans\LoanArrearsSummaryService;
 use App\Models\LoanPaymentSchedule;
 use App\Models\LoanRepayment;
 use App\Models\Repayment;
@@ -17,6 +19,11 @@ class LoanSettlementService
     private const MONEY_SCALE = 2;
 
     private const CALC_SCALE = 12;
+
+    public function __construct(
+        private readonly LoanArrearsAccrualService $arrearsAccrualService,
+        private readonly LoanArrearsSummaryService $arrearsSummaryService,
+    ) {}
 
     public function quoteSettlement(Loan $loan, Carbon|string|null $settlementDate = null): array
     {
@@ -33,6 +40,7 @@ class LoanSettlementService
         $remaining = $this->calculateRemainingComponents($loan, $settlementDate, $paid);
 
         $payoff = $this->calculatePayoffAmount($loan, $settlementDate);
+        $arrearsOutstanding = $this->formatMoney((string) $this->arrearsSummaryService->outstandingArrearsInterest($loan));
 
         $notes = $this->buildQuoteNotes($loan, $behavior, $settlementDate, $earnedInterest, $rebate);
 
@@ -46,6 +54,7 @@ class LoanSettlementService
             'interest_paid' => $paid['interest_paid'],
             'interest_remaining_earned' => $remaining['interest_remaining_earned'],
             'unearned_interest_rebate' => $rebate,
+            'arrears_interest_outstanding' => $arrearsOutstanding,
             'current_outstanding_balance' => $this->formatMoney((string) $loan->outstanding_balance),
             'payoff_amount' => $payoff,
             'interest_behavior' => $behavior,
@@ -107,6 +116,9 @@ class LoanSettlementService
             $remaining['interest_remaining_earned']
         );
 
+        $arrearsOutstanding = (string) $this->arrearsSummaryService->outstandingArrearsInterest($loan);
+        $payoff = $this->bcAdd($payoff, $this->formatMoney($arrearsOutstanding));
+
         if ($this->bcComp($payoff, '0') < 0) {
             return '0.00';
         }
@@ -162,6 +174,9 @@ class LoanSettlementService
                 $loan->refresh();
             }
 
+            $this->arrearsAccrualService->accrueThroughDate($loan, $settlementDate);
+            $loan->refresh();
+
             if ($this->resolveSettlementBehavior($loan) === Loan::INTEREST_BEHAVIOR_UPFRONT_FLAT) {
                 $this->applyUpfrontRebateAdjustment($loan, $settlementDate);
                 $loan->refresh();
@@ -183,13 +198,17 @@ class LoanSettlementService
             $feeApplied = $remaining['processing_fee_remaining'];
             $interestApplied = $remaining['interest_remaining_earned'];
 
+            $allocation = $loan->calculateRepaymentAllocation((float) $appliedAmount);
+
             $loanRepayment = LoanRepayment::create([
                 'repayment_id' => $repayment->id,
                 'loan_id' => $loan->id,
                 'amount' => (float) $appliedAmount,
-                'principal_amount' => (float) $principalApplied,
-                'interest_amount' => (float) $interestApplied,
-                'processing_fee_amount' => (float) $feeApplied,
+                'effective_date' => $settlementDate->toDateString(),
+                'principal_amount' => (float) ($allocation['principal_amount'] ?? $principalApplied),
+                'interest_amount' => (float) ($allocation['interest_amount'] ?? $interestApplied),
+                'processing_fee_amount' => (float) ($allocation['processing_fee_amount'] ?? $feeApplied),
+                'arrears_interest_amount' => (float) ($allocation['arrears_interest_amount'] ?? 0),
                 'outstanding_balance_before' => $outstandingBefore,
                 'outstanding_balance_after' => 0,
                 'notes' => $payload['notes'] ?? 'Early loan settlement',

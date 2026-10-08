@@ -44,6 +44,12 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping()
             ->runInBackground();
 
+        $schedule->command('loans:accrue-arrears')
+            ->dailyAt('01:30')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->runInBackground();
+
         $schedule->command('loans:sync-active-status')
             ->dailyAt('00:30')
             ->timezone($timezone)

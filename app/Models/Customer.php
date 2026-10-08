@@ -414,6 +414,23 @@ class Customer extends Authenticatable
         return $totalOverdue;
     }
 
+    public function getTotalOutstandingArrearsInterest(): float
+    {
+        $summary = app(\App\Services\Loans\LoanArrearsSummaryService::class);
+        $total = 0.0;
+
+        foreach ($this->activeLoans() as $loan) {
+            $total += $summary->outstandingArrearsInterest($loan);
+        }
+
+        return round($total, 2);
+    }
+
+    public function getTotalArrearsExposure(): float
+    {
+        return round($this->getTotalOverdueAmount() + $this->getTotalOutstandingArrearsInterest(), 2);
+    }
+
     /**
      * Check if customer has any overdue loans
      */

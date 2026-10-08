@@ -127,6 +127,8 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('loans/{loan}/schedule-pdf', [\App\Http\Controllers\Admin\LoanController::class, 'exportSchedulePdf'])->name('loans.schedule-pdf');
         Route::post('loans/{loan}/backfill-repayment', [\App\Http\Controllers\Admin\LoanController::class, 'backfillRepayment'])->name('loans.backfill-repayment');
         Route::post('loans/{loan}/refund', [\App\Http\Controllers\Admin\LoanController::class, 'storeRefund'])->name('loans.refund');
+        Route::post('loans/{loan}/arrears-catchup/apply', [\App\Http\Controllers\Admin\LoanController::class, 'applyArrearsCatchUp'])->name('loans.arrears-catchup.apply');
+        Route::post('loans/{loan}/arrears-catchup/dismiss', [\App\Http\Controllers\Admin\LoanController::class, 'dismissArrearsCatchUpPrompt'])->name('loans.arrears-catchup.dismiss');
         Route::post('loans/{loan}/payment-details', [\App\Http\Controllers\Admin\LoanController::class, 'updatePaymentDetails'])->name('loans.payment-details');
         Route::post('loans/{loan}/disburse', [\App\Http\Controllers\Admin\LoanController::class, 'disburse'])->name('loans.disburse');
         Route::post('loans/{loan}/disburse/gateway', [\App\Http\Controllers\Admin\LoanController::class, 'disburseGateway'])->name('loans.disburse.gateway');
@@ -182,6 +184,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::get('sms-templates', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'index'])->name('sms-templates.index');
         Route::get('sms-templates/{smsTemplate}/edit', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'edit'])->name('sms-templates.edit');
         Route::put('sms-templates/{smsTemplate}', [\App\Http\Controllers\Admin\SmsTemplateController::class, 'update'])->name('sms-templates.update');
+        Route::get('creditors/{creditor}/export', [CreditorController::class, 'export'])->name('creditors.export');
         Route::resource('creditors', CreditorController::class);
         Route::post('creditors/{creditor}/convert', [CreditorController::class, 'convert'])->name('creditors.convert');
         Route::resource('assets', AssetController::class);
@@ -194,6 +197,7 @@ Route::middleware('auth:admin')->group(function (): void {
         Route::post('financial-transactions/income', [FinancialTransactionController::class, 'storeIncome'])->name('financial-transactions.income.store');
         Route::get('financial-transactions/expense/create', [FinancialTransactionController::class, 'createExpense'])->name('financial-transactions.expense.create');
         Route::post('financial-transactions/expense', [FinancialTransactionController::class, 'storeExpense'])->name('financial-transactions.expense.store');
+        Route::patch('financial-transactions/{financialTransaction}/category', [FinancialTransactionController::class, 'updateCategory'])->name('financial-transactions.category.update');
         Route::get('financial-transactions/{financialTransaction}', [FinancialTransactionController::class, 'show'])->name('financial-transactions.show');
         Route::delete('financial-transactions/{financialTransaction}', [FinancialTransactionController::class, 'destroy'])->name('financial-transactions.destroy');
 
@@ -201,6 +205,7 @@ Route::middleware('auth:admin')->group(function (): void {
             Route::get('/', [FinancialCategoryController::class, 'index'])->name('index');
             Route::get('expense/create', [FinancialCategoryController::class, 'createExpense'])->name('expense.create');
             Route::post('expense', [FinancialCategoryController::class, 'storeExpense'])->name('expense.store');
+            Route::get('expense/{expenseCategory}', [FinancialCategoryController::class, 'showExpense'])->name('expense.show');
             Route::get('expense/{expenseCategory}/edit', [FinancialCategoryController::class, 'editExpense'])->name('expense.edit');
             Route::put('expense/{expenseCategory}', [FinancialCategoryController::class, 'updateExpense'])->name('expense.update');
             Route::delete('expense/{expenseCategory}', [FinancialCategoryController::class, 'destroyExpense'])->name('expense.destroy');
@@ -416,6 +421,8 @@ Route::middleware('auth:admin')->group(function (): void {
                 ->name('relationship-manager.export');
             Route::get('expenses', [\App\Http\Controllers\Admin\ReportController::class, 'expenses'])->name('expenses');
             Route::get('expenses/export', [\App\Http\Controllers\Admin\ReportController::class, 'exportExpenses'])->name('expenses.export');
+            Route::get('creditors', [\App\Http\Controllers\Admin\ReportController::class, 'creditors'])->name('creditors');
+            Route::get('creditors/export', [\App\Http\Controllers\Admin\ReportController::class, 'exportCreditors'])->name('creditors.export');
         });
 
         // Approval routes

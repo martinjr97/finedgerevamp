@@ -120,7 +120,7 @@ class LoanRatePhase6Test extends TestCase
             'tenure_months' => 1,
             'processing_fee_percentage' => 5,
             'term_interest_percentage' => 27.8,
-            'arrear_rate' => 0.01,
+            'arrear_rate_percent' => 1,
             'is_active' => 1,
         ])->assertRedirect(route('admin.loan-rate-types.show', $rateType));
 
@@ -153,7 +153,7 @@ class LoanRatePhase6Test extends TestCase
             'tenure_months' => 1,
             'processing_fee_percentage' => 5,
             'term_interest_percentage' => 27.8,
-            'arrear_rate' => 0,
+            'arrear_rate_percent' => 0,
             'is_active' => 1,
         ]);
 
@@ -354,7 +354,7 @@ class LoanRatePhase6Test extends TestCase
             'tenure_months' => 1,
             'processing_fee_percentage' => 5,
             'term_interest_percentage' => 20,
-            'arrear_rate' => 0,
+            'arrear_rate_percent' => 0,
             'is_active' => 1,
         ])->assertRedirect();
 
@@ -364,7 +364,7 @@ class LoanRatePhase6Test extends TestCase
             'term_interest_percentage' => 27.8,
             'min_principal' => 1000,
             'max_principal' => 5000,
-            'arrear_rate' => 0,
+            'arrear_rate_percent' => 0,
             'is_active' => 1,
         ])->assertRedirect();
 

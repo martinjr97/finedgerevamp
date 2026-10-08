@@ -335,7 +335,7 @@
             <div class="space-y-6">
                 @include('admin.loans.partials.financial-summary')
 
-                @if ($loan->accrual_period || $loan->last_accrual_date)
+                @if ($loan->accrual_period || $loan->last_accrual_date || ! empty($arrearsCatchUpPrompt))
                     <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
                         <h2 class="text-xl font-semibold text-white">Accrual</h2>
                         <div class="space-y-3 text-sm">
@@ -351,7 +351,14 @@
                                     <span class="font-medium text-white">{{ $loan->last_accrual_date->format('d M Y') }}</span>
                                 </div>
                             @endif
+                            @if ($loan->arrears_last_accrual_date)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400">Last arrears accrual date</span>
+                                    <span class="font-medium text-white">{{ $loan->arrears_last_accrual_date->format('d M Y') }}</span>
+                                </div>
+                            @endif
                         </div>
+                        @include('admin.loans.partials.arrears-catchup-alert')
                     </div>
                 @endif
             </div>
@@ -1140,6 +1147,26 @@
                 toggleExtensionFields();
             }
 
+            function openArrearsCatchUpModal() {
+                const modal = document.getElementById('arrearsCatchUpModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                }
+            }
+
+            function closeArrearsCatchUpModal() {
+                const modal = document.getElementById('arrearsCatchUpModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('arrearsCatchUpModal')?.addEventListener('click', function (e) {
+                if (e.target === this) {
+                    closeArrearsCatchUpModal();
+                }
+            });
+
             function closeExtensionModal() {
                 const modal = document.getElementById('extensionModal');
                 if (!modal) return;
@@ -1577,6 +1604,8 @@
                 </div>
             </div>
         @endif
+
+        @include('admin.loans.partials.arrears-summary')
 
         @include('admin.loans.partials.settlement-panel')
 
@@ -2153,4 +2182,6 @@
         </script>
         @endpush
     @endif
+
+    @include('admin.loans.partials.arrears-catchup-modal')
 @endsection

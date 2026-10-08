@@ -310,8 +310,117 @@ class FinancialTransactionController extends Controller
     public function show(FinancialTransaction $financialTransaction): View
     {
         abort_unless(auth('admin')->user()?->can('financial-transactions.view'), 403);
-        $financialTransaction->load(['sourceBank', 'sourceWallet', 'destinationBank', 'destinationWallet', 'creator', 'employee', 'expenseCategory', 'expenseSubcategory', 'creditor']);
-        return view('admin.financial-transactions.show', compact('financialTransaction'));
+        $financialTransaction->load(['sourceBank', 'sourceWallet', 'destinationBank', 'destinationWallet', 'creator', 'employee', 'expenseCategory', 'expenseSubcategory', 'incomeCategory', 'creditor']);
+
+        $canUpdateCategory = auth('admin')->user()?->can('financial-transactions.update-category') ?? false;
+        $categoryEditable = $canUpdateCategory && in_array($financialTransaction->type, ['income', 'expense'], true);
+
+        $expenseCategories = $categoryEditable && $financialTransaction->type === 'expense'
+            ? FinancialCategoryCatalog::activeExpenseCategories()
+            : collect();
+
+        $incomeCategories = $categoryEditable && $financialTransaction->type === 'income'
+            ? FinancialCategoryCatalog::activeIncomeCategories()
+            : collect();
+
+        return view('admin.financial-transactions.show', compact(
+            'financialTransaction',
+            'canUpdateCategory',
+            'categoryEditable',
+            'expenseCategories',
+            'incomeCategories',
+        ));
+    }
+
+    /**
+     * Update category (and expense subcategory) without changing amounts or accounts.
+     */
+    public function updateCategory(Request $request, FinancialTransaction $financialTransaction): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('financial-transactions.update-category'), 403);
+
+        if (! in_array($financialTransaction->type, ['income', 'expense'], true)) {
+            return redirect()->back()
+                ->with('error', 'Category can only be updated for income and expense transactions.');
+        }
+
+        if ($financialTransaction->type === 'income') {
+            $incomeCategoryCodes = FinancialCategoryCatalog::activeIncomeCategoryCodes();
+            $validated = $request->validate([
+                'category' => ['required', 'in:'.implode(',', $incomeCategoryCodes)],
+            ]);
+
+            $incomeCategory = FinancialCategoryCatalog::resolveIncomeCategory($validated['category']);
+
+            $financialTransaction->update([
+                'category' => $validated['category'],
+                'income_category_id' => $incomeCategory?->id,
+                'expense_category_id' => null,
+                'expense_subcategory_id' => null,
+            ]);
+
+            return redirect()->route('admin.financial-transactions.show', $financialTransaction)
+                ->with('status', 'Transaction category updated successfully.');
+        }
+
+        $expenseCategoryCodes = FinancialCategoryCatalog::activeExpenseCategoryCodes();
+        $validated = $request->validate([
+            'category' => ['required', 'in:'.implode(',', $expenseCategoryCodes)],
+            'expense_subcategory_id' => ['nullable', 'integer'],
+        ]);
+
+        $expenseCategory = FinancialCategoryCatalog::resolveExpenseCategory($validated['category']);
+        $expenseSubcategory = $expenseCategory
+            ? FinancialCategoryCatalog::resolveExpenseSubcategory($expenseCategory->id, $validated['expense_subcategory_id'] ?? null)
+            : null;
+
+        $wasCreditorRepayment = $this->creditorBalanceService->isCreditorLoanRepayment($financialTransaction->expenseCategory);
+        $isCreditorRepayment = $this->creditorBalanceService->isCreditorLoanRepayment($expenseCategory);
+
+        if ($isCreditorRepayment && ! $financialTransaction->creditor_id) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'This transaction has no linked creditor. Creditor Loan Repayment category cannot be applied.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            if ($wasCreditorRepayment && ! $isCreditorRepayment && $financialTransaction->creditor_id) {
+                $creditor = Creditor::query()->find($financialTransaction->creditor_id);
+                if ($creditor) {
+                    $this->creditorBalanceService->restoreBalance($creditor, (float) $financialTransaction->amount);
+                }
+            } elseif (! $wasCreditorRepayment && $isCreditorRepayment && $financialTransaction->creditor_id) {
+                $creditor = Creditor::query()->findOrFail($financialTransaction->creditor_id);
+                if ($this->creditorBalanceService->paymentExceedsBalance($creditor, (float) $financialTransaction->amount)) {
+                    DB::rollBack();
+
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Reclassifying as creditor repayment would exceed the creditor outstanding balance.');
+                }
+                $this->creditorBalanceService->reduceBalance($creditor, (float) $financialTransaction->amount);
+            }
+
+            $financialTransaction->update([
+                'category' => $validated['category'],
+                'expense_category_id' => $expenseCategory?->id,
+                'expense_subcategory_id' => $expenseSubcategory?->id,
+                'income_category_id' => null,
+            ]);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to update category: '.$e->getMessage());
+        }
+
+        return redirect()->route('admin.financial-transactions.show', $financialTransaction)
+            ->with('status', 'Transaction category updated successfully.');
     }
 
     /**

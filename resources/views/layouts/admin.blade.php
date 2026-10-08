@@ -231,6 +231,7 @@
                                     auth('admin')->user()?->can('reports.view') ? ['label' => 'Risk Heatmap Dashboard', 'route' => route('admin.reports.risk-heatmap'), 'icon' => 'fire'] : null,
                                     auth('admin')->user()?->can('reports.view') ? ['label' => 'Relationship Manager Report', 'route' => route('admin.reports.relationship-manager'), 'icon' => 'users'] : null,
                                     auth('admin')->user()?->can('reports.view') ? ['label' => 'Expenses Report', 'route' => route('admin.reports.expenses'), 'icon' => 'banknotes'] : null,
+                                    auth('admin')->user()?->can('reports.view') ? ['label' => 'Creditors Report', 'route' => route('admin.reports.creditors'), 'icon' => 'building-library'] : null,
                                 ]),
                             ];
                         }

@@ -434,31 +434,39 @@ class BulkRepaymentController extends Controller
 
         $allocation = $loan->calculateRepaymentAllocation($amount);
 
-        $principalAmount = $allocation['principal_amount'];
-        $interestAmount = $allocation['interest_amount'];
-        $processingFeeAmount = $allocation['processing_fee_amount'];
+        $principalAmount = (float) $allocation['principal_amount'];
+        $interestAmount = (float) $allocation['interest_amount'];
+        $processingFeeAmount = (float) $allocation['processing_fee_amount'];
+        $arrearsInterestAmount = (float) ($allocation['arrears_interest_amount'] ?? 0);
 
-        $totalAllocated = $principalAmount + $interestAmount + $processingFeeAmount;
+        $totalAllocated = $principalAmount + $interestAmount + $processingFeeAmount + $arrearsInterestAmount;
         if (abs($totalAllocated - $amount) > 0.01) {
             $principalAmount += ($amount - $totalAllocated);
             $principalAmount = max(0, $principalAmount);
         }
 
         if (method_exists($loan, 'updatePaymentSchedule') && $loan->paymentSchedules()->exists()) {
-            $loan->updatePaymentSchedule($amount);
+            $scheduleApplied = \App\Models\LoanRepayment::scheduleAppliedAmountFromAllocation($allocation);
+            if ($scheduleApplied > 0) {
+                $loan->updatePaymentSchedule($scheduleApplied);
+            }
         }
 
         $netPaidAfter = round($netPaidBefore + $amount, 2);
         $outstandingBalanceAfter = $ledgerService->calculateOutstandingBalance($loan, $netPaidAfter);
+
+        $effectiveDateString = LoanRepayment::resolveEffectiveDateString($repayment);
 
         LoanRepayment::create([
             'repayment_id' => $repayment->id,
             'loan_id' => $loan->id,
             'transaction_type' => LoanRepayment::TRANSACTION_TYPE_PAYMENT,
             'amount' => $amount,
+            'effective_date' => $effectiveDateString,
             'principal_amount' => round($principalAmount, 2),
             'interest_amount' => round($interestAmount, 2),
             'processing_fee_amount' => round($processingFeeAmount, 2),
+            'arrears_interest_amount' => round($arrearsInterestAmount, 2),
             'outstanding_balance_before' => $outstandingBalanceBefore,
             'outstanding_balance_after' => $outstandingBalanceAfter,
             'notes' => "Bulk repayment applied to loan {$loan->loan_number}",

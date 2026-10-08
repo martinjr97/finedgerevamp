@@ -1913,6 +1913,9 @@ class GroupLoanApplicationController extends Controller
                 'processing_fee_percentage' => $application->processing_fee_percentage,
                 'daily_rate' => $dailyRate,
                 'weekly_rate' => $weeklyRate,
+                'arrear_rate' => $application->arrears_rate !== null
+                    ? \App\Support\ArrearRate::fromPercentage((float) $application->arrears_rate)
+                    : null,
                 'accrual_period' => $application->repayment_structure === 'weekly' ? 'weekly' : 'daily',
                 'interest_accrued' => $member->calculated_interest_amount,
                 'total_amount' => $member->calculated_total_repayment_amount,

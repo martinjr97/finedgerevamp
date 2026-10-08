@@ -31,6 +31,7 @@ use App\Services\LoanRepaymentLedgerService;
 use App\Services\LoanRepaymentRefundService;
 use App\Services\Loans\AutomaticLoanDisbursementService;
 use App\Services\Loans\DTOs\ManualDisbursementDTO;
+use App\Services\Loans\LoanArrearsCatchUpService;
 use App\Services\Loans\LoanCancellationService;
 use App\Services\Loans\LoanDisbursementService;
 use App\Services\SharedPaymentDetailsDetectionService;
@@ -107,6 +108,30 @@ class LoanController extends Controller
 
         if ($request->has('date_to') && $request->date_to) {
             $query->whereDate('loan_start_date', '<=', $request->date_to);
+        }
+
+        if ($request->filled('created_from')) {
+            $query->whereDate('created_at', '>=', $request->created_from);
+        }
+
+        if ($request->filled('created_to')) {
+            $query->whereDate('created_at', '<=', $request->created_to);
+        }
+
+        if ($request->filled('approved_from')) {
+            $query->whereDate('approved_at', '>=', $request->approved_from);
+        }
+
+        if ($request->filled('approved_to')) {
+            $query->whereDate('approved_at', '<=', $request->approved_to);
+        }
+
+        if ($request->filled('disbursed_from')) {
+            $query->whereNotNull('disbursed_at')->whereDate('disbursed_at', '>=', $request->disbursed_from);
+        }
+
+        if ($request->filled('disbursed_to')) {
+            $query->whereNotNull('disbursed_at')->whereDate('disbursed_at', '<=', $request->disbursed_to);
         }
 
         if ($request->has('search') && $request->search) {
@@ -196,6 +221,30 @@ class LoanController extends Controller
 
         if ($request->has('date_to') && $request->date_to) {
             $query->whereDate('loan_start_date', '<=', $request->date_to);
+        }
+
+        if ($request->filled('created_from')) {
+            $query->whereDate('created_at', '>=', $request->created_from);
+        }
+
+        if ($request->filled('created_to')) {
+            $query->whereDate('created_at', '<=', $request->created_to);
+        }
+
+        if ($request->filled('approved_from')) {
+            $query->whereDate('approved_at', '>=', $request->approved_from);
+        }
+
+        if ($request->filled('approved_to')) {
+            $query->whereDate('approved_at', '<=', $request->approved_to);
+        }
+
+        if ($request->filled('disbursed_from')) {
+            $query->whereNotNull('disbursed_at')->whereDate('disbursed_at', '>=', $request->disbursed_from);
+        }
+
+        if ($request->filled('disbursed_to')) {
+            $query->whereNotNull('disbursed_at')->whereDate('disbursed_at', '<=', $request->disbursed_to);
         }
 
         if ($request->has('search') && $request->search) {
@@ -744,10 +793,16 @@ class LoanController extends Controller
         $canCancelLoan = app(LoanCancellationService::class)->canCancel($loan);
 
         $loanStatement = $loan->getSimpleStatementSummary();
+        $arrearsSummary = app(\App\Services\Loans\LoanArrearsSummaryService::class)->summarize($loan);
+        $arrearsStatementSegments = app(\App\Services\Loans\LoanArrearsSummaryService::class)->statementSegments($loan);
+        $arrearsCatchUpPrompt = app(LoanArrearsCatchUpService::class)->buildPromptForLoan($loan);
 
         return view('admin.loans.show', compact(
             'loan',
             'loanStatement',
+            'arrearsSummary',
+            'arrearsStatementSegments',
+            'arrearsCatchUpPrompt',
             'disbursementType',
             'banks',
             'wallets',
@@ -768,6 +823,45 @@ class LoanController extends Controller
             'approvalAutoDisbursementPreview',
             'canCancelLoan',
         ));
+    }
+
+    public function applyArrearsCatchUp(Loan $loan): RedirectResponse
+    {
+        $admin = auth('admin')->user();
+        abort_unless($admin instanceof Admin, 403);
+        abort_unless($admin->can('loans.disburse'), 403);
+
+        try {
+            $result = app(LoanArrearsCatchUpService::class)->applyCatchUp($loan, $admin);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()
+                ->route('admin.loans.show', $loan)
+                ->with('error', $e->getMessage());
+        }
+
+        $created = $result['accrual_result']['accruals_created'] ?? 0;
+        $charged = $result['accrual_result']['total_charged'] ?? '0.00';
+
+        return redirect()
+            ->route('admin.loans.show', $loan)
+            ->with('status', "Posted {$created} missed arrears accrual row(s). Total charged: ZMW ".number_format((float) $charged, 2).'.');
+    }
+
+    public function dismissArrearsCatchUpPrompt(Loan $loan): RedirectResponse
+    {
+        $admin = auth('admin')->user();
+        abort_unless($admin instanceof Admin, 403);
+        abort_unless($admin->can('loans.view'), 403);
+
+        $catchUpService = app(LoanArrearsCatchUpService::class);
+        $preview = $catchUpService->buildPromptForLoan($loan)
+            ?? app(\App\Services\Loans\LoanArrearsAccrualService::class)->previewMissedAccruals($loan);
+
+        $catchUpService->dismissPrompt($loan, $admin, $preview);
+
+        return redirect()
+            ->route('admin.loans.show', $loan)
+            ->with('status', 'Arrears catch-up reminder dismissed for this loan. You will not be prompted again.');
     }
 
     public function cancel(Request $request, Loan $loan): RedirectResponse
@@ -1087,6 +1181,7 @@ class LoanController extends Controller
                 'repayment_id' => $repayment->id,
                 'loan_id' => $loan->id,
                 'amount' => $paymentAmount,
+                'effective_date' => LoanRepayment::resolveEffectiveDateString($repayment),
                 'principal_amount' => round($principalPaid, 2),
                 'interest_amount' => round($interestPaid, 2),
                 'processing_fee_amount' => round($processingFeePaid, 2),

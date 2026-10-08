@@ -288,4 +288,20 @@ class CreditorRepaymentTest extends TestCase
         $creditor->refresh();
         $this->assertSame(1500.0, (float) $creditor->amount);
     }
+
+    public function test_creditor_show_can_export_excel(): void
+    {
+        $admin = $this->makeAdmin(['creditors.view']);
+
+        $creditor = Creditor::create([
+            'name' => 'Export Test Creditor',
+            'amount' => 2500,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.creditors.export', $creditor))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
 }

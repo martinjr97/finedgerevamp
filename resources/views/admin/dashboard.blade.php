@@ -408,172 +408,162 @@
             {{-- Today's Stats --}}
             <div x-show="activeTab === 'today'" x-transition class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                 @if ($canViewLoans)
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Loans Created</p>
-                            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($todayStats['loans_created']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">New loan applications today</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['today']['loans_created']"
+                        label="Loans Created"
+                        :value="$todayStats['loans_created']"
+                        subtitle="New loan applications today">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
 
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Loans Approved</p>
-                            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($todayStats['loans_approved']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Loans approved today</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['today']['loans_approved']"
+                        label="Loans Approved"
+                        :value="$todayStats['loans_approved']"
+                        subtitle="Loans approved today">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
 
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Loans Disbursed</p>
-                            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($todayStats['loans_disbursed']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Loans disbursed today</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['today']['loans_disbursed']"
+                        label="Loans Disbursed"
+                        :value="$todayStats['loans_disbursed']"
+                        subtitle="Loans disbursed today">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
 
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Amount Disbursed</p>
-                            <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($todayStats['total_disbursed'], 2) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Total disbursed today</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['today']['total_disbursed']"
+                        label="Amount Disbursed"
+                        :value="$todayStats['total_disbursed']"
+                        :decimals="2"
+                        subtitle="Total disbursed today">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
                 @endif
 
                 @if ($canViewRepayments)
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Repayments Received</p>
-                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($todayStats['repayments_received']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Repayments processed today</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['today']['repayments_received']"
+                        label="Repayments Received"
+                        :value="$todayStats['repayments_received']"
+                        subtitle="Repayments processed today">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
 
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Repayment Amount</p>
-                            <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($todayStats['total_repayments'], 2) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Total repayments today</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['today']['total_repayments']"
+                        label="Repayment Amount"
+                        :value="$todayStats['total_repayments']"
+                        :decimals="2"
+                        subtitle="Total repayments today">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
                 @endif
 
                 @if ($canViewCustomers)
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">New Customers</p>
-                            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($todayStats['new_customers']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">New registrations today</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['today']['new_customers']"
+                        label="New Customers"
+                        :value="$todayStats['new_customers']"
+                        subtitle="New registrations today">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
                 @endif
             </div>
 
             {{-- This Week's Stats --}}
             <div x-show="activeTab === 'week'" x-transition class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                 @if ($canViewLoans)
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Loans Created</p>
-                            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($weekStats['loans_created']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">New loan applications this week</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['week']['loans_created']"
+                        label="Loans Created"
+                        :value="$weekStats['loans_created']"
+                        subtitle="New loan applications this week">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
 
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Loans Approved</p>
-                            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($weekStats['loans_approved']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Loans approved this week</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['week']['loans_approved']"
+                        label="Loans Approved"
+                        :value="$weekStats['loans_approved']"
+                        subtitle="Loans approved this week">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
 
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Loans Disbursed</p>
-                            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($weekStats['loans_disbursed']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Loans disbursed this week</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['week']['loans_disbursed']"
+                        label="Loans Disbursed"
+                        :value="$weekStats['loans_disbursed']"
+                        subtitle="Loans disbursed this week">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
 
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Amount Disbursed</p>
-                            <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($weekStats['total_disbursed'], 2) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Total disbursed this week</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['week']['total_disbursed']"
+                        label="Amount Disbursed"
+                        :value="$weekStats['total_disbursed']"
+                        :decimals="2"
+                        subtitle="Total disbursed this week">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
                 @endif
 
                 @if ($canViewRepayments)
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Repayments Received</p>
-                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($weekStats['repayments_received']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Repayments processed this week</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['week']['repayments_received']"
+                        label="Repayments Received"
+                        :value="$weekStats['repayments_received']"
+                        subtitle="Repayments processed this week">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
 
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">Repayment Amount</p>
-                            <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($weekStats['total_repayments'], 2) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">Total repayments this week</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['week']['total_repayments']"
+                        label="Repayment Amount"
+                        :value="$weekStats['total_repayments']"
+                        :decimals="2"
+                        subtitle="Total repayments this week">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
                 @endif
 
                 @if ($canViewCustomers)
-                    <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm text-slate-400">New Customers</p>
-                            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                            </svg>
-                        </div>
-                        <p class="text-3xl font-semibold mt-2">{{ number_format($weekStats['new_customers']) }}</p>
-                        <p class="text-slate-500 text-xs mt-2">New registrations this week</p>
-                    </article>
+                    <x-admin.dashboard-activity-stat-tile
+                        :href="$activityStatLinks['week']['new_customers']"
+                        label="New Customers"
+                        :value="$weekStats['new_customers']"
+                        subtitle="New registrations this week">
+                        <x-slot:icon>
+                            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.dashboard-activity-stat-tile>
                 @endif
             </div>
             </section>

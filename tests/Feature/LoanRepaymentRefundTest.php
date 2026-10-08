@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\Customer\StatementController;
 use App\Models\Admin;
 use App\Models\Channel;
 use App\Models\Company;
@@ -12,11 +11,14 @@ use App\Models\LoanPaymentSchedule;
 use App\Models\LoanProduct;
 use App\Models\LoanRepayment;
 use App\Models\Repayment;
+use App\Services\CustomerLifetimeStatementService;
 use App\Services\LoanRepaymentLedgerService;
 use App\Services\LoanRepaymentRefundService;
+use App\Services\Loans\LoanArrearsAccrualService;
+use App\Services\Loans\LoanArrearsSummaryService;
 use App\Services\RepaymentProcessingService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -543,14 +545,21 @@ class LoanRepaymentRefundTest extends TestCase
             'Statement balance test'
         );
 
-        $statement = $this->buildCustomerStatement($customer, $loan->id);
-        $paymentTxn = $statement->firstWhere('type', 'payment');
-        $refundTxn = $statement->firstWhere('type', 'refund');
+        $statement = app(CustomerLifetimeStatementService::class)->build($customer, null, null, $loan->id);
+        $paymentRow = $statement['rows']->firstWhere('transaction_type', 'payment');
+        $refundRow = $statement['rows']->firstWhere('transaction_type', 'refund');
 
-        $this->assertSame(300.0, (float) $paymentTxn['net_paid']);
-        $this->assertSame(300.0, (float) $paymentTxn['outstanding_balance']);
-        $this->assertSame(200.0, (float) $refundTxn['net_paid']);
-        $this->assertSame(400.0, (float) $refundTxn['outstanding_balance']);
+        $this->assertNotNull($paymentRow);
+        $this->assertNotNull($refundRow);
+        $this->assertEqualsWithDelta(300.0, (float) $paymentRow['credit'], 0.01);
+        $this->assertEqualsWithDelta(300.0, (float) $paymentRow['running_balance']['balance_owed'], 0.01);
+        $this->assertEqualsWithDelta(100.0, (float) $refundRow['debit'], 0.01);
+        $this->assertEqualsWithDelta(400.0, (float) $refundRow['running_balance']['balance_owed'], 0.01);
+
+        $loan->refresh();
+        $this->assertEqualsWithDelta(200.0, $this->ledger->calculateNetPaid($loan), 0.01);
+        $this->assertEqualsWithDelta(400.0, $this->ledger->calculateOutstandingBalance($loan), 0.01);
+        $this->assertEqualsWithDelta(200.0, (float) $statement['summary']['total_net_paid'], 0.01);
     }
 
     public function test_customer_statement_includes_payments_and_refunds_across_loans(): void
@@ -574,11 +583,73 @@ class LoanRepaymentRefundTest extends TestCase
             'Overpayment on loan A'
         );
 
-        $statement = $this->buildCustomerStatement($customer);
+        $statement = app(CustomerLifetimeStatementService::class)->build($customer);
+        $rows = $statement['rows'];
 
-        $this->assertTrue($statement->contains(fn ($txn) => $txn['type'] === 'payment' && $txn['loan']->id === $loanA->id));
-        $this->assertTrue($statement->contains(fn ($txn) => $txn['type'] === 'payment' && $txn['loan']->id === $loanB->id));
-        $this->assertTrue($statement->contains(fn ($txn) => $txn['type'] === 'refund' && $txn['loan']->id === $loanA->id));
+        $this->assertTrue($rows->contains(
+            fn (array $row) => $row['transaction_type'] === 'payment' && $row['loan_id'] === $loanA->id
+        ));
+        $this->assertTrue($rows->contains(
+            fn (array $row) => $row['transaction_type'] === 'payment' && $row['loan_id'] === $loanB->id
+        ));
+        $this->assertTrue($rows->contains(
+            fn (array $row) => $row['transaction_type'] === 'refund' && $row['loan_id'] === $loanA->id
+        ));
+    }
+
+    public function test_customer_statement_and_ledger_after_arrears_split_payment_and_full_refund(): void
+    {
+        config(['arrears.engine_effective_date' => '2026-01-01']);
+
+        $suffix = Str::lower(Str::random(6));
+        $company = $this->makeCompany($suffix);
+        $loanProduct = $this->makeLoanProduct($company, $suffix);
+        $customer = $this->makeCustomer($company, $loanProduct, $suffix);
+        $channel = $this->makeChannel($suffix);
+
+        $loan = $this->makeLoanWithSchedules($customer, $loanProduct, $channel, [
+            ['expected' => 1000, 'due_date' => '2026-10-30'],
+        ]);
+        $loan->update(['arrear_rate' => 0.01]);
+
+        app(LoanArrearsAccrualService::class)->accrueLoan(
+            $loan,
+            Carbon::parse('2026-11-09'),
+            null,
+            Carbon::parse('2026-01-01'),
+            false
+        );
+
+        $payment = $this->applyPayment($loan, $customer, $channel, 600);
+        $loan->refresh();
+
+        $this->assertEqualsWithDelta(100.0, (float) $payment->arrears_interest_amount, 0.01);
+        $this->assertEqualsWithDelta(500.0, $payment->scheduleAppliedAmount(), 0.01);
+        $this->assertEqualsWithDelta(500.0, (float) $loan->paymentSchedules->first()->remaining_amount, 0.01);
+        $this->assertEqualsWithDelta(0.0, app(LoanArrearsSummaryService::class)->outstandingArrearsInterest($loan), 0.01);
+
+        $statementAfterPayment = app(CustomerLifetimeStatementService::class)->build($customer, null, null, $loan->id);
+        $paymentRow = $statementAfterPayment['rows']->firstWhere('transaction_type', 'payment');
+        $this->assertEqualsWithDelta(600.0, (float) $paymentRow['credit'], 0.01);
+
+        app(LoanRepaymentRefundService::class)->applyRefund($loan->fresh(), $payment, 600.0, 'Full refund after arrears split');
+
+        $loan->refresh();
+        $schedule = $loan->paymentSchedules->first();
+
+        $this->assertEqualsWithDelta(1000.0, (float) $schedule->remaining_amount, 0.01);
+        $this->assertEqualsWithDelta(100.0, app(LoanArrearsSummaryService::class)->outstandingArrearsInterest($loan), 0.01);
+        $this->assertEqualsWithDelta(0.0, $this->ledger->calculateNetPaid($loan), 0.01);
+
+        $statementAfterRefund = app(CustomerLifetimeStatementService::class)->build($customer, null, null, $loan->id);
+        $refundRow = $statementAfterRefund['rows']->firstWhere('transaction_type', 'refund');
+        $this->assertEqualsWithDelta(600.0, (float) $refundRow['debit'], 0.01);
+
+        $refundLoanRepayment = LoanRepayment::query()
+            ->where('transaction_type', LoanRepayment::TRANSACTION_TYPE_REFUND)
+            ->firstOrFail();
+        $this->assertEqualsWithDelta(-100.0, (float) $refundLoanRepayment->arrears_interest_amount, 0.01);
+        $this->assertEqualsWithDelta(-500.0, (float) $refundLoanRepayment->principal_amount, 0.01);
     }
 
     public function test_report_collection_totals_net_refunds(): void
@@ -637,18 +708,4 @@ class LoanRepaymentRefundTest extends TestCase
             ->assertForbidden();
     }
 
-    private function buildCustomerStatement(Customer $customer, ?int $loanId = null): \Illuminate\Support\Collection
-    {
-        $controller = app(StatementController::class);
-        $reflection = new \ReflectionClass($controller);
-        $method = $reflection->getMethod('buildTransactionHistory');
-        $method->setAccessible(true);
-
-        $loansQuery = $customer->loans()->with(['loanProduct', 'customerGroup', 'accruals']);
-        if ($loanId) {
-            $loansQuery->where('id', $loanId);
-        }
-
-        return $method->invoke($controller, $loansQuery->get());
-    }
 }

@@ -31,6 +31,16 @@ class FinancialCategoryController extends Controller
         return view('admin.financial-categories.index', compact('expenseCategories', 'incomeCategories'));
     }
 
+    public function showExpense(ExpenseCategory $expenseCategory): View
+    {
+        abort_unless(auth('admin')->user()?->can('financial-categories.view'), 403);
+
+        $expenseCategory->loadCount('transactions');
+        $expenseCategory->load(['subcategories' => fn ($query) => $query->orderBy('name')]);
+
+        return view('admin.financial-categories.show-expense', compact('expenseCategory'));
+    }
+
     public function createExpense(): View
     {
         abort_unless(auth('admin')->user()?->can('financial-categories.create'), 403);

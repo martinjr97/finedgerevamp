@@ -21,6 +21,7 @@
                     ['label' => 'Branch Report', 'description' => 'Branch-level portfolio, PAR, and activity.', 'route' => route('admin.reports.branches')],
                     ['label' => 'Risk Heatmap Dashboard', 'description' => 'Risk concentration by borrower, branch, and region.', 'route' => route('admin.reports.risk-heatmap')],
                     ['label' => 'Expenses Report', 'description' => 'Spending by category, top payees, and expense insights.', 'route' => route('admin.reports.expenses')],
+                    ['label' => 'Creditors Report', 'description' => 'Outstanding balances, payments in period, and creditor payment detail.', 'route' => route('admin.reports.creditors')],
                 ];
             @endphp
 

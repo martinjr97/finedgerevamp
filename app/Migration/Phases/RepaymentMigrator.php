@@ -206,6 +206,7 @@ class RepaymentMigrator
                     'loan_id' => $loanId,
                     'transaction_type' => LoanRepayment::TRANSACTION_TYPE_PAYMENT,
                     'amount' => $amount,
+                    'effective_date' => LoanRepayment::resolveEffectiveDateString($repaymentModel),
                     'principal_amount' => $splits['principal_amount'],
                     'interest_amount' => $splits['interest_amount'],
                     'processing_fee_amount' => $splits['processing_fee_amount'],

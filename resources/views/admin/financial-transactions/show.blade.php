@@ -6,8 +6,25 @@
     <div class="space-y-8">
         @include('partials.admin.page-header', [
             'title' => 'Transaction Details',
-            'buttons' => []
+            'buttons' => array_filter([
+                [
+                    'action' => 'back',
+                    'text' => 'Back to transactions',
+                    'href' => route('admin.financial-transactions.index'),
+                ],
+            ]),
         ])
+
+        @if (session('status'))
+            <div class="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                {{ session('status') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                {{ session('error') }}
+            </div>
+        @endif
 
         <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
             <div class="grid grid-cols-2 gap-6">
@@ -28,9 +45,25 @@
                     </p>
                 </div>
                 <div>
-                    <label class="text-sm text-slate-400">Category</label>
-                    <p class="text-white">{{ \App\Support\FinancialCategoryCatalog::transactionCategoryLabel($financialTransaction) }}</p>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <div>
+                            <label class="text-sm text-slate-400">Category</label>
+                            <p class="text-white">{{ \App\Support\FinancialCategoryCatalog::transactionCategoryLabel($financialTransaction) }}</p>
+                        </div>
+                        @if ($categoryEditable)
+                            <button type="button" onclick="openEditCategoryModal()" class="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/20 transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                Edit category
+                            </button>
+                        @endif
+                    </div>
                 </div>
+                @if($financialTransaction->type === 'expense' && $financialTransaction->expenseSubcategory)
+                <div>
+                    <label class="text-sm text-slate-400">Subcategory</label>
+                    <p class="text-white">{{ $financialTransaction->expenseSubcategory->name }}</p>
+                </div>
+                @endif
                 @if($financialTransaction->type === 'expense' && ($financialTransaction->receiver_name || $financialTransaction->employee))
                 <div>
                     <label class="text-sm text-slate-400">Receiver</label>
@@ -99,5 +132,8 @@
             </div>
         </div>
     </div>
-@endsection
 
+    @if ($categoryEditable)
+        @include('admin.financial-transactions.partials.edit-category-modal')
+    @endif
+@endsection

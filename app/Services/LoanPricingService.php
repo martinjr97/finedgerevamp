@@ -109,6 +109,9 @@ class LoanPricingService
             'derived_daily_rate' => $derivedDailyRate,
             'loan_rate_id' => $loanRate->id,
             'loan_rate_type_id' => $rateType->id,
+            'arrear_rate' => $loanRate->arrear_rate !== null
+                ? $this->formatRate((string) $loanRate->arrear_rate, 5)
+                : null,
             'start_date' => $startDate->toDateString(),
             'loan_end_date' => $startDate->copy()->addMonths($tenureMonths)->toDateString(),
             'projected_interest' => $interest,
@@ -175,6 +178,8 @@ class LoanPricingService
         $dailyRate = $quote['derived_daily_rate'] ?? $quote['daily_rate'];
         $weeklyRate = $quote['weekly_rate'];
 
+        $arrearRate = $quote['arrear_rate'] ?? null;
+
         if ($behavior === LoanRateType::INTEREST_BEHAVIOR_UPFRONT_FLAT) {
             return [
                 'processing_fee' => $processingFee,
@@ -184,6 +189,7 @@ class LoanPricingService
                 'outstanding_balance' => $projectedTotal,
                 'daily_rate' => $dailyRate,
                 'weekly_rate' => $weeklyRate,
+                'arrear_rate' => $arrearRate,
                 'quoted_term_rate' => $quote['quoted_term_rate'],
                 'interest_behavior' => $behavior,
                 'accrual_type' => $accrualType,
@@ -211,6 +217,7 @@ class LoanPricingService
             'outstanding_balance' => $initialBookedTotal,
             'daily_rate' => $dailyRate,
             'weekly_rate' => $weeklyRate,
+            'arrear_rate' => $arrearRate,
             'quoted_term_rate' => $quote['quoted_term_rate'],
             'interest_behavior' => $behavior,
             'accrual_type' => $accrualType,

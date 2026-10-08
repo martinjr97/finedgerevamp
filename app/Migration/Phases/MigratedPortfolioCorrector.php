@@ -151,7 +151,14 @@ class MigratedPortfolioCorrector
             ->get();
 
         foreach ($repayments as $loanRepayment) {
-            $loan->updatePaymentSchedule((float) $loanRepayment->amount);
+            if ($loanRepayment->isRefund()) {
+                continue;
+            }
+
+            $scheduleApplied = $loanRepayment->scheduleAppliedAmount();
+            if ($scheduleApplied > 0) {
+                $loan->updatePaymentSchedule($scheduleApplied);
+            }
         }
 
         $stats['schedules_synced']++;

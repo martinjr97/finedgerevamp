@@ -96,6 +96,26 @@ class FinancialCategoryManagementTest extends TestCase
         $this->assertTrue(IncomeCategory::query()->where('code', 'CONS_'.$suffix)->exists());
     }
 
+    public function test_admin_can_view_expense_subcategories_from_category_index(): void
+    {
+        $this->seed(FinancialCategorySeeder::class);
+        $admin = $this->makeAdmin(['financial-categories.view']);
+
+        $category = ExpenseCategory::query()->where('code', 'operational')->firstOrFail();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.financial-categories.index'))
+            ->assertOk()
+            ->assertSee('View Subcategories', false)
+            ->assertSee(route('admin.financial-categories.expense.show', $category).'#subcategories', false);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.financial-categories.expense.show', $category))
+            ->assertOk()
+            ->assertSee('Subcategories', false)
+            ->assertSee('Unclassified', false);
+    }
+
     public function test_admin_can_create_expense_subcategory_from_category_index(): void
     {
         $this->seed(FinancialCategorySeeder::class);

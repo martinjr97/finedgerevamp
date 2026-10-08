@@ -189,7 +189,7 @@
                                             {{ $rate->max_principal !== null ? number_format($rate->max_principal, 2) : 'open' }}
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3">{{ number_format($rate->arrear_rate, 5) }}</td>
+                                    <td class="px-4 py-3">{{ \App\Support\ArrearRate::toPercentage((string) $rate->arrear_rate) }}% <span class="text-xs text-slate-400">(stored {{ number_format($rate->arrear_rate, 5) }})</span></td>
                                     <td class="px-4 py-3">
                                         <span class="rounded-full px-2 py-1 text-xs {{ $rate->is_active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300' }}">
                                             {{ $rate->is_active ? 'Active' : 'Inactive' }}

@@ -59,11 +59,21 @@ class LoanRepaymentRefundService
             $outstandingBalanceBefore = $this->ledgerService->calculateOutstandingBalance($loan, $netPaidBefore);
             $componentSplit = $originalLoanRepayment->calculateRefundComponentSplit($refundAmount);
 
-            $scheduleReversalAmount = $this->ledgerService->scheduleReversalAmountForRefund(
+            $scheduleFromComponents = LoanRepayment::scheduleAppliedAmountFromAllocation([
+                'principal_amount' => $componentSplit['principal_amount'],
+                'interest_amount' => $componentSplit['interest_amount'],
+                'processing_fee_amount' => $componentSplit['processing_fee_amount'],
+            ]);
+
+            $suspenseAwareScheduleCap = $this->ledgerService->scheduleReversalAmountForRefund(
                 $loan,
                 $refundAmount,
                 $netPaidBefore
             );
+
+            $originalScheduleApplied = $originalLoanRepayment->scheduleAppliedAmount();
+            $scheduleReversalCap = max(0, round($originalScheduleApplied - $originalLoanRepayment->scheduleAmountReversedByRefunds(), 2));
+            $scheduleReversalAmount = round(min($scheduleFromComponents, $suspenseAwareScheduleCap, $scheduleReversalCap), 2);
 
             if ($loan->paymentSchedules()->exists() && $scheduleReversalAmount > 0) {
                 $loan->reversePaymentSchedule($scheduleReversalAmount);
@@ -99,6 +109,7 @@ class LoanRepaymentRefundService
                 'principal_amount' => round(-$componentSplit['principal_amount'], 2),
                 'interest_amount' => round(-$componentSplit['interest_amount'], 2),
                 'processing_fee_amount' => round(-$componentSplit['processing_fee_amount'], 2),
+                'arrears_interest_amount' => round(-($componentSplit['arrears_interest_amount'] ?? 0), 2),
                 'outstanding_balance_before' => $outstandingBalanceBefore,
                 'outstanding_balance_after' => $outstandingBalanceAfter,
                 'notes' => $reason,

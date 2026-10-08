@@ -226,6 +226,7 @@ class AdminSidebarNavigation
                 'Risk Heatmap Dashboard' => ['admin.reports.risk-heatmap'],
                 'Relationship Manager Report' => ['admin.reports.relationship-manager', 'admin.reports.relationship-manager.*'],
                 'Expenses Report' => ['admin.reports.expenses', 'admin.reports.expenses.*'],
+                'Creditors Report' => ['admin.reports.creditors', 'admin.reports.creditors.*'],
             ],
             'menu-audit-logs' => [
                 '_self' => ['admin.audit-logs.*'],
