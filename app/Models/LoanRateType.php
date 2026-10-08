@@ -37,12 +37,14 @@ class LoanRateType extends Model
         'interest_behavior',
         'rate_input_mode',
         'is_active',
+        'is_public_on_website',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_public_on_website' => 'boolean',
         ];
     }
 

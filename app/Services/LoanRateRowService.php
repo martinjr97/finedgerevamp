@@ -52,6 +52,7 @@ class LoanRateRowService
                 ]),
             ],
             'is_active' => 'boolean',
+            'is_public_on_website' => 'boolean',
         ];
     }
 

@@ -113,6 +113,12 @@
                         {{ $loanRateType->is_active ? 'Active' : 'Inactive' }}
                     </span>
                 </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">Public website</p>
+                    <span class="inline-block rounded-full px-2 py-1 text-xs {{ $loanRateType->is_public_on_website ? 'bg-sky-500/20 text-sky-300' : 'bg-slate-500/20 text-slate-300' }}">
+                        {{ $loanRateType->is_public_on_website ? 'Visible on marketing site' : 'Hidden from marketing site' }}
+                    </span>
+                </div>
             </div>
         </div>
 

@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\LoanRate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -27,6 +29,8 @@ class LoanProduct extends Model
         'requires_reference',
         'rules',
         'is_active',
+        'is_public_on_website',
+        'public_website_loan_rate_type_id',
         'accrual_type',
     ];
 
@@ -40,8 +44,24 @@ class LoanProduct extends Model
             'requires_collateral' => 'boolean',
             'requires_reference' => 'boolean',
             'is_active' => 'boolean',
+            'is_public_on_website' => 'boolean',
             'rules' => 'array',
         ];
+    }
+
+    public function publicWebsiteRateType(): BelongsTo
+    {
+        return $this->belongsTo(LoanRateType::class, 'public_website_loan_rate_type_id');
+    }
+
+    public function publicWebsiteRates(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            LoanRate::class,
+            'loan_product_public_website_rate',
+            'loan_product_id',
+            'loan_rate_id',
+        )->withTimestamps();
     }
 
     public function company(): BelongsTo

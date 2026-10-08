@@ -90,6 +90,17 @@
                             <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                         @enderror
                     </div>
+                    <div>
+                        <label class="text-sm font-medium {{ $labelClass }}">Public product type (marketing site)</label>
+                        <select name="is_public_on_website" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
+                            <option value="1" @selected(old('is_public_on_website', $loanRateType->is_public_on_website) == true)>Show on public website</option>
+                            <option value="0" @selected(old('is_public_on_website', $loanRateType->is_public_on_website) == false)>Hidden from public website</option>
+                        </select>
+                        <p class="mt-1 text-xs {{ $helpClass }}">Product types listed on the marketing site loan options page and calculator (loan rate types).</p>
+                        @error('is_public_on_website')
+                            <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </div>
 

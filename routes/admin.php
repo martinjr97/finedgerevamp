@@ -312,6 +312,8 @@ Route::middleware('auth:admin')->group(function (): void {
 
         // Configuration routes
         Route::resource('loan-products', LoanProductController::class);
+        Route::put('loan-products/{loanProduct}/public-website', [LoanProductController::class, 'updatePublicWebsite'])
+            ->name('loan-products.public-website.update');
         Route::prefix('loan-products/{loanProduct}')->name('loan-products.')->group(function () {
             Route::resource('collateral-types', \App\Http\Controllers\Admin\CollateralTypeController::class)->except(['show']);
             Route::get('collateral-types/{collateralType}', [\App\Http\Controllers\Admin\CollateralTypeController::class, 'show'])->name('collateral-types.show');

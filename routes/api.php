@@ -28,6 +28,20 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
+    // Standalone marketing website (server-to-server, API key)
+    Route::prefix('public/website')
+        ->middleware(['website.api', 'throttle:120,1'])
+        ->group(function () {
+            Route::get('/faqs', [\App\Http\Controllers\Api\V1\Public\WebsiteIntegrationController::class, 'faqs'])
+                ->name('api.v1.public.website.faqs');
+            Route::get('/loan-products', [\App\Http\Controllers\Api\V1\Public\WebsiteIntegrationController::class, 'loanProducts'])
+                ->name('api.v1.public.website.loan-products');
+            Route::get('/loan-rate-types', [\App\Http\Controllers\Api\V1\Public\WebsiteIntegrationController::class, 'loanRateTypes'])
+                ->name('api.v1.public.website.loan-rate-types');
+            Route::post('/loan-quotes', [\App\Http\Controllers\Api\V1\Public\WebsiteIntegrationController::class, 'quote'])
+                ->name('api.v1.public.website.loan-quotes');
+        });
+
     // Public configuration endpoints
     Route::prefix('config')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\V1\Public\ConfigController::class, 'index'])->name('api.v1.config.index');

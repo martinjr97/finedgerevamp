@@ -3,26 +3,71 @@
 @section('title', $product->name . ' | '.config('app.system_name'))
 
 @section('content')
-    <div class="space-y-8">
+    @php
+        $websiteRateTypesJson = $product->loanRateTypes->map(fn ($type) => [
+            'id' => $type->id,
+            'name' => $type->name,
+            'code' => $type->code,
+            'rates' => $type->loanRates->map(fn ($rate) => [
+                'id' => $rate->id,
+                'tenure_months' => (int) $rate->tenure_months,
+                'processing_fee_percentage' => $rate->processing_fee_percentage,
+                'term_interest_percentage' => $rate->term_interest_percentage,
+                'min_principal' => $rate->min_principal,
+                'max_principal' => $rate->max_principal,
+            ])->values(),
+        ])->values();
+    @endphp
+    <div
+        class="space-y-8"
+        x-data="{
+            openPublicWebsiteModal: {{ session('open_public_website_modal') || $errors->has('public_website_loan_rate_type_id') || $errors->has('public_website_loan_rate_ids') ? 'true' : 'false' }},
+            websitePublic: {{ old('is_public_on_website', $product->is_public_on_website) ? 'true' : 'false' }},
+            rateTypes: @js($websiteRateTypesJson),
+            selectedRateTypeId: '{{ old('public_website_loan_rate_type_id', $product->public_website_loan_rate_type_id) }}',
+            selectedRateIds: @js(old('public_website_loan_rate_ids', $publicWebsiteRateIds)),
+            get activeRates() {
+                const type = this.rateTypes.find(t => String(t.id) === String(this.selectedRateTypeId));
+                return type ? type.rates : [];
+            },
+            init() {
+                this.$watch('selectedRateTypeId', () => {
+                    const allowed = new Set(this.activeRates.map(r => String(r.id)));
+                    this.selectedRateIds = this.selectedRateIds.filter(id => allowed.has(String(id)));
+                });
+            },
+        }"
+    >
         @include('partials.admin.page-header', [
             'title' => $product->name,
             'description' => $product->description ?? 'Loan product details and information',
-            'buttons' => [
+            'buttons' => array_filter([
                 [
                     'action' => 'secondary',
                     'text' => 'Back to Products',
                     'href' => route('admin.loan-products.index'),
                     'icon' => '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>'
                 ],
+                auth('admin')->user()?->can('loan-products.update') ? [
+                    'action' => 'secondary',
+                    'text' => 'Public website',
+                    'href' => '#',
+                    'icon' => '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9v-9m0-9a9 9 0 019 9"/></svg>',
+                    'attributes' => [
+                        'x-on:click.prevent' => 'openPublicWebsiteModal = true',
+                    ],
+                ] : null,
                 [
                     'action' => 'edit',
                     'text' => 'Edit Product',
                     'href' => route('admin.loan-products.edit', $product),
                     'can' => auth('admin')->user()?->can('loan-products.update'),
                     'icon' => '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>'
-                ]
-            ]
+                ],
+            ]),
         ])
+
+        @include('admin.loan-products.partials.public-website-modal')
 
         {{-- Product Information --}}
         <div class="rounded-3xl border-2 border-blue-500/30 bg-blue-950/30 p-6 shadow-lg">
@@ -45,6 +90,18 @@
                     <span class="inline-block rounded-full px-2 py-1 text-xs {{ $product->is_active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300' }}">
                         {{ $product->is_active ? 'Active' : 'Inactive' }}
                     </span>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">Public website</p>
+                    <span class="inline-block rounded-full px-2 py-1 text-xs {{ $product->is_public_on_website ? 'bg-sky-500/20 text-sky-300' : 'bg-slate-500/20 text-slate-300' }}">
+                        {{ $product->is_public_on_website ? 'Visible' : 'Hidden' }}
+                    </span>
+                    @if($product->is_public_on_website && $product->publicWebsiteRateType)
+                        <p class="mt-1 text-xs text-slate-400">
+                            Type: {{ $product->publicWebsiteRateType->name }} ·
+                            {{ $product->publicWebsiteRates->count() }} rate row(s)
+                        </p>
+                    @endif
                 </div>
                 @if($product->tenure_months)
                     <div>

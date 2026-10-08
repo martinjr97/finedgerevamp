@@ -4,11 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\LoanProduct;
+use App\Services\LoanProductPublicWebsiteService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class LoanProductController extends Controller
 {
+    public function __construct(
+        private readonly LoanProductPublicWebsiteService $publicWebsite,
+    ) {}
+
     public function index(): View
     {
         abort_unless(auth('admin')->user()?->can('loan-products.view'), 403);
@@ -22,8 +28,18 @@ class LoanProductController extends Controller
     {
         abort_unless(auth('admin')->user()?->can('loan-products.view'), 403);
 
+        $loanProduct->load([
+            'publicWebsiteRateType',
+            'publicWebsiteRates',
+            'loanRateTypes' => fn ($query) => $query
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->with(['loanRates' => fn ($rates) => $rates->where('is_active', true)->orderBy('tenure_months')]),
+        ]);
+
         $data = [
             'product' => $loanProduct,
+            'publicWebsiteRateIds' => $loanProduct->publicWebsiteRates->pluck('id')->all(),
         ];
 
         // Load category-specific data
@@ -149,6 +165,29 @@ class LoanProductController extends Controller
                 ->route('admin.loan-products.edit', $loanProduct)
                 ->withInput()
                 ->with('error', 'Failed to update loan product: '.$e->getMessage());
+        }
+    }
+
+    public function updatePublicWebsite(Request $request, LoanProduct $loanProduct): RedirectResponse
+    {
+        abort_unless(auth('admin')->user()?->can('loan-products.update'), 403);
+
+        try {
+            $this->publicWebsite->updateSettings($loanProduct, $request->all());
+
+            return redirect()
+                ->route('admin.loan-products.show', $loanProduct)
+                ->with('status', 'Public website settings saved.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            return redirect()
+                ->route('admin.loan-products.show', $loanProduct)
+                ->withErrors($exception->errors())
+                ->with('open_public_website_modal', true)
+                ->withInput();
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('admin.loan-products.show', $loanProduct)
+                ->with('error', 'Failed to save public website settings: '.$e->getMessage());
         }
     }
 

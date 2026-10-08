@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'migration.manage' => \App\Http\Middleware\EnsureMigrationManagePermission::class,
             'api.admin' => \App\Http\Middleware\EnsureApiAdmin::class,
             'api.customer' => \App\Http\Middleware\EnsureApiCustomer::class,
+            'website.api' => \App\Http\Middleware\VerifyWebsiteApiKey::class,
             'customer.self-service-loans' => \App\Http\Middleware\EnsureCustomerCanRequestSelfServiceLoan::class,
             'customer.security-question' => \App\Http\Middleware\EnsureCustomerHasSecurityQuestion::class,
         ]);

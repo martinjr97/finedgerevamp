@@ -91,6 +91,17 @@
                             <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
                         @enderror
                     </div>
+                    <div>
+                        <label class="text-sm font-medium {{ $labelClass }}">Public marketing website</label>
+                        <select name="is_public_on_website" class="mt-2 w-full rounded-2xl {{ $inputClass }} text-white px-4 py-3 {{ $inputFocusClass }}">
+                            <option value="0" @selected(old('is_public_on_website', false) == false)>Hidden from public website</option>
+                            <option value="1" @selected(old('is_public_on_website') == true)>Show on public website</option>
+                        </select>
+                        <p class="mt-1 text-xs {{ $helpClass }}">When enabled, this product type can appear on the public Finedge marketing site.</p>
+                        @error('is_public_on_website')
+                            <p class="mt-1 text-xs {{ $errorClass }}">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </div>
 
