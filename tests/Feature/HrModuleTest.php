@@ -346,6 +346,22 @@ class HrModuleTest extends TestCase
             ->assertDontSee('Already Approved');
     }
 
+    public function test_leave_store_rejects_non_accrual_type_with_zero_balance(): void
+    {
+        $admin = $this->hrAdmin();
+        $employee = Employee::create(['first_name' => 'No', 'last_name' => 'Sick', 'employment_status' => 'active']);
+        $sick = LeaveType::query()->where('code', 'sick')->firstOrFail();
+
+        $this->actingAs($admin, 'admin')->post(route('admin.hr.leave.applications.store'), [
+            'employee_id' => $employee->id,
+            'leave_type_id' => $sick->id,
+            'start_date' => now()->addDay()->toDateString(),
+            'end_date' => now()->addDay()->toDateString(),
+        ])->assertSessionHasErrors('leave_type_id');
+
+        $this->assertSame(0, LeaveApplication::query()->where('employee_id', $employee->id)->count());
+    }
+
     public function test_leave_store_rejects_insufficient_balance(): void
     {
         $admin = $this->hrAdmin();

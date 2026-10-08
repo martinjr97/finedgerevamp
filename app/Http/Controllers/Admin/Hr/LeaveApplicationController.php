@@ -16,7 +16,7 @@ use Illuminate\View\View;
 
 class LeaveApplicationController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, LeaveBalanceService $balanceService): View
     {
         abort_unless(auth('admin')->user()?->can('hr.leave.view'), 403);
 
@@ -25,6 +25,17 @@ class LeaveApplicationController extends Controller
             ->where('status', LeaveApplication::STATUS_PENDING)
             ->orderBy('start_date')
             ->paginate(25);
+
+        foreach ($applications as $application) {
+            $available = null;
+            if ($application->employee && $application->leaveType?->requiresBalanceCheck()) {
+                $available = $balanceService->balanceForType(
+                    $application->employee_id,
+                    $application->leave_type_id,
+                )['available'];
+            }
+            $application->setAttribute('available_balance', $available);
+        }
 
         $canApprove = auth('admin')->user()?->can('hr.leave.approve') ?? false;
 
@@ -47,6 +58,7 @@ class LeaveApplicationController extends Controller
                 'id' => $type->id,
                 'name' => $type->name,
                 'accrual_based' => (bool) $type->accrual_based,
+                'requires_balance_check' => $type->requiresBalanceCheck(),
             ])->values()->all(),
             'canApproveImmediately' => $canApproveImmediately,
             'balancePreviewUrl' => route('admin.hr.leave.applications.balance-preview'),
@@ -68,6 +80,8 @@ class LeaveApplicationController extends Controller
         return response()->json([
             'available' => $balance['available'],
             'accrual_based' => (bool) $leaveType->accrual_based,
+            'requires_balance_check' => $leaveType->requiresBalanceCheck(),
+            'leave_type_name' => $leaveType->name,
         ]);
     }
 
@@ -92,16 +106,10 @@ class LeaveApplicationController extends Controller
         $leaveType = LeaveType::query()->findOrFail($validated['leave_type_id']);
         $days = $calculator->calculateDays($validated['start_date'], $validated['end_date']);
 
-        if ($leaveType->accrual_based && ! $balanceService->hasSufficientBalance($validated['employee_id'], $leaveType->id, $days)) {
-            $available = $balanceService->balanceForType($validated['employee_id'], $leaveType->id)['available'];
-
+        $balanceCheck = $balanceService->validateLeaveRequest($validated['employee_id'], $leaveType, $days);
+        if (! $balanceCheck['ok']) {
             return back()->withInput()->withErrors([
-                'end_date' => sprintf(
-                    'Insufficient leave balance for %s. Available: %s day(s), requested: %s day(s).',
-                    $leaveType->name,
-                    number_format($available, 2),
-                    number_format($days, 2),
-                ),
+                $balanceCheck['field'] => $balanceCheck['message'],
             ]);
         }
 
@@ -143,6 +151,31 @@ class LeaveApplicationController extends Controller
 
         return redirect()->route('admin.hr.leave.applications.index')
             ->with('status', 'Leave application submitted and is pending approval.');
+    }
+
+    public function show(LeaveApplication $leaveApplication, LeaveBalanceService $balanceService): View
+    {
+        abort_unless(auth('admin')->user()?->can('hr.leave.view'), 403);
+
+        $leaveApplication->load(['employee.hrDepartment', 'leaveType', 'approver']);
+
+        $availableBalance = null;
+        if ($leaveApplication->employee && $leaveApplication->leaveType) {
+            $availableBalance = $balanceService->balanceForType(
+                $leaveApplication->employee_id,
+                $leaveApplication->leave_type_id,
+            )['available'];
+        }
+
+        $canApprove = auth('admin')->user()?->can('hr.leave.approve') ?? false;
+        $isPending = $leaveApplication->status === LeaveApplication::STATUS_PENDING;
+
+        return view('admin.hr.leave.applications-show', compact(
+            'leaveApplication',
+            'availableBalance',
+            'canApprove',
+            'isPending',
+        ));
     }
 
     public function approve(LeaveApplication $leaveApplication, Request $request, LeaveApplicationService $service): RedirectResponse

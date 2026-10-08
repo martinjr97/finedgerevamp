@@ -107,4 +107,46 @@ class LeaveBalanceService
     {
         return $this->balanceForType($employeeId, $leaveTypeId)['available'] + 0.0001 >= $days;
     }
+
+    /**
+     * @return array{ok: bool, available: float, message: string|null, field: string|null}
+     */
+    public function validateLeaveRequest(Employee|int $employee, LeaveType $leaveType, float $days): array
+    {
+        $employeeId = $employee instanceof Employee ? $employee->id : $employee;
+
+        if (! $leaveType->requiresBalanceCheck()) {
+            return ['ok' => true, 'available' => 0, 'message' => null, 'field' => null];
+        }
+
+        $available = $this->balanceForType($employeeId, $leaveType->id)['available'];
+
+        if ($available <= 0) {
+            return [
+                'ok' => false,
+                'available' => $available,
+                'field' => 'leave_type_id',
+                'message' => sprintf(
+                    'No days available for %s. The employee’s available balance is 0.',
+                    $leaveType->name,
+                ),
+            ];
+        }
+
+        if (! $this->hasSufficientBalance($employeeId, $leaveType->id, $days)) {
+            return [
+                'ok' => false,
+                'available' => $available,
+                'field' => 'end_date',
+                'message' => sprintf(
+                    'Insufficient leave balance for %s. Available: %s day(s), requested: %s day(s).',
+                    $leaveType->name,
+                    number_format($available, 2),
+                    number_format($days, 2),
+                ),
+            ];
+        }
+
+        return ['ok' => true, 'available' => $available, 'message' => null, 'field' => null];
+    }
 }

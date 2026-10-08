@@ -44,4 +44,10 @@ class LeaveType extends Model
     {
         return $this->hasMany(EmployeeLeaveTransaction::class);
     }
+
+    /** Paid and allocated leave types must have sufficient balance; unpaid leave is exempt. */
+    public function requiresBalanceCheck(): bool
+    {
+        return $this->code !== 'unpaid';
+    }
 }

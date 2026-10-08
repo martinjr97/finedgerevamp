@@ -31,6 +31,7 @@ Route::prefix('hr')->name('hr.')->group(function () {
     Route::get('leave/applications/create', [LeaveApplicationController::class, 'create'])->name('leave.applications.create');
     Route::get('leave/applications/balance-preview', [LeaveApplicationController::class, 'balancePreview'])->name('leave.applications.balance-preview');
     Route::post('leave/applications', [LeaveApplicationController::class, 'store'])->name('leave.applications.store');
+    Route::get('leave/applications/{leaveApplication}', [LeaveApplicationController::class, 'show'])->name('leave.applications.show');
     Route::post('leave/applications/{leaveApplication}/approve', [LeaveApplicationController::class, 'approve'])->name('leave.applications.approve');
     Route::post('leave/applications/{leaveApplication}/reject', [LeaveApplicationController::class, 'reject'])->name('leave.applications.reject');
     Route::post('leave/applications/{leaveApplication}/cancel', [LeaveApplicationController::class, 'cancel'])->name('leave.applications.cancel');

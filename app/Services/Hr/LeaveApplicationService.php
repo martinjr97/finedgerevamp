@@ -19,12 +19,17 @@ class LeaveApplicationService
             throw new \InvalidArgumentException('Only pending leave can be approved.');
         }
 
-        if (! $this->leaveBalanceService->hasSufficientBalance(
-            $application->employee_id,
-            $application->leave_type_id,
-            (float) $application->days_requested
-        )) {
-            throw new \InvalidArgumentException('Insufficient leave balance.');
+        $application->loadMissing('leaveType');
+        $leaveType = $application->leaveType;
+        if ($leaveType && $leaveType->requiresBalanceCheck()) {
+            $check = $this->leaveBalanceService->validateLeaveRequest(
+                $application->employee_id,
+                $leaveType,
+                (float) $application->days_requested,
+            );
+            if (! $check['ok']) {
+                throw new \InvalidArgumentException($check['message'] ?? 'Insufficient leave balance.');
+            }
         }
 
         return DB::transaction(function () use ($application, $approverAdminId, $comments) {
