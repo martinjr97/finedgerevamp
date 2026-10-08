@@ -215,6 +215,18 @@ class AdminSidebarNavigation
             'menu-approvals' => [
                 '_self' => ['admin.approvals.*'],
             ],
+            'menu-hr' => [
+                'Dashboard' => ['admin.hr.dashboard'],
+                'Employees' => ['admin.hr.employees.*'],
+                'Departments' => ['admin.hr.departments.*'],
+                'Positions' => ['admin.hr.positions.*'],
+                'Contract Types' => ['admin.hr.contract-types.*'],
+                'Contracts' => ['admin.hr.contracts.*'],
+                'Leave Applications' => ['admin.hr.leave.applications.*'],
+                'Leave History' => ['admin.hr.leave.history.*'],
+                'Leave Balances' => ['admin.hr.leave.balances.*'],
+                'HR Settings' => ['admin.hr.settings.*'],
+            ],
             'menu-reports' => [
                 'Arrears Report' => ['admin.reports.arrears', 'admin.reports.arrears.*'],
                 'Disbursements Report' => ['admin.reports.disbursements', 'admin.reports.disbursements.*'],

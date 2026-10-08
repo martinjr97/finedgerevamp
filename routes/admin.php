@@ -79,6 +79,8 @@ Route::middleware('auth:admin')->group(function (): void {
 
     Route::middleware('password.changed')->group(function (): void {
         Route::get('dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+
+        require __DIR__.'/admin_hr.php';
         Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
         Route::patch('profile/name', [ProfileController::class, 'updateName'])->name('profile.update-name');
         Route::post('profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.update-avatar');

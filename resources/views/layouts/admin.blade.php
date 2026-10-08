@@ -204,6 +204,26 @@
                             ],
                         ];
                         
+                        if (auth('admin')->user()?->can('hr.dashboard.view')) {
+                            $navItems[] = [
+                                'label' => 'HR',
+                                'icon' => 'users',
+                                'id' => 'menu-hr',
+                                'children' => array_filter([
+                                    auth('admin')->user()?->can('hr.dashboard.view') ? ['label' => 'Dashboard', 'route' => route('admin.hr.dashboard'), 'icon' => 'chart-bar'] : null,
+                                    auth('admin')->user()?->can('hr.employees.view') ? ['label' => 'Employees', 'route' => route('admin.hr.employees.index'), 'icon' => 'users'] : null,
+                                    auth('admin')->user()?->can('hr.departments.view') ? ['label' => 'Departments', 'route' => route('admin.hr.departments.index'), 'icon' => 'building-office-2'] : null,
+                                    auth('admin')->user()?->can('hr.positions.view') ? ['label' => 'Positions', 'route' => route('admin.hr.positions.index'), 'icon' => 'identification'] : null,
+                                    auth('admin')->user()?->can('hr.contract-types.view') ? ['label' => 'Contract Types', 'route' => route('admin.hr.contract-types.index'), 'icon' => 'document-text'] : null,
+                                    auth('admin')->user()?->can('hr.contracts.view') ? ['label' => 'Contracts', 'route' => route('admin.hr.contracts.index'), 'icon' => 'clipboard-document-list'] : null,
+                                    auth('admin')->user()?->can('hr.leave.view') ? ['label' => 'Pending Leave', 'route' => route('admin.hr.leave.applications.index'), 'icon' => 'calendar'] : null,
+                                    auth('admin')->user()?->can('hr.leave.view') ? ['label' => 'Leave History', 'route' => route('admin.hr.leave.history.index'), 'icon' => 'clock'] : null,
+                                    auth('admin')->user()?->can('hr.leave-balances.view') ? ['label' => 'Leave Balances', 'route' => route('admin.hr.leave.balances.index'), 'icon' => 'chart-bar'] : null,
+                                    auth('admin')->user()?->can('hr.settings.view') ? ['label' => 'HR Settings', 'route' => route('admin.hr.settings.index'), 'icon' => 'cog'] : null,
+                                ]),
+                            ];
+                        }
+
                         // Add Approvals menu item if user has permission
                         if (auth('admin')->user()?->can('approvals.view')) {
                             $navItems[] = [

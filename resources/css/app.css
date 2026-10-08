@@ -387,6 +387,18 @@ body { background-color: var(--color-surface); color: var(--color-primary); }
 .content-area a[class*="bg-gradient"],
 .content-area button[class*="bg-gradient"],
 .content-area button[class*="bg-gradient"] * { color: var(--color-surface) !important; }
+.content-area button.btn-primary,
+.content-area button.btn-primary *,
+.content-area a.btn-primary,
+.content-area a.btn-primary * {
+    color: #ffffff !important;
+}
+body[data-theme="dark"] .content-area button.btn-primary,
+body[data-theme="dark"] .content-area button.btn-primary *,
+body[data-theme="dark"] .content-area a.btn-primary,
+body[data-theme="dark"] .content-area a.btn-primary * {
+    color: #ffffff !important;
+}
 
 .sidebar {
     background-color: var(--color-surface) !important;

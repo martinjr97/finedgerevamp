@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\HrPermissions;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -106,6 +107,7 @@ class PermissionSeeder extends Seeder
         return $matrixPermissions
             ->merge([
                 self::GROUP_LOANS_ASSIGN_RELATIONSHIP_MANAGER_PERMISSION,
+                ...HrPermissions::all(),
             ])
             ->unique()
             ->values()
