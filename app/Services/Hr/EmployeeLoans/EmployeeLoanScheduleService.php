@@ -179,14 +179,18 @@ class EmployeeLoanScheduleService
      */
     public function resolveSchedulePlan(EmployeeLoan $loan): array
     {
-        $meta = $loan->metadata ?? [];
-        $pricingMeta = $meta['pricing_quote'] ?? null;
+        if ($loan->loan_rate_id && (float) $loan->principal_amount > 0 && (int) $loan->tenure_months > 0) {
+            $quoted = $this->employeeLoanPricingService->quote([
+                'loan_rate_id' => $loan->loan_rate_id,
+                'principal' => $loan->principal_amount,
+                'tenure_months' => (int) $loan->tenure_months,
+                'start_date' => ($loan->loan_start_date ?? $loan->application_date ?? now())->toDateString(),
+            ]);
 
-        if (is_array($pricingMeta)) {
-            $snapshot = $this->employeeLoanPricingService->buildEmployeeLoanSnapshot($pricingMeta);
-
-            return $this->employeeLoanPricingService->buildSchedulePlan($pricingMeta, $snapshot);
+            return $quoted['schedule_plan'];
         }
+
+        $meta = $loan->metadata ?? [];
 
         return [
             'principal' => (float) $loan->principal_amount,
@@ -195,6 +199,18 @@ class EmployeeLoanScheduleService
             'schedule_basis' => data_get($meta, 'pricing_metadata.schedule_basis', 'booked_total'),
             'is_projected_interest' => (bool) data_get($meta, 'pricing_metadata.schedule_uses_projected_interest', false),
         ];
+    }
+
+    public function regenerateWhenNoCompletedRepayments(EmployeeLoan $loan): bool
+    {
+        if ($loan->repayments()->where('status', 'completed')->exists()) {
+            return false;
+        }
+
+        $loan->paymentSchedules()->delete();
+        $this->generateForLoan($loan->fresh());
+
+        return true;
     }
 
     public function applyPaymentToSchedule(EmployeeLoan $loan, float $scheduleAppliedAmount): void

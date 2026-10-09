@@ -56,6 +56,7 @@ class EmployeeLoanService
             'created_by' => $creator->id,
             ...$this->mapSnapshotToLoanColumns($quoted['snapshot'], $quoted['quote']),
             'metadata' => array_merge($quoted['snapshot']['metadata'] ?? [], [
+                'pricing_quote' => $quoted['quote'],
                 'draft_pricing' => $quoted['quote'],
                 'loan_purpose_id' => $input['loan_purpose_id'] ?? null,
             ]),
@@ -92,6 +93,7 @@ class EmployeeLoanService
             'disbursement_destination_snapshot' => $input['disbursement_destination_snapshot'] ?? null,
             ...$this->mapSnapshotToLoanColumns($quoted['snapshot'], $quoted['quote']),
             'metadata' => array_merge($loan->metadata ?? [], [
+                'pricing_quote' => $quoted['quote'],
                 'draft_pricing' => $quoted['quote'],
                 'loan_purpose_id' => $input['loan_purpose_id'] ?? null,
             ]),
@@ -142,6 +144,7 @@ class EmployeeLoanService
                 'approval_date' => now()->toDateString(),
                 ...$this->mapSnapshotToLoanColumns($quoted['snapshot'], $quoted['quote']),
                 'metadata' => array_merge($loan->metadata ?? [], [
+                    'pricing_quote' => $quoted['quote'],
                     'approved_pricing_quote' => $quoted['quote'],
                     'pricing_frozen_at' => now()->toIso8601String(),
                 ]),
@@ -200,9 +203,6 @@ class EmployeeLoanService
 
         return array_merge($snapshot, [
             'amount_paid' => 0,
-            'metadata' => [
-                'pricing_quote' => $quote,
-            ],
         ]);
     }
 

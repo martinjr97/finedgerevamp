@@ -26,7 +26,7 @@ class EmployeeLoanInterestAccrualService
         return $count;
     }
 
-    protected function accrueLoanForDate(EmployeeLoan $loan, Carbon $date): bool
+    public function accrueLoanForDate(EmployeeLoan $loan, Carbon $date): bool
     {
         if (EmployeeLoanAccrual::query()
             ->where('employee_loan_id', $loan->id)

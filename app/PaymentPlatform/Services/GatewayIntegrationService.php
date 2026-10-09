@@ -6,8 +6,12 @@ use App\Models\PaymentGateway;
 use App\Models\PaymentGatewayAttempt;
 use App\Models\PaymentGatewayLog;
 use App\Models\EmployeeLoan;
+use App\Models\EmployeeLoanRepayment;
 use App\Models\Loan;
 use App\Models\Repayment;
+use App\Services\Hr\EmployeeLoans\EmployeeLoanPricingService;
+use App\Services\Hr\EmployeeLoans\EmployeeLoanRepaymentGatewayService;
+use App\Services\Hr\EmployeeLoans\EmployeeLoanRepaymentService;
 use App\PaymentPlatform\Enums\GatewayAttemptPurpose;
 use App\PaymentPlatform\Enums\GatewayAttemptStatus;
 use App\PaymentPlatform\Enums\GatewayDirection;
@@ -38,6 +42,7 @@ class GatewayIntegrationService
         private readonly CGrateIssuerNameResolver $issuerNameResolver,
         private readonly PaymentGatewayDestinationMappingResolver $destinationMappingResolver,
         private readonly CustomerNotificationService $customerNotificationService,
+        private readonly EmployeeLoanRepaymentService $employeeLoanRepaymentService,
     ) {}
 
     /**
@@ -127,6 +132,108 @@ class GatewayIntegrationService
             'reference' => $attempt->provider_reference ?? $attempt->internal_reference,
             'transaction_id' => $attempt->provider_transaction_id,
             'message' => 'Payment prompt sent. Approve the prompt on your device to complete the repayment.',
+            'metadata' => [
+                'gateway_code' => $gateway->code,
+                'gateway_attempt_id' => $attempt->id,
+                'gateway_initiated_at' => now()->toIso8601String(),
+            ],
+        ];
+    }
+
+    /**
+     * @return array{success: bool, reference?: string, transaction_id?: string, message?: string, metadata?: array}
+     */
+    public function initiateEmployeeLoanRepaymentCollection(
+        EmployeeLoanRepayment $repayment,
+        \App\Models\Channel $channel,
+        ?string $phoneNumber,
+    ): array {
+        $repayment->loadMissing('employeeLoan.employee');
+        $productId = app(EmployeeLoanPricingService::class)->employeeProduct()->id;
+
+        $gateway = $this->selectionService->selectForCollection(
+            $channel,
+            loanProductId: $productId,
+        );
+
+        if (! $gateway) {
+            return [
+                'success' => false,
+                'message' => 'No payment gateway is currently available for this channel. Please try again later or contact support.',
+            ];
+        }
+
+        $paymentMethod = $this->selectionService->mapChannelToPaymentMethod($channel);
+
+        if (! $paymentMethod) {
+            return [
+                'success' => false,
+                'message' => 'This repayment channel does not support automated payment processing.',
+            ];
+        }
+
+        if (app(EmployeeLoanRepaymentGatewayService::class)->hasActiveCollectionAttempt($repayment)) {
+            return [
+                'success' => false,
+                'message' => 'An active gateway collection attempt already exists for this repayment.',
+            ];
+        }
+
+        $phone = $phoneNumber ?? $repayment->employeeLoan?->employee?->phone;
+
+        $attempt = DB::transaction(function () use ($repayment, $gateway, $paymentMethod, $phone) {
+            $attempt = PaymentGatewayAttempt::create([
+                'payment_gateway_id' => $gateway->id,
+                'direction' => GatewayDirection::Collection,
+                'purpose' => GatewayAttemptPurpose::EmployeeLoanRepayment,
+                'attemptable_type' => EmployeeLoanRepayment::class,
+                'attemptable_id' => $repayment->id,
+                'internal_reference' => 'TEMP-EL-R-'.$repayment->id.'-'.now()->timestamp,
+                'payment_method' => $paymentMethod,
+                'amount' => $repayment->amount,
+                'currency' => (string) config('cgrate.default_currency', 'ZMW'),
+                'customer_phone' => $phone,
+                'status' => GatewayAttemptStatus::Created,
+            ]);
+
+            $internalRef = PaymentGatewayAttempt::generateEmployeeLoanRepaymentInternalReference($repayment->id, $attempt->id);
+            $attempt->update([
+                'internal_reference' => $internalRef,
+                'provider_reference' => $internalRef,
+            ]);
+
+            $repayment->update([
+                'payment_gateway_attempt_id' => $attempt->id,
+                'metadata' => array_merge($repayment->metadata ?? [], [
+                    'gateway_code' => $gateway->code,
+                    'gateway_attempt_id' => $attempt->id,
+                ]),
+            ]);
+
+            PaymentGatewayLog::log(
+                $gateway,
+                'collection.initiated',
+                'Gateway collection attempt created for employee loan repayment #'.$repayment->id,
+                $attempt,
+                direction: GatewayDirection::Collection->value,
+            );
+
+            return $attempt;
+        });
+
+        if ((string) config('queue.default') === 'sync') {
+            DispatchGatewayCollectionJob::dispatchSync($attempt->id);
+        } else {
+            DispatchGatewayCollectionJob::dispatch($attempt->id);
+        }
+
+        $attempt->refresh();
+
+        return [
+            'success' => true,
+            'reference' => $attempt->provider_reference ?? $attempt->internal_reference,
+            'transaction_id' => $attempt->provider_transaction_id,
+            'message' => 'Payment prompt sent to the employee mobile number. Approve on the device to complete the repayment.',
             'metadata' => [
                 'gateway_code' => $gateway->code,
                 'gateway_attempt_id' => $attempt->id,
@@ -545,8 +652,16 @@ class GatewayIntegrationService
             return;
         }
 
+        $attemptable = $attempt->attemptable;
+
+        if ($attemptable instanceof EmployeeLoanRepayment) {
+            $this->finalizeConfirmedEmployeeLoanRepayment($attempt, $attemptable);
+
+            return;
+        }
+
         /** @var Repayment|null $repayment */
-        $repayment = $attempt->attemptable;
+        $repayment = $attemptable;
         if (! $repayment instanceof Repayment) {
             return;
         }
@@ -690,10 +805,71 @@ class GatewayIntegrationService
         );
     }
 
+    private function finalizeConfirmedEmployeeLoanRepayment(
+        PaymentGatewayAttempt $attempt,
+        EmployeeLoanRepayment $repayment,
+    ): void {
+        if ($repayment->status === 'completed') {
+            return;
+        }
+
+        $gateway = $attempt->paymentGateway;
+        if (! $gateway) {
+            return;
+        }
+
+        DB::transaction(function () use ($attempt, $repayment, $gateway) {
+            $lockedAttempt = PaymentGatewayAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+
+            if ($lockedAttempt->status !== GatewayAttemptStatus::Confirmed) {
+                return;
+            }
+
+            $repayment->refresh();
+
+            if ($repayment->status === 'completed') {
+                return;
+            }
+
+            PaymentGatewayLog::log(
+                $gateway,
+                'collection.confirmed',
+                'Gateway confirmed payment for employee loan repayment #'.$repayment->id,
+                $lockedAttempt,
+                direction: GatewayDirection::Collection->value,
+            );
+
+            if ($gateway->hasLinkedFinancialAccount()) {
+                $this->employeeLoanRepaymentService->completeGatewayRepayment(
+                    $repayment,
+                    $lockedAttempt,
+                    $gateway->financial_account_type->value,
+                    (int) $gateway->financial_account_id,
+                );
+            } else {
+                $repayment->update([
+                    'status' => 'pending',
+                    'metadata' => array_merge($repayment->metadata ?? [], [
+                        'requires_finance_reconciliation' => true,
+                        'gateway_confirmed_at' => now()->toIso8601String(),
+                    ]),
+                ]);
+            }
+        });
+    }
+
     private function handleFailedAttempt(PaymentGatewayAttempt $attempt): void
     {
+        $attemptable = $attempt->attemptable;
+
+        if ($attemptable instanceof EmployeeLoanRepayment) {
+            $this->employeeLoanRepaymentService->markGatewayRepaymentFailed($attemptable, $attempt);
+
+            return;
+        }
+
         /** @var Repayment|null $repayment */
-        $repayment = $attempt->attemptable;
+        $repayment = $attemptable;
         if (! $repayment instanceof Repayment) {
             return;
         }

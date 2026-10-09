@@ -4,38 +4,25 @@ namespace App\Services\Hr\EmployeeLoans;
 
 use App\Models\Admin;
 use App\Models\EmployeeLoan;
+use App\Models\EmployeeLoanPaymentSchedule;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class EmployeeLoanSettlementService
 {
     public function __construct(
-        private readonly EmployeeLoanLedgerService $ledgerService,
         private readonly EmployeeLoanRepaymentService $repaymentService,
+        private readonly EmployeeLoanSettlementQuoteCalculator $quoteCalculator,
     ) {}
 
     /**
-     * @return array<string, float>
+     * @return array<string, mixed>
      */
-    public function quote(EmployeeLoan $loan): array
+    public function quote(EmployeeLoan $loan, Carbon|string|null $settlementDate = null): array
     {
-        $netPaid = $this->ledgerService->calculateNetPaid($loan);
-        $total = $this->ledgerService->getExpectedSettlementAmount($loan);
-        $outstanding = $this->ledgerService->calculateOutstandingBalance($loan, $netPaid);
-        $arrears = $this->ledgerService->outstandingArrearsInterest($loan);
+        $date = $settlementDate === null ? Carbon::today() : ($settlementDate instanceof Carbon ? $settlementDate : Carbon::parse($settlementDate));
 
-        $paidPrincipal = (float) $loan->repayments()->where('status', 'completed')->sum('principal_amount');
-        $paidInterest = (float) $loan->repayments()->where('status', 'completed')->sum('interest_amount');
-        $paidFees = (float) $loan->repayments()->where('status', 'completed')->sum('processing_fee_amount');
-
-        return [
-            'principal_outstanding' => round(max(0, (float) $loan->principal_amount - $paidPrincipal), 2),
-            'interest_outstanding' => round(max(0, (float) $loan->interest_accrued - $paidInterest), 2),
-            'fees_outstanding' => round(max(0, (float) $loan->processing_fee - $paidFees), 2),
-            'arrears_interest_outstanding' => $arrears,
-            'settlement_total' => $outstanding,
-            'contractual_total' => $total,
-            'amount_paid' => $netPaid,
-        ];
+        return $this->quoteCalculator->quote($loan, $date);
     }
 
     /**
@@ -43,27 +30,98 @@ class EmployeeLoanSettlementService
      */
     public function settle(EmployeeLoan $loan, array $repaymentInput, Admin $processor): EmployeeLoan
     {
-        $quote = $this->quote($loan);
-        $amount = round((float) ($repaymentInput['amount'] ?? $quote['settlement_total']), 2);
+        $settlementDate = Carbon::parse($repaymentInput['effective_date'] ?? now()->toDateString())->startOfDay();
 
-        return DB::transaction(function () use ($loan, $repaymentInput, $processor, $amount, $quote) {
-            if ($amount > 0) {
-                $this->repaymentService->recordRepayment($loan, array_merge($repaymentInput, [
-                    'amount' => $amount,
-                    'notes' => trim(($repaymentInput['notes'] ?? '').' Settlement payoff'),
-                ]), $processor);
+        return DB::transaction(function () use ($loan, $repaymentInput, $processor, $settlementDate) {
+            $loan = EmployeeLoan::query()->lockForUpdate()->findOrFail($loan->id);
+
+            $loan = $this->quoteCalculator->prepareLoanForSettlementQuote($loan, $settlementDate);
+            $quote = $this->quoteCalculator->quote($loan, $settlementDate);
+            $payoff = (float) $quote['payoff_amount'];
+
+            if ($payoff <= 0) {
+                throw new \InvalidArgumentException('This loan has no outstanding balance to settle.');
             }
 
-            $loan = $loan->fresh();
-            $loan->update([
+            $this->repaymentService->recordRepayment($loan, array_merge($repaymentInput, [
+                'amount' => $payoff,
+                'effective_date' => $settlementDate->toDateString(),
+                'notes' => trim(($repaymentInput['notes'] ?? '').' Settlement payoff'),
+                'metadata' => array_merge($repaymentInput['metadata'] ?? [], [
+                    'settlement' => true,
+                    'quoted_payoff' => $payoff,
+                    'interest_earned' => $quote['interest_earned'],
+                    'unearned_interest_rebate' => $quote['unearned_interest_rebate'],
+                ]),
+            ]), $processor);
+
+            $this->closeRemainingSchedules($loan->fresh(), $settlementDate);
+
+            $loan->fresh()->update([
                 'status' => EmployeeLoan::STATUS_SETTLED,
-                'settlement_amount' => $quote['settlement_total'],
-                'settlement_date' => now()->toDateString(),
-                'loan_settled_date' => now()->toDateString(),
+                'settlement_amount' => $payoff,
+                'settlement_date' => $settlementDate->toDateString(),
+                'loan_settled_date' => $settlementDate->toDateString(),
                 'outstanding_balance' => 0,
+                'metadata' => array_merge($loan->metadata ?? [], [
+                    'settlement' => [
+                        'settlement_date' => $settlementDate->toDateString(),
+                        'payoff_amount' => $payoff,
+                        'rebate_amount' => $quote['unearned_interest_rebate'],
+                        'interest_earned' => $quote['interest_earned'],
+                    ],
+                ]),
             ]);
 
             return $loan->fresh();
         });
+    }
+
+    public function finalizeIfFullyPaid(EmployeeLoan $loan): ?EmployeeLoan
+    {
+        $loan->refresh();
+
+        if ($loan->status === EmployeeLoan::STATUS_SETTLED) {
+            return $loan;
+        }
+
+        if (! in_array($loan->status, [EmployeeLoan::STATUS_ACTIVE, EmployeeLoan::STATUS_APPROVED], true)) {
+            return null;
+        }
+
+        try {
+            $quote = $this->quoteCalculator->quote($loan, Carbon::today());
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ((float) $quote['payoff_amount'] > 0.01) {
+            return null;
+        }
+
+        $loan->update([
+            'status' => EmployeeLoan::STATUS_SETTLED,
+            'settlement_amount' => (float) ($loan->settlement_amount ?? $quote['payoff_amount']),
+            'settlement_date' => $loan->settlement_date ?? now()->toDateString(),
+            'loan_settled_date' => $loan->loan_settled_date ?? now()->toDateString(),
+            'outstanding_balance' => 0,
+        ]);
+
+        return $loan->fresh();
+    }
+
+    private function closeRemainingSchedules(EmployeeLoan $loan, Carbon $settlementDate): void
+    {
+        $loan->paymentSchedules()
+            ->where('remaining_amount', '>', 0)
+            ->orderBy('period_number')
+            ->each(function (EmployeeLoanPaymentSchedule $schedule) use ($settlementDate): void {
+                $schedule->update([
+                    'amount_paid' => $schedule->expected_amount,
+                    'remaining_amount' => 0,
+                    'status' => 'paid',
+                    'paid_at' => $settlementDate,
+                ]);
+            });
     }
 }

@@ -161,4 +161,11 @@ class PaymentGatewayAttempt extends Model
 
         return 'FINEDGE-OUT-'.$loanId.'-'.$attemptId.'-'.$rand;
     }
+
+    public static function generateEmployeeLoanRepaymentInternalReference(int $repaymentId, int $attemptId): string
+    {
+        $rand = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 10));
+
+        return 'FINEDGE-EL-R-'.$repaymentId.'-'.$attemptId.'-'.$rand;
+    }
 }

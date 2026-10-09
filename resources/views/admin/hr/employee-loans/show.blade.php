@@ -98,10 +98,22 @@
 
             @can('repay', $loan)
                 @if($loan->isActive())
-                    <a href="#repayment-panel"
+                    <button type="button" onclick="openEmployeeLoanRepaymentModal()"
                        class="inline-flex items-center gap-2 rounded-2xl border border-emerald-300/40 bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-3 font-semibold text-white shadow-lg shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-700 transition">
                         Record repayment
-                    </a>
+                    </button>
+                @endif
+            @endcan
+
+            @can('settle', $loan)
+                @if($settlementQuote && $loan->isActive() && ($settlementQuote['settlement_total'] ?? 0) > 0)
+                    <button type="button" onclick="openEmployeeLoanSettlementModal()"
+                            class="inline-flex items-center gap-2 rounded-2xl border border-purple-400/40 bg-gradient-to-r from-purple-500 to-purple-700 px-4 py-3 font-semibold text-white shadow-lg shadow-purple-500/30 hover:from-purple-600 hover:to-purple-800 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Early settlement
+                    </button>
                 @endif
             @endcan
 
@@ -405,58 +417,13 @@
 
     @can('repay', $loan)
         @if($loan->isActive())
-            <div id="repayment-panel" class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg scroll-mt-8">
-                <h2 class="text-xl font-semibold text-white mb-4">Record repayment</h2>
-                <form method="POST" action="{{ route('admin.hr.employee-loans.repay', $loan) }}" class="grid md:grid-cols-4 gap-4">
-                    @csrf
-                    <div>
-                        <label class="text-xs text-slate-400 mb-1 block">Amount</label>
-                        <input type="number" step="0.01" name="amount" placeholder="0.00" required class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2.5">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400 mb-1 block">Effective date</label>
-                        <input type="date" name="effective_date" value="{{ now()->toDateString() }}" required class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2.5">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400 mb-1 block">Received via</label>
-                        <select name="received_via_type" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2.5">
-                            <option value="">Optional</option>
-                            <option value="bank">Bank</option>
-                            <option value="wallet">Wallet</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400 mb-1 block">Treasury account</label>
-                        <select name="received_via_id" class="w-full rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2.5">
-                            @foreach($banks as $bank)
-                                <option value="{{ $bank->id }}">{{ $bank->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="md:col-span-4">
-                        <button type="submit" class="btn-primary rounded-2xl px-5 py-2.5 text-sm font-semibold">Save repayment</button>
-                    </div>
-                </form>
-            </div>
+            @include('admin.hr.employee-loans.partials.repayment-modal')
         @endif
     @endcan
 
     @can('settle', $loan)
-        @if($settlementQuote && $loan->isActive())
-            <div class="rounded-3xl border border-purple-500/20 bg-purple-500/5 p-6 shadow-lg">
-                <h2 class="text-xl font-semibold text-white mb-2">Early settlement</h2>
-                <p class="text-sm text-slate-300 mb-4">Quote: <span class="font-semibold text-white">K {{ number_format($settlementQuote['settlement_total'], 2) }}</span></p>
-                <form method="POST" action="{{ route('admin.hr.employee-loans.settle', $loan) }}" class="flex flex-wrap gap-3 items-end">
-                    @csrf
-                    <div>
-                        <label class="text-xs text-slate-400 mb-1 block">Effective date</label>
-                        <input type="date" name="effective_date" value="{{ now()->toDateString() }}" class="rounded-2xl bg-white/10 border border-white/10 text-white px-4 py-2.5">
-                    </div>
-                    <button type="submit" class="rounded-2xl border border-purple-400/40 bg-gradient-to-r from-purple-500 to-purple-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 hover:from-purple-600 hover:to-purple-800 transition">
-                        Settle loan
-                    </button>
-                </form>
-            </div>
+        @if($settlementQuote && $loan->isActive() && ($settlementQuote['settlement_total'] ?? 0) > 0)
+            @include('admin.hr.employee-loans.partials.settlement-modal')
         @endif
     @endcan
 

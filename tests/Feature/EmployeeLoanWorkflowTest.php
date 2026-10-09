@@ -13,6 +13,8 @@ use App\Models\LoanRateType;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanDisbursementService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanPricingService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanRepaymentService;
+use App\Services\Hr\EmployeeLoans\EmployeeLoanScheduleService;
+use App\Services\Hr\EmployeeLoans\EmployeeLoanSettlementService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanService;
 use Database\Seeders\CompanySeeder;
 use Database\Seeders\EmployeeLoanProductSeeder;
@@ -213,6 +215,131 @@ class EmployeeLoanWorkflowTest extends TestCase
             'principal' => 1000,
             'tenure_months' => 3,
         ]);
+    }
+
+    public function test_draft_edit_before_approve_uses_updated_principal_on_schedule_and_metadata(): void
+    {
+        $rate = $this->employeeRate(10.0, 2);
+        $employee = Employee::create(['first_name' => 'Edit', 'last_name' => 'Draft', 'employment_status' => 'active']);
+        $creator = $this->adminWith(['hr.employee-loans.create', 'hr.employee-loans.update']);
+        $approver = $this->adminWith(['hr.employee-loans.approve']);
+
+        $service = app(EmployeeLoanService::class);
+        $loan = $service->createDraft([
+            'employee_id' => $employee->id,
+            'loan_rate_id' => $rate->id,
+            'principal_amount' => 5000,
+            'tenure_months' => 2,
+            'repayment_frequency' => 'monthly',
+            'first_payment_date' => now()->addMonth()->toDateString(),
+        ], $creator);
+
+        $this->assertEqualsWithDelta(5000.0, (float) data_get($loan->metadata, 'pricing_quote.principal'), 0.01);
+
+        $loan = $service->updateDraft($loan->fresh(), [
+            'employee_id' => $employee->id,
+            'loan_rate_id' => $rate->id,
+            'principal_amount' => 5870,
+            'tenure_months' => 2,
+            'repayment_frequency' => 'monthly',
+            'first_payment_date' => now()->addMonth()->toDateString(),
+        ]);
+
+        $this->assertEqualsWithDelta(5870.0, (float) $loan->principal_amount, 0.01);
+        $this->assertEqualsWithDelta(5870.0, (float) data_get($loan->metadata, 'pricing_quote.principal'), 0.01);
+
+        $service->submitForApproval($loan);
+        $loan = $service->approve($loan->fresh(), $approver)->fresh();
+
+        $schedulePrincipal = (float) $loan->paymentSchedules()->sum('principal_component');
+        $scheduleTotal = (float) $loan->paymentSchedules()->sum('expected_amount');
+
+        $this->assertEqualsWithDelta(5870.0, $schedulePrincipal, 0.05);
+        $this->assertEqualsWithDelta((float) $loan->total_amount, $scheduleTotal, 0.05);
+        $this->assertEqualsWithDelta(5870.0, (float) data_get($loan->metadata, 'pricing_quote.principal'), 0.01);
+    }
+
+    public function test_settlement_quote_uses_loan_totals_not_stale_schedule_sum(): void
+    {
+        $rate = $this->employeeRate(10.0, 2);
+        $employee = Employee::create(['first_name' => 'Settle', 'last_name' => 'Quote', 'employment_status' => 'active']);
+        $creator = $this->adminWith(['hr.employee-loans.create', 'hr.employee-loans.update']);
+        $approver = $this->adminWith(['hr.employee-loans.approve', 'hr.employee-loans.disburse']);
+
+        $bank = Bank::create([
+            'name' => 'Settle Bank',
+            'bank_name' => 'Settle',
+            'account_name' => 'Treasury',
+            'account_number' => '456',
+            'current_balance' => 50000,
+            'is_active' => true,
+        ]);
+
+        $service = app(EmployeeLoanService::class);
+        $loan = $service->createDraft([
+            'employee_id' => $employee->id,
+            'loan_rate_id' => $rate->id,
+            'principal_amount' => 5870,
+            'tenure_months' => 2,
+            'repayment_frequency' => 'monthly',
+            'first_payment_date' => now()->addMonth()->toDateString(),
+        ], $creator);
+        $service->submitForApproval($loan);
+        $loan = $service->approve($loan->fresh(), $approver)->fresh();
+
+        app(EmployeeLoanDisbursementService::class)->disburse($loan, $approver, 'bank', $bank->id);
+        $loan = $loan->fresh();
+
+        foreach ($loan->paymentSchedules as $schedule) {
+            $schedule->update([
+                'principal_component' => 2500,
+                'expected_amount' => 2825,
+                'remaining_amount' => 2825,
+            ]);
+        }
+        $staleScheduleTotal = (float) $loan->paymentSchedules()->sum('remaining_amount');
+
+        $quote = app(EmployeeLoanSettlementService::class)->quote($loan->fresh());
+
+        $this->assertNotEqualsWithDelta($staleScheduleTotal, (float) $quote['payoff_amount'], 50.0);
+        $this->assertGreaterThan($staleScheduleTotal, (float) $quote['payoff_amount']);
+        $this->assertLessThanOrEqual((float) $loan->total_amount + 0.05, (float) $quote['payoff_amount']);
+        $this->assertEqualsWithDelta(5870.0, (float) $quote['principal_outstanding'], 0.05);
+        $this->assertGreaterThan(0, (float) ($quote['unearned_interest_rebate'] ?? 0));
+    }
+
+    public function test_regenerate_schedule_repairs_stale_installments_when_no_repayments(): void
+    {
+        $rate = $this->employeeRate(10.0, 2);
+        $employee = Employee::create(['first_name' => 'Repair', 'last_name' => 'Sched', 'employment_status' => 'active']);
+        $creator = $this->adminWith(['hr.employee-loans.create', 'hr.employee-loans.update']);
+        $approver = $this->adminWith(['hr.employee-loans.approve']);
+
+        $service = app(EmployeeLoanService::class);
+        $loan = $service->createDraft([
+            'employee_id' => $employee->id,
+            'loan_rate_id' => $rate->id,
+            'principal_amount' => 5870,
+            'tenure_months' => 2,
+            'repayment_frequency' => 'monthly',
+            'first_payment_date' => now()->addMonth()->toDateString(),
+        ], $creator);
+        $service->submitForApproval($loan);
+        $loan = $service->approve($loan->fresh(), $approver)->fresh();
+
+        foreach ($loan->paymentSchedules as $schedule) {
+            $schedule->update([
+                'principal_component' => 2500,
+                'expected_amount' => 2825,
+                'remaining_amount' => 2825,
+            ]);
+        }
+
+        app(EmployeeLoanScheduleService::class)->regenerateWhenNoCompletedRepayments($loan->fresh());
+        $loan = $loan->fresh();
+
+        $this->assertEqualsWithDelta(5870.0, (float) $loan->paymentSchedules()->sum('principal_component'), 0.05);
+        $this->assertEqualsWithDelta((float) $loan->total_amount, (float) $loan->paymentSchedules()->sum('expected_amount'), 0.05);
     }
 
     public function test_pricing_preview_does_not_persist_loan(): void

@@ -19,6 +19,7 @@ class EmployeeLoanRepayment extends Model
 
     protected $fillable = [
         'employee_loan_id',
+        'payment_gateway_attempt_id',
         'amount',
         'principal_amount',
         'interest_amount',
@@ -57,5 +58,10 @@ class EmployeeLoanRepayment extends Model
     public function processor(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'processed_by');
+    }
+
+    public function paymentGatewayAttempt(): BelongsTo
+    {
+        return $this->belongsTo(PaymentGatewayAttempt::class, 'payment_gateway_attempt_id');
     }
 }

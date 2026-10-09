@@ -3,6 +3,7 @@
 namespace App\PaymentPlatform\Jobs;
 
 use App\Models\PaymentGatewayAttempt;
+use App\Models\EmployeeLoanRepayment;
 use App\Models\Repayment;
 use App\PaymentPlatform\DTOs\CollectMoneyRequest;
 use App\PaymentPlatform\Enums\GatewayAttemptStatus;
@@ -132,6 +133,13 @@ class DispatchGatewayCollectionJob implements ShouldQueue
             return [
                 'repayment_id' => $attempt->attemptable->id,
                 'customer_id' => $attempt->attemptable->customer_id,
+            ];
+        }
+
+        if ($attempt->attemptable instanceof EmployeeLoanRepayment) {
+            return [
+                'employee_loan_repayment_id' => $attempt->attemptable->id,
+                'employee_loan_id' => $attempt->attemptable->employee_loan_id,
             ];
         }
 

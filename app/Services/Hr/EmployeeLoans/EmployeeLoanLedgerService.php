@@ -5,6 +5,7 @@ namespace App\Services\Hr\EmployeeLoans;
 use App\Models\EmployeeLoan;
 use App\Models\EmployeeLoanArrearsAccrual;
 use App\Models\EmployeeLoanRepayment;
+use Carbon\Carbon;
 
 class EmployeeLoanLedgerService
 {
@@ -31,35 +32,41 @@ class EmployeeLoanLedgerService
 
     public function getContractualSettlementAmount(EmployeeLoan $loan): float
     {
-        if ($loan->paymentSchedules()->exists()) {
-            return round((float) $loan->paymentSchedules()->sum('expected_amount'), 2);
-        }
-
-        return round((float) $loan->total_amount, 2);
+        return round((float) $loan->total_amount + $this->outstandingArrearsInterest($loan), 2);
     }
 
     public function getExpectedSettlementAmount(EmployeeLoan $loan): float
     {
-        $contractual = $this->getContractualSettlementAmount($loan);
-        $arrears = $this->outstandingArrearsInterest($loan);
-
-        return round($contractual + $arrears, 2);
+        return $this->getContractualSettlementAmount($loan);
     }
 
     public function calculateOutstandingBalance(EmployeeLoan $loan, ?float $netPaid = null): float
     {
-        $netPaid ??= $this->calculateNetPaid($loan);
-        $expected = $this->getExpectedSettlementAmount($loan);
+        if (in_array($loan->status, [EmployeeLoan::STATUS_SETTLED], true)) {
+            return 0.0;
+        }
 
-        return round(max(0, $expected - $netPaid), 2);
+        if (! in_array($loan->status, [EmployeeLoan::STATUS_ACTIVE, EmployeeLoan::STATUS_APPROVED], true)) {
+            return round(max(0, (float) $loan->total_amount - ($netPaid ?? $this->calculateNetPaid($loan))), 2);
+        }
+
+        try {
+            $quote = app(EmployeeLoanSettlementQuoteCalculator::class)->quote($loan, Carbon::today());
+
+            return (float) $quote['payoff_amount'];
+        } catch (\Throwable) {
+            $netPaid ??= $this->calculateNetPaid($loan);
+
+            return round(max(0, (float) $loan->total_amount - $netPaid), 2);
+        }
     }
 
     public function syncLoanLedger(EmployeeLoan $loan): EmployeeLoan
     {
         $netPaid = $this->calculateNetPaid($loan);
-        $expected = $this->getExpectedSettlementAmount($loan);
         $outstanding = $this->calculateOutstandingBalance($loan, $netPaid);
-        $isFullyPaid = $netPaid >= ($expected - 0.01);
+        $expected = $this->getExpectedSettlementAmount($loan);
+        $isFullyPaid = $netPaid >= ($expected - 0.01) || $outstanding <= 0.01;
 
         $updates = [
             'amount_paid' => $netPaid,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Hr;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bank;
+use App\Models\Channel;
 use App\Models\Employee;
 use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeLoan;
@@ -22,10 +23,13 @@ use App\Services\Hr\EmployeeLoans\EmployeeLoanDisbursementService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanNotificationService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanPayoutDestinationService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanPricingService;
+use App\Services\Hr\EmployeeLoans\EmployeeLoanLedgerService;
+use App\Services\Hr\EmployeeLoans\EmployeeLoanRepaymentGatewayService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanRepaymentService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanScheduleService;
 use App\Services\Hr\EmployeeLoans\EmployeeLoanSettlementService;
+use App\Services\Repayments\Enums\RepaymentGatewayCollectionStatus;
 use App\Services\Loans\DTOs\ManualDisbursementDTO;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -351,9 +355,35 @@ class EmployeeLoanController extends Controller
             ? app(EmployeeLoanScheduleService::class)->previewForDraftLoan($employeeLoan)
             : null;
 
+        $repaymentOutstanding = app(EmployeeLoanLedgerService::class)->calculateOutstandingBalance($employeeLoan);
+        $repaymentChannels = Channel::query()->where('is_active', true)->where('can_repay', true)->orderBy('name')->get();
+        $defaultRepaymentPhone = $employeeLoan->employee?->phone ?? $employeeLoan->employee?->alternative_phone;
+        $repaymentChannelPreviews = app(EmployeeLoanRepaymentGatewayService::class)->previewsForChannels(
+            $repaymentChannels,
+            $employeeLoan,
+            $repaymentOutstanding > 0 ? $repaymentOutstanding : null,
+            $defaultRepaymentPhone,
+        );
+
+        $settlementChannelPreviews = null;
+        if ($settlementQuote && $employeeLoan->isActive() && ($settlementQuote['settlement_total'] ?? 0) > 0) {
+            $settlementChannelPreviews = app(EmployeeLoanRepaymentGatewayService::class)->previewsForChannels(
+                $repaymentChannels,
+                $employeeLoan,
+                (float) $settlementQuote['settlement_total'],
+                $defaultRepaymentPhone,
+            );
+        }
+
         return view('admin.hr.employee-loans.show', [
             'loan' => $employeeLoan,
             'settlementQuote' => $settlementQuote,
+            'repaymentOutstanding' => $repaymentOutstanding,
+            'repaymentChannels' => $repaymentChannels,
+            'repaymentChannelPreviews' => $repaymentChannelPreviews,
+            'settlementChannels' => $repaymentChannels,
+            'settlementChannelPreviews' => $settlementChannelPreviews,
+            'defaultRepaymentPhone' => $defaultRepaymentPhone,
             'banks' => Bank::query()->where('is_active', true)->orderBy('name')->get(),
             'wallets' => Wallet::query()->where('is_active', true)->orderBy('name')->get(),
             'canViewFinancials' => auth('admin')->user()?->can('hr.employee-loans.financials') ?? false,
@@ -508,39 +538,172 @@ class EmployeeLoanController extends Controller
     {
         $this->authorize('repay', $employeeLoan);
 
-        $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01'],
+        $collectionMode = $request->string('collection_mode', 'treasury')->toString();
+
+        $rules = [
+            'collection_mode' => ['required', 'in:gateway,treasury'],
+            'repayment_type' => ['required', 'in:full,partial'],
             'effective_date' => ['required', 'date'],
-            'payment_method' => ['nullable', 'string', 'max:100'],
-            'repayment_source' => ['nullable', 'in:manual,payroll,bank,cash,adjustment'],
             'reference' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
-            'received_via_type' => ['nullable', 'in:bank,wallet'],
-            'received_via_id' => ['nullable', 'integer'],
-        ]);
+        ];
 
-        $this->repaymentService->recordRepayment($employeeLoan, $validated, auth('admin')->user());
+        if ($request->input('repayment_type') === 'partial') {
+            $rules['amount'] = ['required', 'numeric', 'min:0.01'];
+        }
 
-        return back()->with('status', 'Repayment recorded.');
+        if ($collectionMode === 'gateway') {
+            $rules['channel_id'] = ['required', 'integer', 'exists:channels,id'];
+            $rules['phone'] = ['nullable', 'string', 'max:30'];
+        } else {
+            $rules['repayment_source'] = ['required', 'in:payroll,bank,cash,manual'];
+            $rules['received_via_type'] = ['required', 'in:bank,wallet'];
+            $rules['received_via_id'] = ['required', 'integer'];
+        }
+
+        $validated = $request->validate($rules);
+
+        $ledger = app(EmployeeLoanLedgerService::class);
+        $outstanding = $ledger->calculateOutstandingBalance($employeeLoan);
+        $amount = ($validated['repayment_type'] ?? 'partial') === 'full'
+            ? $outstanding
+            : round((float) ($validated['amount'] ?? 0), 2);
+
+        $baseInput = [
+            'amount' => $amount,
+            'effective_date' => $validated['effective_date'],
+            'reference' => $validated['reference'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ];
+
+        if ($collectionMode === 'gateway') {
+            $channel = Channel::query()->findOrFail((int) $validated['channel_id']);
+            $phone = $validated['phone'] ?? $employeeLoan->employee?->phone;
+
+            $pending = $this->repaymentService->createPendingGatewayRepayment(
+                $employeeLoan,
+                array_merge($baseInput, ['phone' => $phone]),
+                auth('admin')->user(),
+            );
+
+            $result = app(EmployeeLoanRepaymentGatewayService::class)->initiate($pending, $channel, $phone);
+
+            if ($result->status === RepaymentGatewayCollectionStatus::Initiated) {
+                return back()->with('status', 'Mobile money collection prompt sent. The loan balance will update when the employee approves payment on their device.');
+            }
+
+            if ($result->status === RepaymentGatewayCollectionStatus::Failed) {
+                $pending->update(['status' => 'failed', 'notes' => $result->message]);
+
+                return back()->with('error', $result->message ?? 'Gateway collection could not be started.');
+            }
+
+            return back()->with('error', $result->message ?? 'Gateway collection is not available for this channel.');
+        }
+
+        $receivedViaType = (string) $validated['received_via_type'];
+        $receivedViaId = (int) $validated['received_via_id'];
+        $this->assertTreasuryAccountExists($receivedViaType, $receivedViaId);
+
+        $this->repaymentService->recordRepayment($employeeLoan, array_merge($baseInput, [
+            'repayment_source' => $validated['repayment_source'],
+            'received_via_type' => $receivedViaType,
+            'received_via_id' => $receivedViaId,
+            'metadata' => ['collection_mode' => 'treasury'],
+        ]), auth('admin')->user());
+
+        return back()->with('status', 'Repayment recorded and treasury balance updated.');
+    }
+
+    protected function assertTreasuryAccountExists(string $type, int $id): void
+    {
+        $exists = match ($type) {
+            'bank' => Bank::query()->whereKey($id)->where('is_active', true)->exists(),
+            'wallet' => Wallet::query()->whereKey($id)->where('is_active', true)->exists(),
+            default => false,
+        };
+
+        if (! $exists) {
+            throw ValidationException::withMessages([
+                'received_via_id' => 'Select a valid active treasury account.',
+            ]);
+        }
     }
 
     public function settle(Request $request, EmployeeLoan $employeeLoan): RedirectResponse
     {
         $this->authorize('settle', $employeeLoan);
 
-        $validated = $request->validate([
+        $collectionMode = $request->string('collection_mode', 'treasury')->toString();
+
+        $rules = [
+            'collection_mode' => ['required', 'in:gateway,treasury'],
             'effective_date' => ['required', 'date'],
-            'received_via_type' => ['nullable', 'in:bank,wallet'],
-            'received_via_id' => ['nullable', 'integer'],
             'reference' => ['nullable', 'string', 'max:255'],
-        ]);
+            'notes' => ['nullable', 'string'],
+        ];
 
-        $quote = $this->settlementService->quote($employeeLoan);
-        $validated['amount'] = $quote['settlement_total'];
+        if ($collectionMode === 'gateway') {
+            $rules['channel_id'] = ['required', 'integer', 'exists:channels,id'];
+            $rules['phone'] = ['nullable', 'string', 'max:30'];
+        } else {
+            $rules['repayment_source'] = ['required', 'in:payroll,bank,cash,manual'];
+            $rules['received_via_type'] = ['required', 'in:bank,wallet'];
+            $rules['received_via_id'] = ['required', 'integer'];
+        }
 
-        $this->settlementService->settle($employeeLoan, $validated, auth('admin')->user());
+        $validated = $request->validate($rules);
 
-        return back()->with('status', 'Employee loan settled.');
+        $quote = $this->settlementService->quote($employeeLoan, $validated['effective_date']);
+        $amount = round((float) $quote['settlement_total'], 2);
+
+        if ($amount <= 0) {
+            return back()->with('error', 'This loan has no outstanding balance to settle.');
+        }
+
+        $baseInput = [
+            'amount' => $amount,
+            'effective_date' => $validated['effective_date'],
+            'reference' => $validated['reference'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ];
+
+        if ($collectionMode === 'gateway') {
+            $channel = Channel::query()->findOrFail((int) $validated['channel_id']);
+            $phone = $validated['phone'] ?? $employeeLoan->employee?->phone;
+
+            $pending = $this->repaymentService->createPendingGatewayRepayment(
+                $employeeLoan,
+                array_merge($baseInput, [
+                    'phone' => $phone,
+                    'metadata' => ['settlement_intended' => true],
+                ]),
+                auth('admin')->user(),
+            );
+
+            $result = app(EmployeeLoanRepaymentGatewayService::class)->initiate($pending, $channel, $phone);
+
+            if ($result->status === RepaymentGatewayCollectionStatus::Initiated) {
+                return back()->with('status', 'Settlement payment prompt sent. The loan will close automatically when payment is confirmed.');
+            }
+
+            $pending->update(['status' => 'failed']);
+
+            return back()->with('error', $result->message ?? 'Could not start gateway settlement collection.');
+        }
+
+        $receivedViaType = (string) $validated['received_via_type'];
+        $receivedViaId = (int) $validated['received_via_id'];
+        $this->assertTreasuryAccountExists($receivedViaType, $receivedViaId);
+
+        $this->settlementService->settle($employeeLoan, array_merge($baseInput, [
+            'repayment_source' => $validated['repayment_source'],
+            'received_via_type' => $receivedViaType,
+            'received_via_id' => $receivedViaId,
+            'metadata' => ['collection_mode' => 'treasury', 'settlement_intended' => true],
+        ]), auth('admin')->user());
+
+        return back()->with('status', 'Employee loan settled and treasury updated.');
     }
 
     public function pricingPreview(Request $request): JsonResponse
