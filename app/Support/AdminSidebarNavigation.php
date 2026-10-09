@@ -225,6 +225,7 @@ class AdminSidebarNavigation
                 'Leave Applications' => ['admin.hr.leave.applications.*'],
                 'Leave History' => ['admin.hr.leave.history.*'],
                 'Leave Balances' => ['admin.hr.leave.balances.*'],
+                'Employee Loans' => ['admin.hr.employee-loans.*'],
                 'HR Settings' => ['admin.hr.settings.*'],
             ],
             'menu-reports' => [

@@ -56,6 +56,13 @@ class SmsTemplateSeeder extends Seeder
                 'description' => 'Placeholders: {NAME}, {LOAN_NUMBER}, {AMOUNT}, {DUE_DATE}, {REFERENCE}, {APP_NAME}',
             ],
             [
+                'key' => 'employee_loan_approved',
+                'name' => 'Employee loan approved',
+                'category' => SmsCategory::Loan,
+                'body' => 'Hi {NAME}, your employee loan {LOAN_NUMBER} for K{AMOUNT} is approved. Disbursement will follow HR procedures — {APP_NAME}',
+                'description' => 'Placeholders: {NAME}, {LOAN_NUMBER}, {AMOUNT}, {APP_NAME}',
+            ],
+            [
                 'key' => 'reminder_1_week_before',
                 'name' => 'Payment reminder (1 week before)',
                 'category' => SmsCategory::Loan,

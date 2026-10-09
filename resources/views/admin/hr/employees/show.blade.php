@@ -20,6 +20,9 @@
         $tabs['kin'] = 'Next of kin';
         $tabs['dependants'] = 'Dependants';
         $tabs['leave'] = 'Leave';
+        if ($canViewEmployeeLoans ?? false) {
+            $tabs['employee_loans'] = 'Employee Loans';
+        }
         $paymentErrorKeys = [
             'account_name', 'account_number', 'bank_name', 'financial_institution_id',
             'branch_name', 'branch_code', 'is_primary', 'mobile_money_provider',
@@ -456,5 +459,42 @@
                 </table>
             </div>
         </section>
+
+        @if ($canViewEmployeeLoans ?? false)
+            <section x-show="tab === 'employee_loans'" x-cloak class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Employee loans</h3>
+                    @can('hr.employee-loans.create')
+                        <a href="{{ route('admin.hr.employee-loans.create') }}" class="text-sm text-cyan-300 hover:underline">New loan</a>
+                    @endcan
+                </div>
+                @php
+                    $activeLoans = $employee->employeeLoans->whereIn('status', ['approved', 'active']);
+                    $outstanding = $activeLoans->sum('outstanding_balance');
+                @endphp
+                <div class="grid md:grid-cols-3 gap-4 text-sm">
+                    <div class="rounded-xl bg-white/5 p-3">Active loans: <strong>{{ $activeLoans->count() }}</strong></div>
+                    <div class="rounded-xl bg-white/5 p-3">Outstanding: <strong>K {{ number_format((float) $outstanding, 2) }}</strong></div>
+                    <div class="rounded-xl bg-white/5 p-3">Total borrowed: <strong>K {{ number_format((float) $employee->employeeLoans->sum('principal_amount'), 2) }}</strong></div>
+                </div>
+                <div class="admin-data-table">
+                    <table class="min-w-full w-full text-sm">
+                        <thead><tr><th>Loan</th><th>Principal</th><th>Outstanding</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @forelse ($employee->employeeLoans as $loan)
+                                <tr>
+                                    <td><a href="{{ route('admin.hr.employee-loans.show', $loan) }}" class="text-cyan-300 hover:underline">{{ $loan->loan_number }}</a></td>
+                                    <td>{{ number_format((float) $loan->principal_amount, 2) }}</td>
+                                    <td>{{ number_format((float) $loan->outstanding_balance, 2) }}</td>
+                                    <td>{{ ucfirst(str_replace('_', ' ', $loan->status)) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="py-6 text-center text-slate-400">No employee loans.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
     </div>
 @endsection

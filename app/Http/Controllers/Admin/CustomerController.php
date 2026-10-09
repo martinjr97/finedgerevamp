@@ -145,7 +145,9 @@ class CustomerController extends Controller
      */
     public function selectProductType(): View
     {
-        $products = LoanProduct::where('is_active', true)
+        $products = LoanProduct::query()
+            ->where('is_active', true)
+            ->forCustomerLoanApplication()
             ->orderBy('category')
             ->orderBy('name')
             ->get()
@@ -168,6 +170,12 @@ class CustomerController extends Controller
         }
 
         $product = LoanProduct::findOrFail($productId);
+
+        if ($product->isEmployeeLoanProduct()) {
+            return redirect()->route('admin.customers.select-product-type')
+                ->with('error', 'Employee Loan is an internal HR product and cannot be used for customer registration.');
+        }
+
         $companies = Company::orderBy('name')->get();
         $relationshipManagers = Admin::where('is_relationship_manager', true)
             ->orderBy('first_name')

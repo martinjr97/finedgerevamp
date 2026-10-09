@@ -60,6 +60,23 @@ class GatewaySelectionService
         return $gateway;
     }
 
+    public function selectForEmployeeLoanDisbursement(\App\Models\EmployeeLoan $loan, bool $requireLinkedAccount = true): ?PaymentGateway
+    {
+        $resolution = $this->routeService->resolveRouteForEmployeeLoanDisbursement($loan);
+
+        if (! $resolution->available) {
+            return null;
+        }
+
+        $gateway = $resolution->gateway;
+
+        if ($requireLinkedAccount && $gateway && ! $gateway->hasLinkedFinancialAccount()) {
+            return null;
+        }
+
+        return $gateway;
+    }
+
     public function mapChannelToPaymentMethod(Channel $channel): ?GatewayPaymentMethod
     {
         return match ($channel->type) {

@@ -3,6 +3,8 @@
 namespace App\PaymentPlatform\Support;
 
 use App\Models\Channel;
+use App\Models\EmployeeLoan;
+use App\Models\FinancialInstitution;
 use App\Models\Loan;
 use App\Services\DisbursementDestinationService;
 use Illuminate\Validation\ValidationException;
@@ -73,6 +75,72 @@ class CGrateIssuerNameResolver
         return [
             'customer_account' => $customerAccount,
             'issuer_name' => $this->resolveMobileIssuerName($channel),
+            'payment_method' => 'mobile_money',
+        ];
+    }
+
+    /**
+     * @return array{customer_account: string, issuer_name: string, payment_method: string}
+     */
+    public function resolveForEmployeeLoan(EmployeeLoan $loan): array
+    {
+        $snapshot = $loan->disbursementSnapshot();
+        if ($snapshot === []) {
+            throw ValidationException::withMessages([
+                'disbursement' => 'Employee loan has no payout destination configured.',
+            ]);
+        }
+
+        $method = $snapshot['payout_method'] ?? $snapshot['account_type'] ?? 'bank';
+
+        if ($method === 'bank') {
+            $accountNumber = trim((string) ($snapshot['account_number'] ?? ''));
+            if ($accountNumber === '') {
+                throw ValidationException::withMessages([
+                    'disbursement' => 'Bank account number is required for gateway disbursement.',
+                ]);
+            }
+
+            $institutionName = null;
+            if (! empty($snapshot['financial_institution_id'])) {
+                $institutionName = FinancialInstitution::query()->find($snapshot['financial_institution_id'])?->name;
+            }
+            $institutionName ??= (string) ($snapshot['bank_name'] ?? '');
+
+            if ($institutionName === '') {
+                throw ValidationException::withMessages([
+                    'disbursement' => 'Financial institution is required for bank disbursement.',
+                ]);
+            }
+
+            return [
+                'customer_account' => $accountNumber,
+                'issuer_name' => $institutionName,
+                'payment_method' => 'bank',
+            ];
+        }
+
+        $phone = trim((string) ($snapshot['account_number'] ?? ''));
+        if ($phone === '') {
+            throw ValidationException::withMessages([
+                'disbursement' => 'Mobile number is required for gateway disbursement.',
+            ]);
+        }
+
+        $provider = strtoupper((string) ($snapshot['bank_name'] ?? ''));
+        $issuerName = match (true) {
+            str_contains($provider, 'MTN') => 'MTN',
+            str_contains($provider, 'AIRTEL') => 'Airtel',
+            str_contains($provider, 'ZAMTEL') => 'Zamtel',
+            default => $this->guessIssuerFromChannelName((string) ($snapshot['bank_name'] ?? 'Mobile')),
+        };
+
+        return [
+            'customer_account' => ZambiaMsisdnNormalizer::normalizeForCGrate(
+                $phone,
+                (string) config('cgrate.msisdn_format', 'local')
+            ),
+            'issuer_name' => $issuerName,
             'payment_method' => 'mobile_money',
         ];
     }

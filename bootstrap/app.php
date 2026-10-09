@@ -56,6 +56,24 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping()
             ->runInBackground();
 
+        $schedule->command('employee-loans:refresh-aging')
+            ->dailyAt('01:05')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        $schedule->command('employee-loans:accrue-interest')
+            ->dailyAt('02:05')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        $schedule->command('employee-loans:accrue-arrears')
+            ->dailyAt('01:35')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->runInBackground();
+
         $schedule->command('repayments:send-reminders')
             ->dailyAt('09:00')
             ->timezone($timezone)

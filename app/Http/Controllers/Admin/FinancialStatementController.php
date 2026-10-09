@@ -7,6 +7,8 @@ use App\Models\Asset;
 use App\Models\Bank;
 use App\Models\CashRegister;
 use App\Models\Creditor;
+use App\Models\EmployeeLoan;
+use App\Models\EmployeeLoanRepayment;
 use App\Models\FinancialTransaction;
 use App\Models\Loan;
 use App\Models\Wallet;
@@ -49,8 +51,19 @@ class FinancialStatementController extends Controller
             $loansQuery->where('loan_start_date', '>=', $loansFromDate);
         }
         
-        $loansReceivable = $loansQuery->sum('outstanding_balance');
+        $customerLoansReceivable = $loansQuery->sum('outstanding_balance');
         $loansCount = $loansQuery->count();
+
+        $employeeLoansQuery = EmployeeLoan::query()
+            ->whereIn('status', [EmployeeLoan::STATUS_APPROVED, EmployeeLoan::STATUS_ACTIVE]);
+
+        if ($loansFromDate) {
+            $employeeLoansQuery->where('loan_start_date', '>=', $loansFromDate);
+        }
+
+        $employeeLoansReceivable = (float) $employeeLoansQuery->sum('outstanding_balance');
+        $employeeLoansCount = $employeeLoansQuery->count();
+        $loansReceivable = $customerLoansReceivable + $employeeLoansReceivable;
         
         // Get loans breakdown by status
         $loansBreakdown = Loan::selectRaw('status, COUNT(*) as count, SUM(outstanding_balance) as outstanding')
@@ -84,6 +97,9 @@ class FinancialStatementController extends Controller
             'totalCashOnHand' => $totalCashOnHand,
             'cashAndCashEquivalents' => $cashAndCashEquivalents,
             'loansReceivable' => $loansReceivable,
+            'customerLoansReceivable' => $customerLoansReceivable,
+            'employeeLoansReceivable' => $employeeLoansReceivable,
+            'employeeLoansCount' => $employeeLoansCount,
             'loansCount' => $loansCount,
             'loansBreakdown' => $loansBreakdown,
             'physicalAssets' => $physicalAssets,
@@ -119,7 +135,12 @@ class FinancialStatementController extends Controller
             ->whereBetween('transaction_date', [$startDateCarbon, $endDateCarbon])
             ->sum('amount');
 
-        $totalInflow = $cashFromLoanRepayments + $cashFromStakeholderContributions;
+        $cashFromEmployeeLoanRepayments = EmployeeLoanRepayment::query()
+            ->where('status', 'completed')
+            ->whereBetween('processed_at', [$startDateCarbon, $endDateCarbon])
+            ->sum('amount');
+
+        $totalInflow = $cashFromLoanRepayments + $cashFromEmployeeLoanRepayments + $cashFromStakeholderContributions;
 
         // CASH OUTFLOWS
         // Operating expenses (all expense transactions)
@@ -132,7 +153,12 @@ class FinancialStatementController extends Controller
             ->where('disbursement_status', 'completed')
             ->sum('principal_amount');
 
-        $totalOutflow = $operatingExpenses + $loansDisbursed;
+        $employeeLoansDisbursed = EmployeeLoan::query()
+            ->whereBetween('disbursed_at', [$startDateCarbon, $endDateCarbon])
+            ->where('disbursement_status', 'completed')
+            ->sum('principal_amount');
+
+        $totalOutflow = $operatingExpenses + $loansDisbursed + $employeeLoansDisbursed;
 
         // NET CASH FLOW
         $netCashFlow = $totalInflow - $totalOutflow;
@@ -276,7 +302,7 @@ class FinancialStatementController extends Controller
 
         $totalLoanInterest = $loanInterest + $interestFromRepayments;
         if ($totalLoanInterest > 0) {
-            $incomeSources['Loan Interest'] = $totalLoanInterest;
+            $incomeSources['Customer Loan Interest'] = $totalLoanInterest;
         }
 
         // Loan Processing Fees
@@ -292,7 +318,31 @@ class FinancialStatementController extends Controller
 
         $totalProcessingFees = $loanProcessingFees + $processingFeesFromRepayments;
         if ($totalProcessingFees > 0) {
-            $incomeSources['Loan Processing Fees'] = $totalProcessingFees;
+            $incomeSources['Customer Loan Processing Fees'] = $totalProcessingFees;
+        }
+
+        $employeeLoanInterest = FinancialTransaction::where('type', 'income')
+            ->where('category', 'employee_loan_interest')
+            ->whereBetween('transaction_date', [$startDateCarbon, $endDateCarbon])
+            ->sum('amount');
+        if ($employeeLoanInterest > 0) {
+            $incomeSources['Employee Loan Interest'] = $employeeLoanInterest;
+        }
+
+        $employeeLoanFees = FinancialTransaction::where('type', 'income')
+            ->where('category', 'employee_loan_processing_fee')
+            ->whereBetween('transaction_date', [$startDateCarbon, $endDateCarbon])
+            ->sum('amount');
+        if ($employeeLoanFees > 0) {
+            $incomeSources['Employee Loan Processing Fees'] = $employeeLoanFees;
+        }
+
+        $employeeLoanArrears = FinancialTransaction::where('type', 'income')
+            ->where('category', 'employee_loan_arrears_interest')
+            ->whereBetween('transaction_date', [$startDateCarbon, $endDateCarbon])
+            ->sum('amount');
+        if ($employeeLoanArrears > 0) {
+            $incomeSources['Employee Loan Arrears Interest'] = $employeeLoanArrears;
         }
 
         // Investment Income

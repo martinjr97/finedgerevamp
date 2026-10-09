@@ -109,12 +109,25 @@
                     <!-- Other Assets -->
                     <div class="space-y-3 mt-6">
                         <h3 class="text-lg font-semibold text-white">Other Assets</h3>
-                        <div class="flex justify-between items-center py-2">
-                            <div class="flex items-center gap-2">
-                                <span class="text-slate-300">Loans Receivable</span>
-                                <span class="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs text-blue-300 border border-blue-500/30">{{ $loansCount }}</span>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center py-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-slate-300">Customer Loans Receivable</span>
+                                    <span class="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs text-blue-300 border border-blue-500/30">{{ $loansCount }}</span>
+                                </div>
+                                <span class="text-white font-semibold">{{ number_format($customerLoansReceivable ?? $loansReceivable, 2) }}</span>
                             </div>
-                            <span class="text-white font-semibold text-lg">{{ number_format($loansReceivable, 2) }}</span>
+                            <div class="flex justify-between items-center py-2 pl-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-slate-400">Employee Loans Receivable</span>
+                                    <span class="rounded-full bg-purple-500/20 px-2 py-0.5 text-xs text-purple-300 border border-purple-500/30">{{ $employeeLoansCount ?? 0 }}</span>
+                                </div>
+                                <span class="text-white font-medium">{{ number_format($employeeLoansReceivable ?? 0, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-t border-white/10">
+                                <span class="text-slate-200 font-semibold">Total Loans Receivable</span>
+                                <span class="text-white font-semibold text-lg">{{ number_format($loansReceivable, 2) }}</span>
+                            </div>
                         </div>
 
                         <div class="space-y-2 pt-2">

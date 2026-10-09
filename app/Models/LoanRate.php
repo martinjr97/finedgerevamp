@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LoanRate extends Model
@@ -75,5 +76,10 @@ class LoanRate extends Model
     public function loanRateType(): BelongsTo
     {
         return $this->belongsTo(LoanRateType::class);
+    }
+
+    public function employeeLoans(): HasMany
+    {
+        return $this->hasMany(EmployeeLoan::class);
     }
 }

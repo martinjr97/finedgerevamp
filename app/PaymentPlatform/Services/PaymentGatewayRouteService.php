@@ -3,7 +3,9 @@
 namespace App\PaymentPlatform\Services;
 
 use App\Models\Channel;
+use App\Models\EmployeeLoan;
 use App\Models\Loan;
+use App\Services\Hr\EmployeeLoans\EmployeeLoanPricingService;
 use App\Models\PaymentGateway;
 use App\Models\PaymentGatewayProductRule;
 use App\Models\PaymentGatewayRoute;
@@ -203,6 +205,31 @@ class PaymentGatewayRouteService
         };
 
         return $this->resolveRoute($routeKey, (float) $loan->principal_amount, $loan, $loan->loan_product_id);
+    }
+
+    public function resolveRouteForEmployeeLoanDisbursement(EmployeeLoan $loan): GatewayRouteResolution
+    {
+        try {
+            $resolved = $this->issuerNameResolver->resolveForEmployeeLoan($loan);
+        } catch (ValidationException $e) {
+            $routeKey = $loan->hasBankDestination()
+                ? GatewayRouteKey::BankDisbursement
+                : ($loan->hasMobileWalletDestination() ? GatewayRouteKey::WalletDisbursement : null);
+
+            return GatewayRouteResolution::unavailable(
+                $routeKey ?? GatewayRouteKey::WalletDisbursement,
+                collect($e->errors())->flatten()->first() ?? 'Employee loan payout destination is invalid.',
+            );
+        }
+
+        $routeKey = match ($resolved['payment_method']) {
+            'bank' => GatewayRouteKey::BankDisbursement,
+            default => GatewayRouteKey::WalletDisbursement,
+        };
+
+        $productId = app(EmployeeLoanPricingService::class)->employeeProduct()->id;
+
+        return $this->resolveRoute($routeKey, (float) $loan->principal_amount, null, $productId);
     }
 
     public function resolveProductGateway(?int $loanProductId, GatewayRouteKey $routeKey): ?PaymentGateway

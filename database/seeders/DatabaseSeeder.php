@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
 	                CompanySeeder::class,
 	                CollateralCategorySeeder::class,
 	                LoanProductSeeder::class,
+	                EmployeeLoanProductSeeder::class,
 	                GroupLoansProductSeeder::class,
 	                GroupMemberTitleSeeder::class,
 	                PermissionSeeder::class,

@@ -241,12 +241,18 @@ class EmployeeController extends Controller
 
         $canViewCompensation = auth('admin')->user()?->can('hr.employee.compensation.view') ?? false;
         $canViewBank = auth('admin')->user()?->can('hr.employee.bank.view') ?? false;
+        $canViewEmployeeLoans = auth('admin')->user()?->can('hr.employee-loans.view') ?? false;
         $leaveBalances = $leaveBalanceService->balancesForEmployee($employee);
+
+        if ($canViewEmployeeLoans) {
+            $employee->load(['employeeLoans' => fn ($q) => $q->latest('id')->limit(10)]);
+        }
 
         return view('admin.hr.employees.show', compact(
             'employee',
             'canViewCompensation',
             'canViewBank',
+            'canViewEmployeeLoans',
             'leaveBalances',
         ) + $this->formOptions() + [
             'mobileMoneyProviders' => $this->mobileMoneyProviderNames(),

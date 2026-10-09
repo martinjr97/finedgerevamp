@@ -219,6 +219,7 @@
                                     auth('admin')->user()?->can('hr.leave.view') ? ['label' => 'Pending Leave', 'route' => route('admin.hr.leave.applications.index'), 'icon' => 'calendar'] : null,
                                     auth('admin')->user()?->can('hr.leave.view') ? ['label' => 'Leave History', 'route' => route('admin.hr.leave.history.index'), 'icon' => 'clock'] : null,
                                     auth('admin')->user()?->can('hr.leave-balances.view') ? ['label' => 'Leave Balances', 'route' => route('admin.hr.leave.balances.index'), 'icon' => 'chart-bar'] : null,
+                                    auth('admin')->user()?->can('hr.employee-loans.view') ? ['label' => 'Employee Loans', 'route' => route('admin.hr.employee-loans.index'), 'icon' => 'banknotes'] : null,
                                     auth('admin')->user()?->can('hr.settings.view') ? ['label' => 'HR Settings', 'route' => route('admin.hr.settings.index'), 'icon' => 'cog'] : null,
                                 ]),
                             ];

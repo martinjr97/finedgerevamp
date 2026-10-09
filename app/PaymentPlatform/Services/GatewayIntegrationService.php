@@ -5,6 +5,7 @@ namespace App\PaymentPlatform\Services;
 use App\Models\PaymentGateway;
 use App\Models\PaymentGatewayAttempt;
 use App\Models\PaymentGatewayLog;
+use App\Models\EmployeeLoan;
 use App\Models\Loan;
 use App\Models\Repayment;
 use App\PaymentPlatform\Enums\GatewayAttemptPurpose;
@@ -17,6 +18,7 @@ use App\PaymentPlatform\Jobs\QueryGatewayAttemptStatusJob;
 use App\PaymentPlatform\Support\CGrateIssuerNameResolver;
 use App\PaymentPlatform\Support\CGrateUatDisbursementIssuer;
 use App\Services\CustomerNotificationService;
+use App\Services\Hr\EmployeeLoans\EmployeeLoanDisbursementService;
 use App\Services\Loans\LoanDisbursementService;
 use App\Services\RepaymentProcessingService;
 use App\Services\Repayments\AdminRepaymentGatewayCollectionService;
@@ -32,6 +34,7 @@ class GatewayIntegrationService
         private readonly RepaymentProcessingService $repaymentProcessingService,
         private readonly RepaymentFinancePostingService $financePostingService,
         private readonly LoanDisbursementService $loanDisbursementService,
+        private readonly EmployeeLoanDisbursementService $employeeLoanDisbursementService,
         private readonly CGrateIssuerNameResolver $issuerNameResolver,
         private readonly PaymentGatewayDestinationMappingResolver $destinationMappingResolver,
         private readonly CustomerNotificationService $customerNotificationService,
@@ -283,6 +286,95 @@ class GatewayIntegrationService
         ];
     }
 
+    /**
+     * @return array{success: bool, reference?: string, transaction_id?: string, message?: string, metadata?: array}
+     */
+    public function initiateEmployeeLoanDisbursement(EmployeeLoan $loan): array
+    {
+        try {
+            $this->employeeLoanDisbursementService->assertNoActiveDisbursementAttempt($loan);
+            $this->employeeLoanDisbursementService->assertCanDisburse($loan);
+            $resolved = $this->issuerNameResolver->resolveForEmployeeLoan($loan);
+        } catch (ValidationException $e) {
+            return [
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first() ?? 'Cannot initiate gateway disbursement.',
+            ];
+        }
+
+        $gateway = $this->selectionService->selectForEmployeeLoanDisbursement($loan, requireLinkedAccount: true);
+
+        if (! $gateway) {
+            $resolution = app(PaymentGatewayRouteService::class)->resolveRouteForEmployeeLoanDisbursement($loan);
+
+            return [
+                'success' => false,
+                'message' => $resolution->failureReason
+                    ?? 'No disbursement gateway is available. Use manual treasury disbursement.',
+            ];
+        }
+
+        $paymentMethod = $resolved['payment_method'];
+        $issuerNameForAttempt = (string) $resolved['issuer_name'];
+
+        $attempt = DB::transaction(function () use ($loan, $gateway, $resolved, $paymentMethod, $issuerNameForAttempt) {
+            $this->employeeLoanDisbursementService->assertNoActiveDisbursementAttempt($loan->fresh());
+
+            $attempt = PaymentGatewayAttempt::create([
+                'payment_gateway_id' => $gateway->id,
+                'direction' => GatewayDirection::Disbursement,
+                'purpose' => GatewayAttemptPurpose::LoanDisbursement,
+                'attemptable_type' => EmployeeLoan::class,
+                'attemptable_id' => $loan->id,
+                'internal_reference' => 'TEMP-ELO-OUT-'.$loan->id.'-'.now()->timestamp,
+                'payment_method' => $paymentMethod,
+                'amount' => $loan->principal_amount,
+                'currency' => (string) config('cgrate.default_currency', 'ZMW'),
+                'customer_phone' => $paymentMethod === 'mobile_money' ? $resolved['customer_account'] : null,
+                'customer_account' => $resolved['customer_account'],
+                'destination_account' => $resolved['customer_account'],
+                'issuer_name' => $issuerNameForAttempt,
+                'source_account' => $gateway->linkedAccountLabel(),
+                'status' => GatewayAttemptStatus::Created,
+            ]);
+
+            $internalRef = PaymentGatewayAttempt::generateDisbursementInternalReference($loan->id, $attempt->id);
+            $attempt->update([
+                'internal_reference' => $internalRef,
+                'provider_reference' => $internalRef,
+            ]);
+
+            $this->employeeLoanDisbursementService->markGatewayProcessing($loan->fresh(), $attempt);
+
+            PaymentGatewayLog::log(
+                $gateway,
+                'disbursement.initiated',
+                'Gateway disbursement attempt created for employee loan '.$loan->loan_number,
+                $attempt,
+                direction: GatewayDirection::Disbursement->value,
+            );
+
+            return $attempt;
+        });
+
+        DispatchGatewayDisbursementJob::dispatch($attempt->id);
+
+        return [
+            'success' => true,
+            'reference' => $attempt->provider_reference ?? $attempt->internal_reference,
+            'transaction_id' => $attempt->provider_transaction_id,
+            'message' => 'Disbursement request submitted to cGrate. The employee loan will update once cGrate responds.',
+            'metadata' => [
+                'gateway_code' => $gateway->code,
+                'gateway_attempt_id' => $attempt->id,
+                'issuer_name' => $attempt->issuer_name,
+                'customer_account' => $attempt->customer_account,
+                'gateway_initiated_at' => now()->toIso8601String(),
+                'queued' => true,
+            ],
+        ];
+    }
+
     public function handleStatusResult(PaymentGatewayAttempt $attempt, \App\PaymentPlatform\DTOs\GatewayStatusResult $result): void
     {
         $attempt->refresh();
@@ -361,59 +453,88 @@ class GatewayIntegrationService
             return;
         }
 
-        /** @var Loan|null $loan */
-        $loan = $attempt->attemptable;
-        if (! $loan instanceof Loan) {
-            return;
-        }
+        $attemptable = $attempt->attemptable;
 
-        if ($loan->disbursement_status === 'completed') {
-            return;
-        }
-
-        $gateway = $attempt->paymentGateway;
-        if (! $gateway) {
-            return;
-        }
-
-        DB::transaction(function () use ($attempt, $loan, $gateway) {
-            $lockedAttempt = PaymentGatewayAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
-
-            if ($lockedAttempt->status !== GatewayAttemptStatus::Confirmed) {
-                return;
-            }
-
-            $loan->refresh();
-
+        if ($attemptable instanceof Loan) {
+            $loan = $attemptable;
             if ($loan->disbursement_status === 'completed') {
                 return;
             }
 
-            PaymentGatewayLog::log(
-                $gateway,
-                'disbursement.confirmed',
-                'Gateway confirmed disbursement for loan '.$loan->loan_number,
-                $lockedAttempt,
-                direction: GatewayDirection::Disbursement->value,
-            );
-        });
+            $gateway = $attempt->paymentGateway;
+            if (! $gateway) {
+                return;
+            }
 
-        $this->loanDisbursementService->completeGatewayDisbursement($loan->fresh(), $attempt->fresh());
+            DB::transaction(function () use ($attempt, $loan, $gateway) {
+                $lockedAttempt = PaymentGatewayAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+
+                if ($lockedAttempt->status !== GatewayAttemptStatus::Confirmed) {
+                    return;
+                }
+
+                $loan->refresh();
+
+                if ($loan->disbursement_status === 'completed') {
+                    return;
+                }
+
+                PaymentGatewayLog::log(
+                    $gateway,
+                    'disbursement.confirmed',
+                    'Gateway confirmed disbursement for loan '.$loan->loan_number,
+                    $lockedAttempt,
+                    direction: GatewayDirection::Disbursement->value,
+                );
+            });
+
+            $this->loanDisbursementService->completeGatewayDisbursement($loan->fresh(), $attempt->fresh());
+
+            return;
+        }
+
+        if ($attemptable instanceof EmployeeLoan) {
+            $employeeLoan = $attemptable;
+            if ($employeeLoan->disbursement_status === 'completed') {
+                return;
+            }
+
+            $gateway = $attempt->paymentGateway;
+            if ($gateway) {
+                PaymentGatewayLog::log(
+                    $gateway,
+                    'disbursement.confirmed',
+                    'Gateway confirmed disbursement for employee loan '.$employeeLoan->loan_number,
+                    $attempt,
+                    direction: GatewayDirection::Disbursement->value,
+                );
+            }
+
+            $this->employeeLoanDisbursementService->completeGatewayDisbursement($employeeLoan->fresh(), $attempt->fresh());
+        }
     }
 
     public function handleDisbursementFailure(PaymentGatewayAttempt $attempt): void
     {
-        /** @var Loan|null $loan */
-        $loan = $attempt->attemptable;
-        if (! $loan instanceof Loan) {
+        $attemptable = $attempt->attemptable;
+
+        if ($attemptable instanceof Loan) {
+            if ($attemptable->disbursement_status === 'completed') {
+                return;
+            }
+
+            $this->loanDisbursementService->markDisbursementFailed($attemptable, $attempt);
+
             return;
         }
 
-        if ($loan->disbursement_status === 'completed') {
-            return;
-        }
+        if ($attemptable instanceof EmployeeLoan) {
+            if ($attemptable->disbursement_status === 'completed') {
+                return;
+            }
 
-        $this->loanDisbursementService->markDisbursementFailed($loan, $attempt);
+            $this->employeeLoanDisbursementService->markDisbursementFailed($attemptable, $attempt);
+        }
     }
 
     public function finalizeConfirmedAttempt(PaymentGatewayAttempt $attempt): void

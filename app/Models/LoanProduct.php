@@ -98,4 +98,18 @@ class LoanProduct extends Model
     {
         return $this->hasMany(PaymentGatewayProductRule::class);
     }
+
+    public function isEmployeeLoanProduct(): bool
+    {
+        return $this->category === 'employee'
+            || (bool) ($this->rules['employee_loan_only'] ?? false);
+    }
+
+    /**
+     * Products offered on customer loan application flows.
+     */
+    public function scopeForCustomerLoanApplication($query)
+    {
+        return $query->where('category', '!=', 'employee');
+    }
 }
