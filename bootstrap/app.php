@@ -106,6 +106,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->runInBackground();
         }
 
+        if (config('legacy-parallel-run.customer_polling_enabled')) {
+            $schedule->command('migration:poll-legacy-customers')
+                ->cron("*/{$pollInterval} * * * *")
+                ->timezone($timezone)
+                ->withoutOverlapping()
+                ->runInBackground();
+        }
+
         $schedule->call(function () {
             app(\App\PaymentPlatform\Services\GatewayPollingService::class)->dispatchDueAttempts();
         })->everyMinute()->name('gateway-poll-due-attempts')->withoutOverlapping();

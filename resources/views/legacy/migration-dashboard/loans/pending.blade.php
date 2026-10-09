@@ -16,6 +16,10 @@
 
     <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 text-sm">
         <div class="rounded-xl border bg-white p-3">
+            <p class="text-xs uppercase text-slate-500">Pending customers</p>
+            <p class="text-xl font-bold text-primary">{{ number_format($parallel['pending_customers'] ?? 0) }}</p>
+        </div>
+        <div class="rounded-xl border bg-white p-3">
             <p class="text-xs uppercase text-slate-500">Pending loans</p>
             <p class="text-xl font-bold text-primary">{{ number_format($parallel['pending_loans'] ?? 0) }}</p>
         </div>

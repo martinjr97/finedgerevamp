@@ -17,6 +17,7 @@ class ParallelRunLoanImportService
 {
     public function __construct(
         private readonly MigrationLoanInboxRepository $inbox,
+        private readonly ParallelRunCustomerPromoteService $customerPromote,
         private readonly ActiveLoanMigrator $activeLoanMigrator,
         private readonly LegacyRepaymentReplayService $replayService,
         private readonly RepaymentMigrator $repaymentMigrator,
@@ -45,6 +46,22 @@ class ParallelRunLoanImportService
         }
 
         $legacyUserId = (int) $legacyLoan['user_id'];
+
+        $customerResult = $this->customerPromote->ensureMapped($legacyUserId);
+        if (! $customerResult['success']) {
+            $reason = $customerResult['message'];
+            if ($inboxRow) {
+                DB::table('migration_loan_inbox')
+                    ->where('legacy_loan_id', $legacyLoanId)
+                    ->update([
+                        'status' => MigrationLoanInboxRepository::STATUS_BLOCKED,
+                        'block_reason' => $reason,
+                        'updated_at' => now(),
+                    ]);
+            }
+
+            throw new RuntimeException($reason);
+        }
 
         $loanSummary = $this->activeLoanMigrator->run(
             promote: true,

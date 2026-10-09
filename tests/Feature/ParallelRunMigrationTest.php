@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Migration\ParallelRun\LegacyLoanPollService;
+use App\Migration\ParallelRun\MigrationCustomerInboxRepository;
 use App\Migration\ParallelRun\MigrationLoanInboxRepository;
 use App\Migration\ParallelRun\MigrationRepaymentInboxRepository;
 use App\Migration\Phases\MigrationEntityMapRepository;
@@ -55,6 +56,35 @@ class ParallelRunMigrationTest extends TestCase
         $admin->assignRole(PermissionMatrix::SUPER_ADMIN_ROLE);
 
         return $admin;
+    }
+
+    public function test_customer_inbox_repository_upsert_and_count(): void
+    {
+        $repo = app(MigrationCustomerInboxRepository::class);
+
+        $repo->upsertDetected(501, [
+            'user_id' => 501,
+            'national_id' => '123456/78/1',
+        ], ['legacy_loan_ids' => [9001]]);
+
+        $this->assertSame(1, $repo->countPending());
+
+        $repo->markImported(501, 1, 99, 'test');
+        $this->assertSame(0, $repo->countPending());
+    }
+
+    public function test_pending_customers_dashboard_page_loads(): void
+    {
+        app(MigrationCustomerInboxRepository::class)->upsertDetected(503, [
+            'user_id' => 503,
+            'legacy_user' => ['first_name' => 'Jane', 'last_name' => 'Doe', 'phone' => '0977123456'],
+        ]);
+
+        $this->actingAs($this->superAdmin(), 'admin')
+            ->get(route('legacy.migration-dashboard.customers.pending'))
+            ->assertOk()
+            ->assertSee('Pending Legacy Customers')
+            ->assertSee('503');
     }
 
     public function test_loan_inbox_repository_upsert_and_count(): void
@@ -206,6 +236,8 @@ class ParallelRunMigrationTest extends TestCase
         ]);
 
         $this->artisan('migration:poll-legacy-loans')->assertSuccessful();
+        config(['legacy-parallel-run.customer_polling_enabled' => true]);
+        $this->artisan('migration:poll-legacy-customers', ['--no-sync' => true])->assertSuccessful();
         $this->artisan('migration:poll-legacy-repayments', ['--no-sync' => true])->assertSuccessful();
         $this->artisan('migration:sync-legacy-repayments')->assertSuccessful();
         $this->artisan('migration:poll-legacy-expenses', ['--no-sync' => true])->assertSuccessful();

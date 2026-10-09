@@ -6,6 +6,7 @@
         ['label' => 'Companies', 'route' => 'legacy.migration-dashboard.companies.index'],
         ['label' => 'Marketeers', 'route' => 'legacy.migration-dashboard.marketeers.index'],
         ['label' => 'Customers', 'route' => 'legacy.migration-dashboard.customers.index'],
+        ['label' => 'Pending Customers', 'route' => 'legacy.migration-dashboard.customers.pending'],
         ['label' => 'Identity', 'route' => 'legacy.migration-dashboard.identity.index'],
         ['label' => 'Pending Loans', 'route' => 'legacy.migration-dashboard.loans.pending'],
         ['label' => 'Loans', 'route' => 'legacy.migration-dashboard.loans.index'],

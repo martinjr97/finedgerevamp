@@ -14,10 +14,21 @@ Route::middleware(['auth:admin', 'password.changed', 'legacy.migration.dashboard
         Route::get('/runs', [LegacyMigrationDashboardController::class, 'runs'])->name('runs.index');
         Route::get('/runs/{run}', [LegacyMigrationDashboardController::class, 'showRun'])->name('runs.show');
         Route::get('/customers', [LegacyMigrationDashboardController::class, 'customers'])->name('customers.index');
+        Route::get('/customers/pending', [LegacyMigrationDashboardController::class, 'pendingCustomers'])->name('customers.pending');
+        Route::get('/customers/pending/{legacyUserId}', [LegacyMigrationDashboardController::class, 'showPendingCustomer'])->name('customers.pending.show');
+        Route::post('/customers/pending/{legacyUserId}/promote', [LegacyMigrationDashboardController::class, 'promotePendingCustomer'])
+            ->middleware('migration.manage')
+            ->name('customers.pending.promote');
+        Route::post('/customers/pending/{legacyUserId}/dismiss', [LegacyMigrationDashboardController::class, 'dismissPendingCustomer'])
+            ->middleware('migration.manage')
+            ->name('customers.pending.dismiss');
         Route::get('/customers/{legacyUserId}', [LegacyMigrationDashboardController::class, 'showCustomer'])->name('customers.show');
         Route::post('/customers/{legacyUserId}/map', [LegacyMigrationDashboardController::class, 'mapCustomer'])
             ->middleware('migration.manage')
             ->name('customers.map');
+        Route::post('/parallel-run/poll-customers', [LegacyMigrationDashboardController::class, 'pollLegacyCustomers'])
+            ->middleware('migration.manage')
+            ->name('parallel-run.poll-customers');
         Route::get('/companies', [LegacyMigrationDashboardController::class, 'companies'])->name('companies.index');
         Route::get('/marketeers', [LegacyMigrationDashboardController::class, 'marketeers'])->name('marketeers.index');
         Route::get('/identity', [LegacyMigrationDashboardController::class, 'identity'])->name('identity.index');

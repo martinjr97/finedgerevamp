@@ -13,6 +13,10 @@ use App\Migration\Dashboard\MigrationParallelRunReportService;
 use App\Migration\Dashboard\MigrationReconciliationReportService;
 use App\Migration\Dashboard\MigrationRunReportService;
 use App\Migration\Dashboard\MigrationTreasuryCutoverService;
+use App\Migration\ParallelRun\LegacyCustomerPollService;
+use App\Migration\ParallelRun\LegacyCustomerSyncService;
+use App\Migration\ParallelRun\MigrationCustomerInboxRepository;
+use App\Migration\ParallelRun\ParallelRunCustomerPromoteService;
 use App\Migration\ParallelRun\ParallelRunLoanImportService;
 use App\Migration\Phases\MigrationEntityMapRepository;
 use App\Migration\RepaymentAttributionService;
@@ -202,6 +206,97 @@ class LegacyMigrationDashboardController extends Controller
             'legacyLoanId' => $legacyLoanId,
             'detail' => $detail,
         ]);
+    }
+
+    public function pendingCustomers(Request $request, MigrationParallelRunReportService $parallelRun): View
+    {
+        return view('legacy.migration-dashboard.customers.pending', [
+            'customers' => $parallelRun->paginatePendingCustomers($request->only(['status', 'search'])),
+            'summary' => $parallelRun->summary(),
+            'filters' => $request->only(['status', 'search']),
+            'canManage' => auth('admin')->user()?->can('migration.manage') ?? false,
+        ]);
+    }
+
+    public function showPendingCustomer(int $legacyUserId, MigrationParallelRunReportService $parallelRun): View
+    {
+        $detail = $parallelRun->pendingCustomerDetail($legacyUserId);
+        abort_if($detail === null, 404);
+
+        return view('legacy.migration-dashboard.customers.pending-show', [
+            'legacyUserId' => $legacyUserId,
+            'detail' => $detail,
+            'canManage' => auth('admin')->user()?->can('migration.manage') ?? false,
+        ]);
+    }
+
+    public function promotePendingCustomer(
+        int $legacyUserId,
+        ParallelRunCustomerPromoteService $promoteService,
+        MigrationCustomerInboxRepository $inbox,
+    ): RedirectResponse {
+        abort_unless(auth('admin')->user()?->can('migration.manage'), 403);
+
+        $result = $promoteService->promoteLegacyUser($legacyUserId);
+
+        if ($result['success'] && $result['target_customer_id']) {
+            $inbox->markImported(
+                $legacyUserId,
+                (int) auth('admin')->id(),
+                (int) $result['target_customer_id'],
+                json_encode(['status' => $result['status'], 'via' => 'manual'])
+            );
+
+            return redirect()
+                ->route('legacy.migration-dashboard.customers.show', $legacyUserId)
+                ->with('status', "Legacy user {$legacyUserId} promoted as customer #{$result['target_customer_id']}. You can now import their pending loan(s).");
+        }
+
+        $inbox->markBlocked($legacyUserId, $result['message']);
+
+        return redirect()
+            ->route('legacy.migration-dashboard.customers.pending.show', $legacyUserId)
+            ->with('error', $result['message']);
+    }
+
+    public function dismissPendingCustomer(
+        Request $request,
+        int $legacyUserId,
+        MigrationCustomerInboxRepository $inbox,
+    ): RedirectResponse {
+        abort_unless(auth('admin')->user()?->can('migration.manage'), 403);
+
+        $validated = $request->validate([
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $inbox->markDismissed($legacyUserId, (int) auth('admin')->id(), $validated['notes'] ?? null);
+
+        return redirect()
+            ->route('legacy.migration-dashboard.customers.pending')
+            ->with('status', "Legacy user {$legacyUserId} dismissed from customer import queue.");
+    }
+
+    public function pollLegacyCustomers(
+        LegacyCustomerPollService $poller,
+        LegacyCustomerSyncService $sync,
+    ): RedirectResponse {
+        abort_unless(auth('admin')->user()?->can('migration.manage'), 403);
+
+        $pollStats = $poller->poll();
+        $syncStats = $sync->syncPending(adminId: (int) auth('admin')->id());
+
+        $message = sprintf(
+            'Customer poll: %d detected, %d already mapped. Sync: %d promoted, %d failed.',
+            $pollStats['detected'],
+            $pollStats['skipped_mapped'],
+            $syncStats['promoted'],
+            $syncStats['failed'],
+        );
+
+        return redirect()
+            ->back()
+            ->with('status', $message);
     }
 
     public function pendingLoans(Request $request, MigrationParallelRunReportService $parallelRun): View

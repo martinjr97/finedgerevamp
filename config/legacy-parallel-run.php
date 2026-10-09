@@ -14,6 +14,8 @@ return [
 
     'expense_polling_enabled' => (bool) env('LEGACY_EXPENSE_POLLING_ENABLED', false),
 
+    'customer_polling_enabled' => (bool) env('LEGACY_CUSTOMER_POLLING_ENABLED', false),
+
     /** Apply treasury balance updates when importing parallel-run loans/repayments/expenses. */
     'finance_on_import_enabled' => (bool) env('LEGACY_PARALLEL_RUN_FINANCE_ENABLED', false),
 
@@ -33,6 +35,9 @@ return [
 
     /** Max expense inbox rows promoted per sync cycle. */
     'expense_sync_batch_limit' => (int) env('LEGACY_EXPENSE_SYNC_BATCH_LIMIT', 100),
+
+    /** Max customer inbox rows promoted per sync cycle. */
+    'customer_sync_batch_limit' => (int) env('LEGACY_CUSTOMER_SYNC_BATCH_LIMIT', 50),
 
     /** Only poll legacy expenses on/after this date (parallel-run window). */
     'financial_from_date' => env('LEGACY_PARALLEL_RUN_FINANCIAL_FROM_DATE'),

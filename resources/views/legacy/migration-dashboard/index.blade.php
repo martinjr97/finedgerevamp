@@ -13,6 +13,7 @@
         $attention = $summary['attention'] ?? [];
         $parallel = $summary['parallel_run'] ?? [];
         $pendingLoans = (int) ($parallel['pending_loans'] ?? 0);
+        $pendingCustomers = (int) ($parallel['pending_customers'] ?? 0);
         $pendingRepayments = (int) ($parallel['pending_repayments'] ?? 0);
     @endphp
 
@@ -20,24 +21,37 @@
         <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
     @endif
 
-    @if($pendingLoans > 0 || $pendingRepayments > 0)
+    @if($pendingLoans > 0 || $pendingCustomers > 0 || $pendingRepayments > 0)
         <div class="mb-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-4 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <p class="font-semibold text-amber-950">Parallel-run sync queue</p>
                     <p class="text-sm text-amber-900">
+                        @if($pendingCustomers > 0)
+                            <strong>{{ number_format($pendingCustomers) }}</strong> legacy customer(s) need promotion.
+                        @endif
                         @if($pendingLoans > 0)
+                            @if($pendingCustomers > 0) · @endif
                             <strong>{{ number_format($pendingLoans) }}</strong> new legacy loan(s) need import review.
                         @endif
                         @if($pendingRepayments > 0)
-                            @if($pendingLoans > 0) · @endif
+                            @if($pendingLoans > 0 || $pendingCustomers > 0) · @endif
                             <strong>{{ number_format($pendingRepayments) }}</strong> legacy repayment(s) pending sync.
                         @endif
                     </p>
                 </div>
-                <a href="{{ route('legacy.migration-dashboard.loans.pending') }}" class="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
-                    Review pending loans
-                </a>
+                <div class="flex flex-wrap gap-2">
+                    @if($pendingCustomers > 0)
+                        <a href="{{ route('legacy.migration-dashboard.customers.pending') }}" class="rounded-xl border border-amber-400 bg-white px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100">
+                            Pending customers
+                        </a>
+                    @endif
+                    @if($pendingLoans > 0)
+                        <a href="{{ route('legacy.migration-dashboard.loans.pending') }}" class="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
+                            Pending loans
+                        </a>
+                    @endif
+                </div>
             </div>
         </div>
     @endif

@@ -16,6 +16,10 @@ class MigrationSyncState
 
     public const KEY_LAST_EXPENSE_SYNC_AT = 'last_expense_sync_at';
 
+    public const KEY_LAST_CUSTOMER_POLL_AT = 'last_customer_poll_at';
+
+    public const KEY_LAST_CUSTOMER_SYNC_AT = 'last_customer_sync_at';
+
     public const KEY_TREASURY_CUTOVER_AT = 'treasury_cutover_at';
 
     public function get(string $key): ?string

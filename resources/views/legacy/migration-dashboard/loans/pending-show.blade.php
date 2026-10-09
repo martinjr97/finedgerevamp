@@ -68,6 +68,11 @@
         </div>
         @unless($readiness['can_import'] ?? false)
             <p class="mt-2 text-xs text-slate-500">Confirm import is disabled until blockers above are resolved.</p>
+            @if(collect($readiness['blockers'] ?? [])->contains(fn ($b) => str_contains((string) $b, 'Customer not mapped')))
+                <a href="{{ route('legacy.migration-dashboard.customers.pending.show', $inbox->legacy_user_id) }}" class="mt-2 inline-block text-sm font-semibold text-primary hover:underline">
+                    Promote legacy customer #{{ $inbox->legacy_user_id }} →
+                </a>
+            @endif
         @endunless
     @endif
 @endsection
